@@ -1,0 +1,7 @@
+
+version: '3'
+services:
+  dns-server:
+    build: "."
+    ports: 
+    - 80:80
