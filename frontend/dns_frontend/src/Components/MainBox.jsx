@@ -1,10 +1,31 @@
 import { Box } from '@mui/material';
 import React from 'react';
 
-const MainBox = () => {
+import themes from '../themes';
+
+const MainBox = ({ children, sx }) => {
     return (
-        <Box>
-            
+        <Box
+            sx={{
+                backgroundColor: themes.theme1.background,
+                height: '100vh',
+                width: '100vw',
+                display: 'flex',
+                overflow: 'hidden',
+            }}
+        >
+            <Box
+                sx={{
+                    backgroundColor: themes.theme1.primary,
+                    width: 1400,
+                    margin: 'auto',
+                    marginTop: 17,
+                    overflow:'auto',
+                    ...sx,
+                }}
+            >
+                {children}
+            </Box>
         </Box>
     );
 };

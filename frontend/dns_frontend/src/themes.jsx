@@ -3,6 +3,7 @@
 const theme1 = {
     primary: '#444554',
     secondary: '#545344',
+    secondary_light: '#706F5B',
     background: '#172121',
     link: '#a9a6c5',
     alt: '#9b8491',
@@ -12,6 +13,7 @@ const theme1 = {
 const theme2 = {
   primary: '#014778',
   secondary: '#783201',
+  secondary_light: '#AB4701',
   background: '#ffffff',
   link: '#d9efff',
   alt: '#0211AA',
