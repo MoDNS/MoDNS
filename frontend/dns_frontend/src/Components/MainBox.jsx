@@ -18,6 +18,7 @@ const MainBox = ({ children, sx }) => {
                 sx={{
                     backgroundColor: themes.theme1.primary,
                     width: 1400,
+                    height: 600,
                     margin: 'auto',
                     marginTop: 17,
                     overflow:'auto',

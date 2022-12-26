@@ -1,10 +1,15 @@
 import React from 'react';
 
+import MainBox from '../Components/MainBox';
+import Title from '../Components/Title';
+
 const Mods = () => {
     return (
-        <div>
-            
-        </div>
+        <MainBox>
+            <Title divider>
+                Mods
+            </Title>
+        </MainBox>
     );
 };
 
