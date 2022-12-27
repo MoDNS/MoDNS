@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import React from 'react';
 
-import themes from '../themes';
+// import themes from '../themes';
 
 const Title = ({children, sx, divider}) => {
     return (
@@ -13,7 +13,7 @@ const Title = ({children, sx, divider}) => {
                         marginLeft: 3,
                         marginRight: 3,
                         marginTop: 2,
-                        color: themes.theme1.text,
+                        color: 'text.main',
                         ...sx
                     }}
                     >
@@ -21,7 +21,7 @@ const Title = ({children, sx, divider}) => {
             </Typography>
             {divider && <Box 
                 sx={{
-                    color: themes.theme1.text,
+                    color: 'text.main',
                     border: 2,  
                     margins: 0,
                     height: '0',

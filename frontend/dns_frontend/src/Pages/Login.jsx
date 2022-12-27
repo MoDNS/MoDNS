@@ -1,4 +1,4 @@
-import { Button, TextField } from '@mui/material';
+import { Button, TextField, useTheme } from '@mui/material';
 import { Box } from '@mui/system';
 import React from 'react';
 import { useState } from 'react';
@@ -6,10 +6,11 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import MainBox from '../Components/MainBox';
 import Title from '../Components/Title';
-import themes from '../themes';
+
 
 
 const Login = ({setLoggedIn}) => {
+    const theme = useTheme();
     const navigate = useNavigate();
     const [password, setPassword] = useState('');
 
@@ -42,26 +43,19 @@ const Login = ({setLoggedIn}) => {
                     onInput={ e=> setPassword(e.target.value) }
                     onFocus={event => {
                         event.target.select();
-                    }}
-                    InputProps={{
-                        sx: { '& input': { color: themes.theme1.text } },
-                    }}
-                    
+                    }}                    
                     sx={{  
                         '& label.Mui-focused': {
-                            color: themes.theme1.text,
+                            color: 'text.primary',
                           },
-                        "& .MuiFormLabel-root": {
-                            color: themes.theme1.text,
-                        },
                         "& .MuiInput-underline:after": {
-                            borderBottomColor: themes.theme1.text,
+                            borderBottomColor: 'text.primary',
                         },
                         "& .MuiInput-underline:before": {
-                            borderBottomColor: themes.theme1.text,
+                            borderBottomColor: 'text.primary',
                         },
                         "& .MuiInput-root:hover::before": {
-                            borderBottomColor: themes.theme1.link,
+                            borderBottomColor: 'text.secondary',
                         },
 
                     }}    
@@ -69,25 +63,25 @@ const Login = ({setLoggedIn}) => {
                 <Box display='flex' justifyContent="right">
                     <Link
                         style={{ 
+                            color: theme.palette.link.main,
                             paddingTop: 2,
-                            color: themes.theme1.link,
                         }}
                     >
                         Forgot Password?
                     </Link>
                 </Box>
-            <Button 
-                type='submit'
-                fullWidth
-                onClick={handleSubmit}
-                sx={{
-                    marginTop: 3, 
-                    backgroundColor: 
-                    themes.theme1.secondary, 
-                    color: themes.theme1.text, 
-                    '&:hover': { backgroundColor: themes.theme1.secondary_light  }, }} >    
-                Sign in
-            </Button>
+                <Button 
+                    type='submit'
+                    fullWidth
+                    variant='contained'
+                    disableElevation
+                    onClick={handleSubmit}
+                    sx={{
+                        marginTop: 3,
+                    }} 
+                    >    
+                    Sign in 
+                </Button>
             </Box>
         </MainBox>
     );
