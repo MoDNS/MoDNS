@@ -16,7 +16,7 @@ const App = () => {
   return (
     <>
       <BrowserRouter>
-        <TopBar links={ isLoggedIn ? ["Dashboard", "Mods", "Settings", "About"] : null} />
+        <TopBar isLoggedIn={isLoggedIn} setLoggedIn={setLoggedIn} />
         {/* { !isLoggedIn ? <Navigate replace to='/manage' /> : <></>} */}
         <Routes>
           <Route path='/manage' element={<Login setLoggedIn={setLoggedIn} />}/>

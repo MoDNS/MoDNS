@@ -5,7 +5,9 @@ import { Link } from 'react-router-dom';
 import themes from '../themes';
 
 
-const TopBar = ({ links }) => {
+const TopBar = ({ isLoggedIn, setLoggedIn }) => {
+    const links = isLoggedIn ? ["Dashboard", "Mods", "Settings", "About"] : null;
+
     return (
         <AppBar 
             sx={{
@@ -32,6 +34,17 @@ const TopBar = ({ links }) => {
                     );
                 })
             }
+            {isLoggedIn && <Link
+                onClick={() => setLoggedIn(false)}
+                to={"./manage/"}
+                style={{ 
+                    color: themes.theme1.text,
+                    marginLeft: 'auto',
+                    marginRight: 30
+                }}
+            >
+                Log out
+            </Link>}
         </AppBar>
     );
 };
