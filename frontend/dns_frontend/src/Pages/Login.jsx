@@ -48,12 +48,20 @@ const Login = ({setLoggedIn}) => {
                     }}
                     
                     sx={{  
-                        "& .MuiFormLabel-root": {color: themes.theme1.text},
+                        '& label.Mui-focused': {
+                            color: themes.theme1.text,
+                          },
+                        "& .MuiFormLabel-root": {
+                            color: themes.theme1.text,
+                        },
                         "& .MuiInput-underline:after": {
                             borderBottomColor: themes.theme1.text,
                         },
                         "& .MuiInput-underline:before": {
                             borderBottomColor: themes.theme1.text,
+                        },
+                        "& .MuiInput-root:hover::before": {
+                            borderBottomColor: themes.theme1.link,
                         },
 
                     }}    
