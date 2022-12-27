@@ -1,4 +1,4 @@
-
+import { ThemeOptions } from '@material-ui/core/styles/createMuiTheme';
 
 const theme1 = {
     primary: '#444554',
@@ -20,10 +20,20 @@ const theme2 = {
   text: '#d9efff'
 };
 
+const theme3 = {
+    type: 'light',
+    primary: {
+      main: '#463483',
+    },
+    secondary: {
+      main: '#f50057',
+    },
+  };
 
 const themes = {
   theme1,
-  theme2
+  theme2,
+  theme3
 }
 
 export default themes;
