@@ -1,9 +1,3 @@
 
-mod listeners;
-mod plugins;
-
-pub fn hello() {
-	println!("Hello from server lib!");
-	listeners::hello();
-	plugins::hello();
-}
+pub mod listeners;
+pub mod plugins;

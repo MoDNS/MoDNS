@@ -1,6 +1,6 @@
 
 #Use cargo-chef to build dependencies separately from main binary
-FROM lukemathwalker/cargo-chef:0.1.50-rust-1.65.0-bullseye AS chef
+FROM lukemathwalker/cargo-chef:0.1.50-rust-1.66.0-bullseye AS chef
 
 WORKDIR /builder
 
@@ -41,6 +41,16 @@ RUN touch src/main.rs
 
 RUN cargo build --release
 
+FROM node:19 AS build-frontend
+
+WORKDIR /builder
+
+COPY frontend/dns_frontend .
+
+RUN npm ci
+
+RUN npm run build
+
 #Finally, copy server over to a bare image to reduce bulk of final image
 FROM debian:buster-slim AS runtime
 
@@ -53,6 +63,8 @@ ENV PATH "${PATH}:/app"
 COPY --from=build-cli /builder/target/release/modns .
 
 COPY --from=build-daemon /builder/target/release/modnsd .
+
+COPY --from=build-frontend /builder/build web
 
 #Rocket needs Rocket.toml config file in its runtime environment
 ENTRYPOINT [ "modnsd" ]
