@@ -8,7 +8,6 @@
 //   text: '#d9efff'
 // };
 
-
 import { createTheme } from "@mui/material";
 
 export const themeOne = createTheme({
@@ -53,6 +52,7 @@ export const themeOne = createTheme({
           },
           "&.MuiButton-text": {
             textTransform: 'none',
+            
             padding: 0,
             textDecoration:'underline',
             color: '#e8efef',

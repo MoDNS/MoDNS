@@ -18,9 +18,9 @@ const MainBox = ({ children, sx }) => {
                 sx={{
                     backgroundColor: 'primary.main',
                     width: 1400,
-                    height: 600,
+                    height: .85,
                     margin: 'auto',
-                    marginTop: 17,
+                    marginTop: '6%',
                     overflow:'auto',
                     ...sx,
                 }}
