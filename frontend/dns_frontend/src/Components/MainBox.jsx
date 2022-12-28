@@ -21,7 +21,9 @@ const MainBox = ({ children, sx }) => {
                     height: 600,
                     margin: 'auto',
                     marginTop: 7,
+                    marginBottom: 0,
                     overflow:'auto',
+                    alignSelf: 'flex-end',
                     ...sx
                 }}
             >
