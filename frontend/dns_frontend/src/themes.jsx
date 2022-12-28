@@ -63,6 +63,18 @@ export const themeOne = createTheme({
         },
       },
     },
+    MuiTextField:{
+      styleOverrides: {
+        root:{
+          "input::-ms-reveal": {
+            display: "none",
+          },
+          "input::-ms-clear": {
+            display: 'none',
+          }
+        }
+      }
+    }
   },
   props: {
     MuiTextField: {

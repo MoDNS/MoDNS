@@ -47,12 +47,7 @@ const Login = ({setLoggedIn}) => {
                     onFocus={event => {
                         event.target.select();
                     }}
-                    sx={{
-                        '::-ms-reveal': {
-                            display: 'none',
-                        },
-                        color: theme.palette.text.primary,
-                    }}
+                    
                     InputProps={{
                         endAdornment: (
                             <InputAdornment position='end'>
