@@ -11,7 +11,7 @@ const TopBar = ({ isLoggedIn, setLoggedIn }) => {
         <AppBar 
             sx={{
                 flexDirection: 'row',
-                height: .08,
+                height: 0.08,
                 alignItems: 'center'
             }}
         >
@@ -19,8 +19,9 @@ const TopBar = ({ isLoggedIn, setLoggedIn }) => {
                 links && links.map((link, index) => {
                     return (
                         <Button 
+                            key={index}
                             variant="text"
-                            disableRipple 
+                            disableRipple
                             sx={{ marginLeft: 4 }} 
                             component={Link} 
                             to={'./manage/' + link.toLowerCase()} 
@@ -42,7 +43,6 @@ const TopBar = ({ isLoggedIn, setLoggedIn }) => {
                 >
                     Log Out
                 </Button>
-
         }
         </AppBar>
     );
