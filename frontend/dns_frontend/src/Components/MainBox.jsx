@@ -10,7 +10,7 @@ const MainBox = ({ children, sx }) => {
                 justifyContent:'center',
                 height: '100vh',
                 width: '100vw',
-                paddingTop: 7,
+                // paddingTop: 7,
                 display: 'flex',
                 overflow: 'hidden',
             }}

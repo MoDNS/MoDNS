@@ -31,7 +31,7 @@ const Login = ({setLoggedIn}) => {
     }
 
     return (
-        <MainBox sx={{ width: 500, height: 475, marginTop: 10, marginBottom: 10 }}>
+        <MainBox sx={{ width: 500, height: 475, marginTop: 10, marginBottom: '15%' }}>
             <Title sx={{ textAlign: 'center', marginTop: 8 }}>
                 Login
             </Title>
