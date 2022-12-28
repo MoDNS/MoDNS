@@ -1,14 +1,3 @@
-
-// const theme1 = {
-//     primary: '#444554',
-//     secondary: '#545344',
-//     secondary_light: '#706F5B',
-//     background: '#172121',
-//     link: '#a9a6c5',
-//     alt: '#9b8491',
-//     text: '#e8efef'
-// };
-
 // const theme2 = {
 //   primary: '#014778',
 //   secondary: '#783201',
@@ -18,14 +7,6 @@
 //   alt: '#0211AA',
 //   text: '#d9efff'
 // };
-
-
-// const themes = {
-//   theme1,
-//   theme2
-// }
-
-// export default themes;
 
 
 import { createTheme } from "@mui/material";
@@ -63,11 +44,22 @@ export const themeOne = createTheme({
       styleOverrides: {
         // Name of the slot
         root: {
-          // Some CSS
-          backgroundColor: '#545344',
-          '&:hover': {
-            backgroundColor:'#817f6f',
-          }
+          "&.MuiButton-contained": {
+            // Some CSS
+            backgroundColor: '#545344',
+            '&:hover': {
+              backgroundColor:'#817f6f',
+            }
+          },
+          "&.MuiButton-text": {
+            textTransform: 'none',
+            padding: 0,
+            textDecoration:'underline',
+            color: '#e8efef',
+            '&:hover': {
+              textDecoration:'underline 1.5px'
+            },
+          },
         },
       },
     },

@@ -1,27 +1,32 @@
-import { Button, TextField, useTheme } from '@mui/material';
+import { Button, IconButton, InputAdornment, useTheme } from '@mui/material';
 import { Box } from '@mui/system';
 import React from 'react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import Visibility from '@mui/icons-material/Visibility';
 
 import MainBox from '../Components/MainBox';
 import Title from '../Components/Title';
+import InputField from '../Components/InputField';
 
 
 
 const Login = ({setLoggedIn}) => {
     const theme = useTheme();
     const navigate = useNavigate();
-    const [password, setPassword] = useState('');
 
-    function handleSubmit(event, navi) {
-        event.preventDefault();
+    const [password, setPassword] = useState('');
+    const [showPass, setShowPass] = useState(false);
+
+    function handleSubmit(e) {
+        e.preventDefault();
+
         if(password){
             console.log(password);
+            setLoggedIn(true);
+            navigate('/manage/dashboard');
         }
-        setLoggedIn(true);
-
-        navigate('/manage/dashboard');
         
     }
 
@@ -31,35 +36,39 @@ const Login = ({setLoggedIn}) => {
                 Login
             </Title>
             <Box type='form' sx={{ marginTop: 19, paddingLeft: 10, paddingRight: 10, marginBottom: 8, paddingBottom: 0 }}>
-                <TextField 
+                <InputField
                     fullWidth
                     required
+                    type={ showPass ? 'text' : 'password' }
                     autoComplete='current-password'
-                    type='password'
-                    variant='standard'
                     placeholder='Enter Password'
                     label='Password'
-                    value={password}
                     onInput={ e=> setPassword(e.target.value) }
                     onFocus={event => {
                         event.target.select();
-                    }}                    
-                    sx={{  
-                        '& label.Mui-focused': {
-                            color: 'text.primary',
-                          },
-                        "& .MuiInput-underline:after": {
-                            borderBottomColor: 'text.primary',
+                    }}
+                    sx={{
+                        '::-ms-reveal': {
+                            display: 'none',
                         },
-                        "& .MuiInput-underline:before": {
-                            borderBottomColor: 'text.primary',
-                        },
-                        "& .MuiInput-root:hover::before": {
-                            borderBottomColor: 'text.secondary',
-                        },
-
-                    }}    
-                />
+                        color: theme.palette.text.primary,
+                    }}
+                    InputProps={{
+                        endAdornment: (
+                            <InputAdornment position='end'>
+                                <IconButton
+                                    sx={{ color: theme.palette.text.primary }}
+                                    onClick={ () => setShowPass(!showPass) }
+                                    onMouseDown= { (e) => { e.preventDefault() } }
+                                >
+                                    {showPass ? <VisibilityOff /> : <Visibility /> }
+                                </IconButton>
+                            </InputAdornment>
+                        )
+                    }}
+                >
+                    {/* <InputMask mask="" maskChar="*" /> */}
+                </InputField>
                 <Box display='flex' justifyContent="right">
                     <Link
                         style={{ 
@@ -75,7 +84,7 @@ const Login = ({setLoggedIn}) => {
                     fullWidth
                     variant='contained'
                     disableElevation
-                    onClick={handleSubmit}
+                    onClick={(e) => handleSubmit(e)}
                     sx={{
                         marginTop: 3,
                     }} 
