@@ -8,6 +8,7 @@ const MainBox = ({ children, sx }) => {
         <Box
             sx={{
                 backgroundColor: 'background',
+                justifyContent:'center',
                 height: '100vh',
                 width: '100vw',
                 display: 'flex',
@@ -17,8 +18,8 @@ const MainBox = ({ children, sx }) => {
             <Box
                 sx={{
                     backgroundColor: 'primary.main',
-                    width: 1400,
-                    height: .85,
+                    width: .95,
+                    height: .95,
                     margin: 'auto',
                     marginTop: '6%',
                     overflow:'auto',
