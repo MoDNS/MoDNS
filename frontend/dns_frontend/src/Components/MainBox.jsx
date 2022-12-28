@@ -1,7 +1,6 @@
 import { Box } from '@mui/material';
 import React from 'react';
 
-// import themes from '../themes';
 
 const MainBox = ({ children, sx }) => {
     return (
@@ -10,6 +9,7 @@ const MainBox = ({ children, sx }) => {
                 backgroundColor: 'background',
                 height: '100vh',
                 width: '100vw',
+                paddingTop: 7,
                 display: 'flex',
                 overflow: 'hidden',
             }}
@@ -20,9 +20,9 @@ const MainBox = ({ children, sx }) => {
                     width: 1400,
                     height: 600,
                     margin: 'auto',
-                    marginTop: 17,
+                    marginTop: 7,
                     overflow:'auto',
-                    ...sx,
+                    ...sx
                 }}
             >
                 {children}

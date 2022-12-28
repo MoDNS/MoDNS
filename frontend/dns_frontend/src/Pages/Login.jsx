@@ -31,7 +31,7 @@ const Login = ({setLoggedIn}) => {
     }
 
     return (
-        <MainBox sx={{ width: 500, height: 475, marginTop: 20 }}>
+        <MainBox sx={{ width: 500, height: 475, marginTop: 10 }}>
             <Title sx={{ textAlign: 'center', marginTop: 8 }}>
                 Login
             </Title>
@@ -46,12 +46,6 @@ const Login = ({setLoggedIn}) => {
                     onInput={ e=> setPassword(e.target.value) }
                     onFocus={event => {
                         event.target.select();
-                    }}
-                    sx={{
-                        '::-ms-reveal': {
-                            display: 'none',
-                        },
-                        color: theme.palette.text.primary,
                     }}
                     InputProps={{
                         endAdornment: (

@@ -40,6 +40,18 @@ export const themeOne = createTheme({
   },
   components: {
     // Name of the component
+    MuiTextField:{
+      styleOverrides: {
+        root: {
+          "input::-ms-reveal": {
+            display: "none",
+          },
+          "input::-ms-clear": {
+            display: 'none',
+          }
+        }
+      }
+    },
     MuiButton: {
       styleOverrides: {
         // Name of the slot
