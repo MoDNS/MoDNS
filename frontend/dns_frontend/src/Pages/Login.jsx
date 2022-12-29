@@ -30,6 +30,14 @@ const Login = ({setLoggedIn}) => {
         
     }
 
+    // this adds enter to submit
+    function handleKeyPress(e) {
+        var key = e.key;
+        if (key === "Enter") {
+            handleSubmit(e)
+        }
+    }
+    
     return (
         <MainBox sx={{ width: 0.3, height: 0.65, marginTop: '8.5%', padding: '3%' }}>
             <Title sx={{ textAlign: 'center' }}>
@@ -38,6 +46,7 @@ const Login = ({setLoggedIn}) => {
             <Box type='form' sx={{ marginTop: '51%', marginBottom: 0, paddingBottom: 0 }}>
                 <InputField
                     fullWidth
+                    onKeyPress={(e) => handleKeyPress(e)} //this adds enter to submit
                     required
                     type={ showPass ? 'text' : 'password' }
                     autoComplete='current-password'
@@ -79,6 +88,7 @@ const Login = ({setLoggedIn}) => {
                     variant='contained'
                     disableElevation
                     onClick={(e) => handleSubmit(e)}
+
                     sx={{
                         marginTop: '5%',
                         marginBottom: 0,
