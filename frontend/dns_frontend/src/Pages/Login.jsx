@@ -31,11 +31,11 @@ const Login = ({setLoggedIn}) => {
     }
 
     return (
-        <MainBox sx={{ width: 500, height: 475, marginTop: 10, marginBottom: '15%' }}>
-            <Title sx={{ textAlign: 'center', marginTop: 8 }}>
+        <MainBox sx={{ width: 0.35, height: 0.7, marginTop: '8.5%' }}>
+            <Title sx={{ textAlign: 'center', marginTop: '8%' }}>
                 Login
             </Title>
-            <Box type='form' sx={{ marginTop: 19, paddingLeft: 10, paddingRight: 10, marginBottom: 8, paddingBottom: 0 }}>
+            <Box type='form' sx={{ marginTop: '40%', paddingLeft: '10%', paddingRight: '10%', marginBottom: '8%', paddingBottom: 0 }}>
                 <InputField
                     fullWidth
                     required
@@ -62,13 +62,12 @@ const Login = ({setLoggedIn}) => {
                         )
                     }}
                 >
-                    {/* <InputMask mask="" maskChar="*" /> */}
                 </InputField>
                 <Box display='flex' justifyContent="right">
                     <Link
                         style={{ 
                             color: theme.palette.link.main,
-                            paddingTop: 2,
+                            paddingTop: '0.5%',
                         }}
                     >
                         Forgot Password?
@@ -81,7 +80,7 @@ const Login = ({setLoggedIn}) => {
                     disableElevation
                     onClick={(e) => handleSubmit(e)}
                     sx={{
-                        marginTop: 3,
+                        marginTop: '5%',
                     }} 
                     >    
                     Sign in 
