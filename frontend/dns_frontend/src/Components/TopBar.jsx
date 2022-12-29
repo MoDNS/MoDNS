@@ -12,6 +12,7 @@ const TopBar = ({ isLoggedIn, setLoggedIn }) => {
             sx={{
                 flexDirection: 'row',
                 height: '4vw',
+                position: 'sticky',
                 alignItems: 'center'
             }}
         >
