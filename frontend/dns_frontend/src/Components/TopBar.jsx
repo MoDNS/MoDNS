@@ -11,7 +11,7 @@ const TopBar = ({ isLoggedIn, setLoggedIn }) => {
         <AppBar 
             sx={{
                 flexDirection: 'row',
-                height: 0.08,
+                height: '4vw',
                 alignItems: 'center'
             }}
         >
