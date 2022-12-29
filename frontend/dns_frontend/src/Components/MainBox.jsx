@@ -19,10 +19,9 @@ const MainBox = ({ children, sx }) => {
                     backgroundColor: 'primary.main',
                     width: .95,
                     height: .95,
-                    margin: 'auto',
+                    minWidth: 450,
                     marginTop: '6%',
-                    overflow:'auto',
-                    alignSelf: 'flex-end',
+                    padding: '1.5%',
                     ...sx
                 }}
             >

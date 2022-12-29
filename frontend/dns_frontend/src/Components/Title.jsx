@@ -10,16 +10,16 @@ const Title = ({children, sx, divider}) => {
                     variant='h3'
                     noWrap
                     sx={{
-                        marginLeft: 3,
-                        marginRight: 3,
-                        marginTop: 2,
+                        marginLeft: '1%',
+                        marginRight: '1%',
+                        marginTop: 0,
                         color: 'text.main',
                         ...sx
                     }}
                     >
                     {children}
             </Typography>
-            {divider && <Divider sx={{ marginLeft: 3, marginRight: 3, marginTop: 0.5, }} />}
+            {divider && <Divider sx={{ marginLeft: '0.25%', marginRight: '0.25%', marginTop: 0.5, }} />}
         </>
     );
 };

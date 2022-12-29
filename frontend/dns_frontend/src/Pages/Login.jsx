@@ -31,11 +31,11 @@ const Login = ({setLoggedIn}) => {
     }
 
     return (
-        <MainBox sx={{ width: 0.35, height: 0.7, marginTop: '8.5%' }}>
-            <Title sx={{ textAlign: 'center', marginTop: '8%' }}>
+        <MainBox sx={{ width: 0.3, height: 0.65, marginTop: '8.5%', padding: '3%' }}>
+            <Title sx={{ textAlign: 'center' }}>
                 Login
             </Title>
-            <Box type='form' sx={{ marginTop: '40%', paddingLeft: '10%', paddingRight: '10%', marginBottom: '8%', paddingBottom: 0 }}>
+            <Box type='form' sx={{ marginTop: '51%', marginBottom: 0, paddingBottom: 0 }}>
                 <InputField
                     fullWidth
                     required
@@ -63,7 +63,7 @@ const Login = ({setLoggedIn}) => {
                     }}
                 >
                 </InputField>
-                <Box display='flex' justifyContent="right">
+                <Box display='flex' justifyContent="right" >
                     <Link
                         style={{ 
                             color: theme.palette.link.main,
@@ -81,6 +81,7 @@ const Login = ({setLoggedIn}) => {
                     onClick={(e) => handleSubmit(e)}
                     sx={{
                         marginTop: '5%',
+                        marginBottom: 0,
                     }} 
                     >    
                     Sign in 
