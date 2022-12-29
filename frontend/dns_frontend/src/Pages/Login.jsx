@@ -39,11 +39,14 @@ const Login = ({setLoggedIn}) => {
     }
     
     return (
-        <MainBox sx={{ width: 0.3, height: 0.65, marginTop: '8.5%', padding: '3%' }}>
+        <MainBox id='MBox' sx={{ width: 0.3, height: 450, marginTop: '8.5%', padding: '3%' }}>
             <Title sx={{ textAlign: 'center' }}>
                 Login
             </Title>
-            <Box type='form' sx={{ marginTop: '51%', marginBottom: 0, paddingBottom: 0 }}>
+            <Box 
+                type='form' 
+                sx={{ marginTop: '30%', marginBottom: 0, paddingBottom: 0 }}
+            >
                 <InputField
                     fullWidth
                     onKeyPress={(e) => handleKeyPress(e)} //this adds enter to submit
@@ -72,7 +75,10 @@ const Login = ({setLoggedIn}) => {
                     }}
                 >
                 </InputField>
-                <Box display='flex' justifyContent="right" >
+                <Box 
+                    display='flex' 
+                    justifyContent="right" 
+                >
                     <Link
                         style={{ 
                             color: theme.palette.link.main,
@@ -93,7 +99,7 @@ const Login = ({setLoggedIn}) => {
                         marginTop: '5%',
                         marginBottom: 0,
                     }} 
-                    >    
+                >    
                     Sign in 
                 </Button>
             </Box>
