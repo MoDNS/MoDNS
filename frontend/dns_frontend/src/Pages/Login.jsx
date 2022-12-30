@@ -30,14 +30,26 @@ const Login = ({setLoggedIn}) => {
         
     }
 
+    // this adds enter to submit
+    function handleKeyPress(e) {
+        var key = e.key;
+        if (key === "Enter") {
+            handleSubmit(e)
+        }
+    }
+    
     return (
-        <MainBox sx={{ position: 'relative', top: 150, marginLeft: 'auto', marginRight: 'auto', width: 415, }} >
+        <MainBox id='MBox' sx={{ position: 'relative', top: 150, marginLeft: 'auto', marginRight: 'auto', width: 415, }} >
             <Title sx={{ textAlign: 'center' }}>
                 Login
             </Title>
-            <Box type='form' sx={{ marginTop: 20, marginBottom: 0, paddingBottom: 0 }}>
+            <Box 
+                type='form' 
+                sx={{ marginTop: 20, marginBottom: 0, paddingBottom: 0 }}
+            >
                 <InputField
                     fullWidth
+                    onKeyPress={(e) => handleKeyPress(e)} //this adds enter to submit
                     required
                     type={ showPass ? 'text' : 'password' }
                     autoComplete='current-password'
@@ -63,7 +75,11 @@ const Login = ({setLoggedIn}) => {
                     }}
                 >
                 </InputField>
-                <Box display='flex' justifyContent="right"  overflow='visible' >
+                <Box 
+                    display='flex'
+                    justifyContent="right"
+                    overflow='visible'
+                >
                     <Link
                         style={{ 
                             color: theme.palette.link.main,
@@ -79,11 +95,12 @@ const Login = ({setLoggedIn}) => {
                     variant='contained'
                     disableElevation
                     onClick={(e) => handleSubmit(e)}
+
                     sx={{
                         marginTop: 2,
                         marginBottom: 0,
                     }} 
-                    >    
+                >    
                     Sign in 
                 </Button>
             </Box>
