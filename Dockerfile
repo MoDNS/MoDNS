@@ -45,9 +45,11 @@ FROM node:19 AS build-frontend
 
 WORKDIR /builder
 
-COPY frontend/dns_frontend .
+COPY frontend/dns_frontend/package.json frontend/dns_frontend/package-lock.json ./
 
 RUN npm ci
+
+COPY frontend/dns_frontend .
 
 RUN npm run build
 
