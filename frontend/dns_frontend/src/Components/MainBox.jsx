@@ -1,34 +1,38 @@
 import { Box } from '@mui/material';
 import React from 'react';
+import { PropTypes } from 'prop-types';
 
 
 const MainBox = ({ children, sx }) => {
+
     return (
-        <Box
-            sx={{
-                backgroundColor: 'background',
-                justifyContent:'center',
-                height: '100vh',
-                width: '100vw',
-                display: 'flex',
-                overflow: 'hidden',
-            }}
-        >
             <Box
                 sx={{
                     backgroundColor: 'primary.main',
-                    width: .95,
-                    height: .95,
-                    minWidth: 450,
-                    marginTop: '6%',
-                    padding: '1.5%',
+                    padding: 6,
+                    paddingTop: 4,
                     ...sx
                 }}
             >
                 {children}
             </Box>
-        </Box>
     );
 };
 
 export default MainBox;
+
+MainBox.propTypes = {
+    sx: PropTypes.object,
+};
+
+MainBox.defaultProps = {
+    children: null,
+    sx: {
+        position: 'absolute',
+        top: 100,
+        bottom: 0,
+        left: 50,
+        right: 50,
+        minWidth: 450,
+    }
+};

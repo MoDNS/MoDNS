@@ -9,6 +9,8 @@ const Settings = () => {
             <Title divider>
                 Settings
             </Title>
+            
+
         </MainBox>
     );
 };

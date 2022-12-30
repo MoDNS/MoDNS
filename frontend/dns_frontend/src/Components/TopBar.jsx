@@ -9,10 +9,13 @@ const TopBar = ({ isLoggedIn, setLoggedIn }) => {
 
     return (
         <AppBar 
+            position='fixed'
             sx={{
+                top: 0,
+                height: 50,
+                paddingLeft: 4,
                 flexDirection: 'row',
-                height: 0.08,
-                alignItems: 'center'
+                alignItems: 'center',
             }}
         >
             {
@@ -22,7 +25,7 @@ const TopBar = ({ isLoggedIn, setLoggedIn }) => {
                             key={index}
                             variant="text"
                             disableRipple
-                            sx={{ marginLeft: 4 }} 
+                            sx={{ marginRight: 4 }} 
                             component={Link} 
                             to={'./manage/' + link.toLowerCase()} 
                         >
