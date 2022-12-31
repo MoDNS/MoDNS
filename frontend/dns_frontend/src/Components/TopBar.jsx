@@ -24,7 +24,6 @@ const TopBar = ({ isLoggedIn, setLoggedIn }) => {
                         <Button 
                             key={index}
                             variant="text"
-                            disableRipple
                             sx={{ marginRight: 4 }} 
                             component={Link} 
                             to={'./manage/' + link.toLowerCase()} 
@@ -38,7 +37,6 @@ const TopBar = ({ isLoggedIn, setLoggedIn }) => {
             {isLoggedIn &&
                 <Button 
                     variant="text"
-                    disableRipple 
                     sx={{ marginLeft: 'auto', marginRight: 4 }} 
                     component={Link}
                     onClick={ () => setLoggedIn(false) }

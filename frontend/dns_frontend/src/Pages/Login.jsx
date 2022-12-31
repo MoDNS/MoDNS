@@ -7,7 +7,6 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Visibility from '@mui/icons-material/Visibility';
 
 import MainBox from '../Components/MainBox';
-import Title from '../Components/Title';
 import InputField from '../Components/InputField';
 
 
@@ -39,13 +38,16 @@ const Login = ({setLoggedIn}) => {
     }
     
     return (
-        <MainBox id='MBox' sx={{ position: 'relative', top: 150, marginLeft: 'auto', marginRight: 'auto', width: 415, }} >
-            <Title sx={{ textAlign: 'center' }}>
-                Login
-            </Title>
+        <MainBox 
+            id='MBox' 
+            sx={{ position: 'relative', top: 150, marginLeft: 'auto', marginRight: 'auto', width: 415, }} 
+            title={'Login'}
+            titleCentered
+        >
+
             <Box 
-                type='form' 
-                sx={{ marginTop: 20, marginBottom: 0, paddingBottom: 0 }}
+                type='form'
+                sx={{ marginTop: 20, width: '100%' }}
             >
                 <InputField
                     fullWidth
@@ -93,7 +95,6 @@ const Login = ({setLoggedIn}) => {
                     type='submit'
                     fullWidth
                     variant='contained'
-                    disableElevation
                     onClick={(e) => handleSubmit(e)}
 
                     sx={{

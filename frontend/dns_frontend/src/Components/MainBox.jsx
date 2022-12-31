@@ -1,9 +1,13 @@
 import { Box } from '@mui/material';
 import React from 'react';
 import { PropTypes } from 'prop-types';
+import Title from './Title';
 
 
-const MainBox = ({ children, sx }) => {
+const MainBox = ({ children, sx, title, divider, titleCentered }) => {
+
+    const pt = divider ? 20 : 0;
+    const pb = divider ? 30 : 0;
 
     return (
             <Box
@@ -11,12 +15,16 @@ const MainBox = ({ children, sx }) => {
                     backgroundColor: 'primary.main',
                     padding: 6,
                     paddingTop: 4,
-                    display: 'flex',
-                    flexFlow: 'column',
+                    overflow: 'hidden',
                     ...sx
                 }}
             >
-                {children}
+                <Title titleCentered={titleCentered} divider={divider}>
+                    {title}
+                </Title>
+                <div style={{ height: '100%', display: 'flex', paddingTop: pt, paddingBottom: pb, }} >
+                    {children}
+                </div>
             </Box>
     );
 };
@@ -25,6 +33,9 @@ export default MainBox;
 
 MainBox.propTypes = {
     sx: PropTypes.object,
+    title: PropTypes.string,
+    divider: PropTypes.bool,
+    titleCentered: PropTypes.bool,
 };
 
 MainBox.defaultProps = {
@@ -36,5 +47,8 @@ MainBox.defaultProps = {
         left: 50,
         right: 50,
         minWidth: 450,
-    }
+    },
+    title: 'Title Here',
+    divider: false,
+    titleCentered: false,
 };

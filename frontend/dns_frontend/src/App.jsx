@@ -10,15 +10,18 @@ import Mods from './Pages/Mods';
 import Settings from './Pages/Settings';
 import ProtectedRoute from './ProtectedRoute';
 
-import {themeOne} from './themes';
+import themes from './themes';
+
 
 
 const App = () => {
   const [isLoggedIn, setLoggedIn] = useState(false);
 
+  const [theme, setTheme] = useState(1);
+
   return (
     <>
-      <ThemeProvider theme={themeOne}>
+      <ThemeProvider theme={themes[theme]}>
         <CssBaseline>
           <BrowserRouter>
             <TopBar isLoggedIn={isLoggedIn} setLoggedIn={setLoggedIn} />
@@ -27,7 +30,7 @@ const App = () => {
               <Route path='/manage' element={<Login setLoggedIn={setLoggedIn} />}/>
               <Route exact path = '/manage/dashboard' element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Dashboard/> } /> } />
               <Route exact path = '/manage/mods'      element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Mods/> } /> } />
-              <Route exact path = '/manage/settings'  element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Settings/> } /> } />
+              <Route exact path = '/manage/settings'  element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Settings setTheme={setTheme} /> } /> } />
               <Route exact path = '/manage/about'     element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <About/> } /> } />
 
               <Route path='/*' element={ <Navigate to={isLoggedIn ? '/manage/dashboard' : '/manage'} /> } />
