@@ -11,6 +11,8 @@ const MainBox = ({ children, sx }) => {
                     backgroundColor: 'primary.main',
                     padding: 6,
                     paddingTop: 4,
+                    display: 'flex',
+                    flexFlow: 'column',
                     ...sx
                 }}
             >

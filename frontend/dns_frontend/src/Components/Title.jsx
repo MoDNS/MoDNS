@@ -1,7 +1,6 @@
 import { Divider, Typography } from '@mui/material';
 import React from 'react';
-
-// import themes from '../themes';
+import { PropTypes } from 'prop-types';
 
 const Title = ({children, sx, divider}) => {
     return (
@@ -25,3 +24,13 @@ const Title = ({children, sx, divider}) => {
 };
 
 export default Title;
+
+Title.propTypes = {
+    sx: PropTypes.object,
+    divider: PropTypes.bool,
+};
+
+Title.defaultProps = {
+    sx: {},
+    divider: false,
+};

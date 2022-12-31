@@ -1,7 +1,7 @@
 import { AppBar, Button } from '@mui/material';
 import React from 'react';
 import { Link } from 'react-router-dom';
-
+import { PropTypes } from 'prop-types';
 
 
 const TopBar = ({ isLoggedIn, setLoggedIn }) => {
@@ -52,3 +52,13 @@ const TopBar = ({ isLoggedIn, setLoggedIn }) => {
 };
 
 export default TopBar;
+
+TopBar.propTypes = {
+    isLoggedIn: PropTypes.bool,
+    setLoggedIn: PropTypes.func,
+};
+
+TopBar.defaultProps = {
+    isLoggedIn: false,
+    setLoggedIn: () => {},
+};
