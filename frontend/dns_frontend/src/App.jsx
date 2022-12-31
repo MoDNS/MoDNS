@@ -12,12 +12,10 @@ import ProtectedRoute from './ProtectedRoute';
 
 import themes from './themes';
 
-
-
 const App = () => {
   const [isLoggedIn, setLoggedIn] = useState(false);
 
-  const [theme, setTheme] = useState(1);
+  const [theme, setTheme] = useState('1');
 
   return (
     <>

@@ -225,8 +225,8 @@ const themeTwo = createTheme({
 
 
 const themes = {
-  1: themeOne,
-  2: themeTwo,
+  '1': themeOne,
+  '2': themeTwo,
 }
 
 export default themes;
