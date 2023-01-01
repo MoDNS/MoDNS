@@ -1,14 +1,18 @@
-use modnsd::listeners::api::{ApiAddr, runapi};
-use std::net::SocketAddr;
-use std::path::Path;
+use modnsd::listeners::api::{ApiListener, self};
+use tokio::net::{TcpListener, UnixListener};
 
 #[tokio::main]
-async fn main() -> std::io::Result<()>{
+async fn main() -> std::io::Result<()> {
 
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    pretty_env_logger::init();
 
-    let apiaddrs = vec![ApiAddr::Tcp(SocketAddr::from(([0, 0, 0, 0], 80))), ApiAddr::Unix(&Path::new("/app/modnsd.sock"))];
+    let apiaddrs = vec![
+        ApiListener::Tcp(TcpListener::bind(("0.0.0.0", 80)).await?), 
+        ApiListener::Unix(UnixListener::bind("./modnsd.sock")?)
+    ];
 
-    runapi(apiaddrs).await
+    api::listen_on(apiaddrs).await;
+
+    Ok(())
 
 }

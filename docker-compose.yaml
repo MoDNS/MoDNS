@@ -5,3 +5,5 @@ services:
     build: "."
     ports: 
     - 80:80
+    environment:
+      - "RUST_LOG=http::frontend=info"

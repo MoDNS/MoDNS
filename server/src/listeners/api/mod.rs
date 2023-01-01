@@ -1,36 +1,35 @@
 
-use actix_web::{App, HttpServer, middleware::Logger};
-use actix_files;
-use actix_web_lab::web as web_lab;
-use std::net::SocketAddr;
-use std::path::Path;
+mod routes;
 
-pub enum ApiAddr<'a> {
-    Tcp(SocketAddr),
-    Unix(&'a Path),
+use routes::*;
+
+use warp::Filter;
+use tokio::net::{TcpListener, UnixListener};
+use tokio_stream::wrappers::{UnixListenerStream, TcpListenerStream};
+use futures::future::{Either, join_all};
+
+pub enum ApiListener {
+    Tcp(TcpListener),
+    Unix(UnixListener),
 }
 
-pub async fn runapi<'a>(listeners: Vec<ApiAddr<'a>>) -> std::io::Result<()> {
+pub async fn listen_on<'a>(listeners: Vec<ApiListener>) {
 
-    let mut server = HttpServer::new(|| {
-        App::new()
-        .wrap(Logger::default())
-        .service(web_lab::redirect("/", "/manage"))
-        .service(actix_files::Files::new("/manage", "./web").index_file("index.html"))
-        
-    });
+    let routes = root_redirect().or(frontend_filter()).with(warp::log("http::frontend"));
+
+    let mut servers = Vec::with_capacity(listeners.len());
 
     for listener in listeners {
-        server = match listener {
-            ApiAddr::Tcp(l) => server.bind(l)?,
+        let server = warp::serve(routes.clone());
 
-            #[cfg(unix)]
-            ApiAddr::Unix(l) => server.bind_uds(l)?,
+        let active_server = match listener {
+            ApiListener::Tcp(listener) => Either::Left(server.run_incoming(TcpListenerStream::new(listener))),
+            ApiListener::Unix(listener) => Either::Right(server.run_incoming(UnixListenerStream::new(listener))),
+        };
 
-            #[cfg(not(unix))]
-            ApiAddr::Unix(_) => server
-        }
-    };
+        servers.push(active_server);
+    }
 
-    server.run().await
+    join_all(servers).await;
+
 }
