@@ -24,6 +24,20 @@ fontfamily: cmbright
 
 ### Design problem
 
-DNS services are often single-use, requiring multiple servers to be used upstream of one another for more than one functionality.
+DNS server with plugins to expand capabilities
 
-### Primary use case
+### Intended purpose
+
+Provide DNS services on a residential or SOHO network
+
+### Unintended purposes
+
+Provide DNS services for a corporate network
+
+### Special Features
+
+All functionality is provided by plugin modules. This way, server functionality is infinitely configurable
+
+## Requirements
+
+**TODO**
