@@ -2,18 +2,24 @@ import { Button, FormControlLabel, Radio, RadioGroup, Typography, useTheme } fro
 import React from 'react';
 import SquareIcon from '@mui/icons-material/Square';
 import themes from '../../themes';
+import { getThemeStorage, setThemeStroage } from '../../scripts/getsetThemeLocal';
 
 const ThemeSelector = ({ setTheme }) => {
 
     const theme = useTheme();
 
-    const [selectedTheme, setSelectedTheme] = React.useState('1');
+    const [selectedTheme, setSelectedTheme] = React.useState(getThemeStorage());
 
     const handleChange = (event) => {
         setSelectedTheme(event.target.value);
     };
 
     const themeSelectionRows = [];
+
+    const handleApplyChanges = () => {
+        setTheme(selectedTheme);
+        setThemeStroage(selectedTheme);
+    }
 
     Object.keys(themes).forEach(function(key) {
         themeSelectionRows.push(
@@ -62,7 +68,7 @@ const ThemeSelector = ({ setTheme }) => {
             <Button
                 variant={'contained'}
                 sx={{  position: 'sticky', bottom: 0, }}
-                onClick={ () => setTheme(selectedTheme) }
+                onClick={ () => handleApplyChanges() }
             >
                 Apply Changes
             </Button>  

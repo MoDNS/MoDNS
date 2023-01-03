@@ -9,13 +9,15 @@ import Login from './Pages/Login';
 import Mods from './Pages/Mods';
 import Settings from './Pages/Settings';
 import ProtectedRoute from './ProtectedRoute';
+import { getThemeStorage } from './scripts/getsetThemeLocal';
 
 import themes from './themes';
 
 const App = () => {
   const [isLoggedIn, setLoggedIn] = useState(false);
-
-  const [theme, setTheme] = useState('1');
+  
+  
+  const [theme, setTheme] = useState(getThemeStorage());
 
   return (
     <>
@@ -32,10 +34,11 @@ const App = () => {
               <Route exact path = '/manage/about'     element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <About/> } /> } />
 
               <Route path='/*' element={ <Navigate to={isLoggedIn ? '/manage/dashboard' : '/manage'} /> } />
+              
             </Routes>
           </BrowserRouter>
         </CssBaseline>
-      </ThemeProvider>  
+      </ThemeProvider>
     </>
   );
 }
