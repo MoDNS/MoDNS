@@ -1,6 +1,7 @@
 import React from 'react';
 
 import MainBox from '../Components/MainBox';
+import DropDown from '../Components/DropDown';
 
 const Mods = () => {
     return (
@@ -8,7 +9,9 @@ const Mods = () => {
             title={"Mods"}
             divider
         >
-
+            <DropDown title={"Setting1"} sx={{}}>
+                There
+            </DropDown>
         </MainBox>
     );
 };
