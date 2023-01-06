@@ -40,4 +40,33 @@ All functionality is provided by plugin modules. This way, server functionality 
 
 ## Requirements
 
-**TODO**
+# Functional Performance
+ - MoDNS should provide DNS services
+ - Should allow the installation and use of modules to alter the DNS process
+ - Easily Managed from local web server hosted by MoDNS
+
+# Opeerating Requirements
+ - Linux Operating Systems
+
+# Reliability, Robustness
+ - No DNS servicing failures should occur
+ - Will accommodate many needs through the use of user-defined modules
+
+# Ease of Use
+ - Should have a simple installation process
+ - Should guide the user through configuring router
+ - Managing enabled modules will be simple
+ - Managing settings such as static IP address and hosted local address should be simple
+ - Should guide the user through writing and installing modules
+
+# Human FActors
+ - Attractive Web Design
+ - Use UI elements whose meanings are well-known
+ - Dashboard is designed for quick information gathering
+
+# Appearance
+ - Web Server should be attractive to look at
+ - Allow users to select themes to modify the appearance
+
+# Deployment
+ - MoDNS should be deployed on GitHub using an installer
