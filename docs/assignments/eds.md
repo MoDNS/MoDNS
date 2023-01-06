@@ -1,6 +1,6 @@
 ---
 # create a pdf from this file with [pandoc](www.pandoc.org): `pandoc eds.md -o eds.pdf`
-# or use the docker image: `docker run pandoc/latex -v .:/data pandoc eds.md -o eds.pdf`
+# or use the docker image: `docker run pandoc/latex -v <assignments folder>:/data pandoc eds.md -o eds.pdf`
 
 title: "MoDS: A Modular DNS Server"
 subtitle: Engineering Product Design Document
