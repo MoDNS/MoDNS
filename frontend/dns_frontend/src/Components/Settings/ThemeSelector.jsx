@@ -53,7 +53,7 @@ const ThemeSelector = ({ setTheme }) => {
         <>
             <Typography
                 sx={{ 
-                    fontSize: 25,
+                    fontSize: 35,
                 }}
             >
                 Theme Selector
@@ -67,6 +67,7 @@ const ThemeSelector = ({ setTheme }) => {
 
             <Button
                 variant={'contained'}
+                fullWidth
                 sx={{  position: 'sticky', bottom: 0, }}
                 onClick={ () => handleApplyChanges() }
             >

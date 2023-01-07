@@ -30,7 +30,7 @@ const Settings = ({ setTheme }) => {
             <div style={{display:'flex', flexDirection:'row', flexGrow: 1, }}>
                 <div 
                     style={{ 
-                        width: '45%',
+                        width: '50%',
                         paddingRight: 80,
                         paddingLeft: 20,
                         paddingTop: 24,
@@ -47,7 +47,7 @@ const Settings = ({ setTheme }) => {
                         }} 
                     >
                         <Typography  sx={{ fontSize: 25 }}>
-                            Sever
+                            Server
                         </Typography>
 
                         <Button
@@ -107,9 +107,10 @@ const Settings = ({ setTheme }) => {
                     sx={{
                         borderRadius: 8, 
                         padding: 3,
-                        width: '55%',
+                        width: '50%',
                         display: 'flex',
                         flexDirection: 'column',
+                        flexGrow: 1,
                         alignItems: 'center',
                         overflowY: 'auto',
                         border: `4px solid ${theme.palette.background.default}`,

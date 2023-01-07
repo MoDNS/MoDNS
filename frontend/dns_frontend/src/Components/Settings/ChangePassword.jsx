@@ -7,13 +7,12 @@ const ChangePassword = () => {
     <>
       <Typography
         sx={{
-          fontSize: 25,
+          fontSize: 35,
         }}
       >
         Change Password
       </Typography>
       <div
-        class="InsideComponents"
         style={{
           display: "flex",
           flexDirection: "row",
@@ -24,20 +23,20 @@ const ChangePassword = () => {
         <div style={{ display: "flex", flexDirection: "column" }}>
           <InputField placeholder="Enter Password" label="Old Password" />
           <InputField
-            placeholder="Enter Password"
+            placeholder="Enter New Password"
             label="New Password"
             sx={{ marginTop: 5 }}
           />
-          <InputField placeholder="Enter Password" label="Confirm Password" />
-          <Button
-            variant={"contained"}
-            sx={{ position: "sticky", bottom: 0, marginTop: "2rem" }}
-            // onClick={ () => handleApplyChanges() }
-          >
-            Apply Changes
-          </Button>
+          <InputField placeholder="Confirm New Password" label="Confirm Password" />
         </div>
       </div>
+      <Button
+        variant={"contained"}
+        fullWidth
+        sx={{ position: "sticky", bottom: 0, marginTop: "2rem" }}
+      >
+        Apply Changes
+      </Button>
     </>
   );
 };
