@@ -10,7 +10,6 @@ const Mods = () => {
             divider
         >
             <DropDown title={"Setting1"} sx={{}}>
-                There
             </DropDown>
         </MainBox>
     );
