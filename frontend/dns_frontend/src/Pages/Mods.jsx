@@ -10,9 +10,10 @@ const Mods = () => {
             divider
         >
             <div
-                sx={{
+                style={{
                     display: "flex",
-                    flexDirection: "row",
+                    flexDirection: "column",
+                    width: '100%'
                 }}
             >
                 <DropDown title={"Setting1"} sx={{}}>
