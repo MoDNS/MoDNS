@@ -2,11 +2,14 @@ import { Box, Button } from "@mui/material";
 import React from "react";
 import Title from "./Title";
 import { useState } from 'react';
+import DropDownButtonImg from './Images/DropDownButton.png'
+import DropDownButtonImgInverted from './Images/DropDownButtonInverted.png'
 
 const DropDown = ({ children, sx, title, divider, titleCentered }) => {
         
     const [box, setBox] = useState(0);
     const [hei, setHei] = useState(0);
+    const [imgUsed, setImgUsed] = useState(0);
 
     const pages = {
         0: 'visible',
@@ -18,15 +21,22 @@ const DropDown = ({ children, sx, title, divider, titleCentered }) => {
         1: '0',
     }
 
+    const buttonImg = {
+        0: DropDownButtonImgInverted,
+        1: DropDownButtonImg,
+    }
+
     function hideChild(){
         // console.log(pages[box]);
         if(box === 0){
             setBox(1);
             setHei(1);
+            setImgUsed(1);
         }
         else{
             setBox(0);
             setHei(0);
+            setImgUsed(0);
         }
     };
 
@@ -65,7 +75,7 @@ const DropDown = ({ children, sx, title, divider, titleCentered }) => {
                     width: 100,
                     }}
                 >
-                    <img src="./Images/DropDownButton.png" alt="Press"></img>
+                    <img src={buttonImg[imgUsed]} alt="Press"></img>
                 </Button>
             </div>
 
