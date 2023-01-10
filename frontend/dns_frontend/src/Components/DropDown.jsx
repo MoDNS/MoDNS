@@ -7,36 +7,23 @@ import DropDownButtonImgInverted from './Images/DropDownButtonInverted.png'
 
 const DropDown = ({ children, sx, title, divider, titleCentered }) => {
         
+    const Vis = ['visible', 'auto', DropDownButtonImgInverted];
+    const Hid = ['hidden', '0', DropDownButtonImg];
+
     const [box, setBox] = useState(0);
-    const [hei, setHei] = useState(0);
-    const [imgUsed, setImgUsed] = useState(0);
 
     const pages = {
-        0: 'visible',
-        1: 'hidden',
-    }
-
-    const heig = {
-        0:'auto',
-        1: '0',
-    }
-
-    const buttonImg = {
-        0: DropDownButtonImgInverted,
-        1: DropDownButtonImg,
+        0: Vis,
+        1: Hid,
     }
 
     function hideChild(){
         // console.log(pages[box]);
         if(box === 0){
             setBox(1);
-            setHei(1);
-            setImgUsed(1);
         }
         else{
             setBox(0);
-            setHei(0);
-            setImgUsed(0);
         }
     };
 
@@ -75,15 +62,15 @@ const DropDown = ({ children, sx, title, divider, titleCentered }) => {
                     width: 100,
                     }}
                 >
-                    <img src={buttonImg[imgUsed]} alt="Press"></img>
+                    <img src={pages[box][2]} alt="Press"></img>
                 </Button>
             </div>
 
             <div 
                 id="menu-dropdown" 
                 style={{ 
-                    visibility : pages[box],
-                    height: heig[hei],
+                    visibility : pages[box][0],
+                    height:  pages[box][1],
                 }}>
                 {children}
             </div>
