@@ -1,4 +1,4 @@
-import { Box, Button } from "@mui/material";
+// import { Button } from "@mui/material";
 import React from "react";
 import Title from "./Title";
 import { useState } from "react";
@@ -25,15 +25,19 @@ const DropDown = ({ children, sx, title, divider, titleCentered }) => {
   }
 
   return (
-    <Box
+    <div
+      onClick={hideChild} //when the entire
       sx={{
         backgroundColor: "primary.main",
         width: "100%",
         overflow: "hidden",
         minheight: 100,
+        padding: 20,
+        paddingTop: 0,
         ...sx,
       }}
     >
+      {/* This is the div that is used to hold the dropdown title and image */}
       <div
         style={{
           display: "flex",
@@ -46,26 +50,32 @@ const DropDown = ({ children, sx, title, divider, titleCentered }) => {
           {title}
         </Title>
 
-        <Button
-          onClick={hideChild}
-          sx={{
-            width: 100,
-          }}
-        >
-          <img src={visibilityOfChildComponent[box][2]} alt="Press"></img>
-        </Button>
+        <div>
+          <img
+            src={visibilityOfChildComponent[box][2]}
+            style={{
+              width: "auto",
+              height: "auto",
+              margin: 15,
+            }}
+            alt="Press"
+          />
+        </div>
       </div>
 
+      {/* This is the div that holds the actual items from the dropdown */}
       <div
         id="menu-dropdown"
         style={{
           visibility: visibilityOfChildComponent[box][0],
           height: visibilityOfChildComponent[box][1],
+          padding: 20,
+          paddingTop: 0,
         }}
       >
         {children}
       </div>
-    </Box>
+    </div>
   );
 };
 

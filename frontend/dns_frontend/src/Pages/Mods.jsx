@@ -17,13 +17,13 @@ const Mods = () => {
                 }}
             >
                 <DropDown title={"Setting1"} sx={{}}>
-                    <h1>banana is my name and i like being yellow</h1>
-                    <h1>banana is my name and i like being yellow</h1>
-                    <h1>banana is my name and i like being yellow</h1>
+                    <h1>Insert Items here</h1>
                 </DropDown>
 
                 <DropDown title={"Setting2"} sx={{}}>
-                    <h1>banana is not my name and i like being yellow</h1>
+                    <h1>Insert Items here</h1>
+                    <h1>Insert Items here</h1>
+                    <h1>Insert Items here</h1>
                 </DropDown>
             </div>
         </MainBox>
