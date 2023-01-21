@@ -30,10 +30,10 @@ const ThemeSelector = ({ setTheme }) => {
                 key={key}
                 label={
                     <div style={{ display: 'flex', flexDirection: 'row' }} >
-                        <SquareIcon sx={{ fontSize: 30, margin: 0.5, backgroundColor: themes[key].palette.primary.main, color: themes[key].palette.primary.main, border: '2px solid', borderColor: theme.palette.background.default }} />
-                        <SquareIcon sx={{ fontSize: 30, margin: 0.5, backgroundColor: themes[key].palette.secondary.main, color: themes[key].palette.secondary.main, border: '2px solid', borderColor: theme.palette.background.default }} />
-                        <SquareIcon sx={{ fontSize: 30, margin: 0.5, backgroundColor: themes[key].palette.text.primary, color: themes[key].palette.text.primary, border: '2px solid', borderColor: theme.palette.background.default }} />
-                        <SquareIcon sx={{ fontSize: 30, margin: 0.5, backgroundColor: themes[key].palette.background.default, color: themes[key].palette.background.default, border: '2px solid', borderColor: theme.palette.background.default }} />
+                        <SquareIcon sx={{ fontSize: 30, margin: 0.5, backgroundColor: themes[key].palette.primary.main, color: themes[key].palette.primary.main, border: '2px solid', borderColor: theme.palette.primary.dark }} />
+                        <SquareIcon sx={{ fontSize: 30, margin: 0.5, backgroundColor: themes[key].palette.secondary.main, color: themes[key].palette.secondary.main, border: '2px solid', borderColor: theme.palette.primary.dark }} />
+                        <SquareIcon sx={{ fontSize: 30, margin: 0.5, backgroundColor: themes[key].palette.text.primary, color: themes[key].palette.text.primary, border: '2px solid', borderColor: theme.palette.primary.dark }} />
+                        <SquareIcon sx={{ fontSize: 30, margin: 0.5, backgroundColor: themes[key].palette.background.default, color: themes[key].palette.background.default, border: '2px solid', borderColor: theme.palette.primary.dark }} />
                     </div>
                 }
                 control={

@@ -1,54 +1,52 @@
-import { Divider, ToggleButton, ToggleButtonGroup, Typography, useTheme } from '@mui/material';
 import React from 'react';
 
 import MainBox from '../Components/MainBox';
-import DropDown from '../Components/DropDown';
+import { ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { useState } from 'react';
+import SequentialView from '../Components/Mods/SequentialView';
+import Overview from '../Components/Mods/Overview';
 
 
 const Mods = () => {
-    const theme = useTheme();
+
+    const [view, setView] = useState(0);
+
+    const handleViewSwitch = (e, newView) => {
+        if (newView != null) {
+            setView(newView);
+        }
+    }
 
     return (
         <MainBox
             title={"Mods"}
             divider
         >
-            {/* <ToggleButtonGroup>
-                <ToggleButton>
-                    <Typography sx={{ color: theme.palette.text.primary }}>
+            <ToggleButtonGroup
+                sx={{ marginLeft: 'auto', width: 'fit' }} 
+                value={view}
+                exclusive
+                onChange={handleViewSwitch}
+            >
+                <ToggleButton
+                    value={0}
+                    sx={{ paddingY: 0.2 }}
+                >
+                    <Typography sx={{ color: 'text.primary' }}>
                         Sequential
                     </Typography>
                 </ToggleButton>
-                <ToggleButton >
-                    <Typography sx={{ color: theme.palette.text.primary }}>
+                <ToggleButton 
+                    sx={{ paddingY: 0.2 }}
+                    value={1}
+                >
+                    <Typography sx={{ color: 'text.primary' }}>
                         Overview
                     </Typography>
                 </ToggleButton>
-            </ToggleButtonGroup> */}
+            </ToggleButtonGroup>
 
-            <div style={{ overflowY: 'auto',  margin: 10 }} >
-                
-                <DropDown title={"Listeners"} >
-                    test item 1
-                </DropDown>
-
-                <DropDown title={"Interceptors"} >
-                    test item 2
-                </DropDown>
-
-                <DropDown title={"Resolvers"} >
-                    test item 3
-                </DropDown>
-
-                <DropDown title={"Validators"} >
-                    test item 4
-                </DropDown>
-                
-                <DropDown title={"Inspectors"} >
-                    test item 5
-                </DropDown>
-
-            </div>
+            {!view ? <SequentialView /> : <Overview />}
 
         </MainBox>
     );

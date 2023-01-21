@@ -114,7 +114,8 @@ const Settings = ({ setTheme }) => {
                         flexGrow: 1,
                         alignItems: 'center',
                         overflowY: 'auto',
-                        border: `4px solid ${theme.palette.background.default}`,
+                        overflowX: 'hidden',
+                        border: `4px solid ${theme.palette.primary.dark}`,
                     }}
                 >
                     {

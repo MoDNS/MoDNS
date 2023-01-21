@@ -95,6 +95,11 @@ const themeOne = createTheme({
         }
       }
     },
+    MuiToggleButton: {
+      defaultProps: {
+        disableRipple: true,
+      },
+    },
     MuiButton: {
       defaultProps: {
         disableRipple: true,
@@ -239,6 +244,11 @@ const themeTwo = createTheme({
           color: t2_tp,
         }
       }
+    },
+    MuiToggleButton: {
+      defaultProps: {
+        disableRipple: true,
+      },
     },
     MuiButton: {
       defaultProps: {

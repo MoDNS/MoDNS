@@ -4,7 +4,7 @@ import { Accordion, AccordionDetails, AccordionSummary, Icon, Typography } from 
 import { PropTypes } from 'prop-types';
 
 
-const DropDown = ({ title, children }) => {
+const DropDown = ({ title, description, children }) => {
 
     return (
         <Accordion
@@ -24,9 +24,16 @@ const DropDown = ({ title, children }) => {
                     </Icon>
                 }
             >
-                <Typography fontSize={30}
+                <Typography 
+                    fontSize={30}
+                    sx={{ width: '30%', }}
                 >
                     {title}
+                </Typography>
+                <Typography 
+                    sx={{ marginTop: 'auto', marginBottom: 'auto', }}
+                >
+                    {description}
                 </Typography>
             </AccordionSummary>     
             <AccordionDetails >
@@ -41,10 +48,12 @@ export default DropDown;
 
 DropDown.propTypes = {
     title: PropTypes.string,
+    description: PropTypes.string,
     children: PropTypes.any,
 };
 
 DropDown.defaultProps = {
     title: "Insert Title",
+    description: "Accordion Description",
     children: null,
 };

@@ -2,19 +2,19 @@ import { Button, InputAdornment, Typography } from '@mui/material';
 import React from 'react';
 import { useState } from 'react';
 
-import { HTTPgetStaticIP, HTTPsetStaticIP } from '../../API/getsetAPI';
+import { getServerConfig, setServerConfig } from '../../API/getsetAPI';
 import InputField from '../InputField';
 
 const ServerSettings = () => {
 
     const [webAddress, setWebAddress] = useState('modns');
-    const [staticIP, setStaticIP] = useState( HTTPgetStaticIP() );
+    const [staticIP, setStaticIP] = useState( getServerConfig() );
 
     
     const handleSetStaticIP = () => {
         if (/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/.test(staticIP)) {
             setStaticIP(staticIP);
-            HTTPsetStaticIP(staticIP);
+            setServerConfig(staticIP);
         } else {
             alert("Static IP format not correct");
         }
