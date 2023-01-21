@@ -1,13 +1,29 @@
 import { Button, InputAdornment, Typography } from '@mui/material';
 import React from 'react';
 import { useState } from 'react';
+
+import { HTTPgetStaticIP, HTTPsetStaticIP } from '../../API/getsetAPI';
 import InputField from '../InputField';
 
 const ServerSettings = () => {
 
     const [webAddress, setWebAddress] = useState('modns');
+    const [staticIP, setStaticIP] = useState( HTTPgetStaticIP() );
 
-    const [staticIP, setStaticIP] = useState('xxx.xxx.xxx.xxx');
+    
+    const handleSetStaticIP = () => {
+        if (/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/.test(staticIP)) {
+            setStaticIP(staticIP);
+            HTTPsetStaticIP(staticIP);
+        } else {
+            alert("Static IP format not correct");
+        }
+    }
+
+
+    const applyChanges = () => {
+        handleSetStaticIP();
+    }
 
     return (
         <>
@@ -31,8 +47,8 @@ const ServerSettings = () => {
                         </Typography>
 
                         <InputField
-                            defaultValue={'modns'}
-                            placeholder={webAddress}
+                            defaultValue={webAddress}
+                            placeholder={'modns'}
                             inputProps={{style: { textAlign: 'right', paddingRight: 0, }}}
                             onInput={ e => setWebAddress(e.target.value) }
                             sx={{ marginLeft: 'auto', width: 195, }}
@@ -58,8 +74,10 @@ const ServerSettings = () => {
                         </Typography>
 
                         <InputField
-                            defaultValue={''}
-                            placeholder={staticIP}
+                            onFocus={ (e) => e.target.select() }
+                            defaultValue={staticIP}
+                            inputProps={{style: { textAlign: 'right', paddingRight: 0, }}}
+                            placeholder={ 'xxx.xxx.xxx.xxx' }
                             onInput={ e => setStaticIP(e.target.value) }
                         />
                     </div>
@@ -70,6 +88,7 @@ const ServerSettings = () => {
                 fullWidth
                 variant={'contained'}
                 sx={{  position: 'sticky', bottom: 0, }}
+                onClick={ () => applyChanges() }
             >
                 Apply Changes
             </Button>            

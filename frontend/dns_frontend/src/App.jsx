@@ -9,7 +9,7 @@ import Login from './Pages/Login';
 import Mods from './Pages/Mods';
 import Settings from './Pages/Settings';
 import ProtectedRoute from './ProtectedRoute';
-import { getThemeStorage } from './scripts/getsetThemeLocal';
+import { getThemeStorage } from './scripts/getsetLocalStorage';
 
 import themes from './themes';
 

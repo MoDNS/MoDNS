@@ -6,7 +6,6 @@ const About = () => {
     return (
         <MainBox
             title={"About"}
-            divider
         >
 
         </MainBox>

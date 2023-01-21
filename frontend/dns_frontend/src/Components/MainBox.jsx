@@ -4,10 +4,10 @@ import { PropTypes } from 'prop-types';
 import Title from './Title';
 
 
-const MainBox = ({ children, sx, title, divider, titleCentered }) => {
+const MainBox = ({ children, sx, title, noDivider, titleCentered }) => {
 
-    const pt = divider ? 20 : 0;
-    const pb = divider ? 30 : 0;
+    const pt = !noDivider ? 20 : 0;
+    const pb = !noDivider ? 30 : 0;
 
     return (
             <Box
@@ -19,10 +19,10 @@ const MainBox = ({ children, sx, title, divider, titleCentered }) => {
                     ...sx
                 }}
             >
-                <Title titleCentered={titleCentered} divider={divider}>
+                <Title titleCentered={titleCentered} noDivider={noDivider}>
                     {title}
                 </Title>
-                <div style={{ height: '100%', display: 'flex', paddingTop: pt, paddingBottom: pb, }} >
+                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', paddingTop: pt, paddingBottom: pb, }} >
                     {children}
                 </div>
             </Box>
@@ -32,9 +32,10 @@ const MainBox = ({ children, sx, title, divider, titleCentered }) => {
 export default MainBox;
 
 MainBox.propTypes = {
+    children: PropTypes.any,
     sx: PropTypes.object,
     title: PropTypes.string,
-    divider: PropTypes.bool,
+    noDivider: PropTypes.bool,
     titleCentered: PropTypes.bool,
 };
 
@@ -49,6 +50,6 @@ MainBox.defaultProps = {
         minWidth: 450,
     },
     title: 'Title Here',
-    divider: false,
+    noDivider: false,
     titleCentered: false,
 };

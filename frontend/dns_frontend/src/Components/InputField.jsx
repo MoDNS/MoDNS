@@ -22,7 +22,6 @@ const InputField = ({ sx, ...other }) => {
                     borderBottomColor: 'text.secondary',
                 },
                 ...sx,
-
             }}    
         />
     );
@@ -32,6 +31,7 @@ export default InputField;
 
 InputField.propTypes = {
     sx: PropTypes.object,
+    other: PropTypes.any,
 };
 
 InputField.defaultProps = {

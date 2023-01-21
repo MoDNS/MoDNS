@@ -3,6 +3,7 @@ import { Button, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { useTheme } from '@mui/material';
 import { useState } from 'react';
+import { PropTypes } from 'prop-types';
 
 import MainBox from '../Components/MainBox';
 import ServerSettings from '../Components/Settings/ServerSettings';
@@ -127,3 +128,12 @@ const Settings = ({ setTheme }) => {
 };
 
 export default Settings;
+
+
+Settings.propTypes = {
+    setTheme: PropTypes.func.isRequired,
+};
+
+Settings.defaultProps = {
+    setTheme: () => {},
+};

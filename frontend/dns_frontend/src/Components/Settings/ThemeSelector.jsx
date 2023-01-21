@@ -2,7 +2,9 @@ import { Button, FormControlLabel, Radio, RadioGroup, Typography, useTheme } fro
 import React from 'react';
 import SquareIcon from '@mui/icons-material/Square';
 import themes from '../../themes';
-import { getThemeStorage, setThemeStroage } from '../../scripts/getsetThemeLocal';
+import { PropTypes } from 'prop-types';
+
+import { getThemeStorage, setThemeStroage } from '../../scripts/getsetLocalStorage';
 
 const ThemeSelector = ({ setTheme }) => {
 
@@ -78,3 +80,12 @@ const ThemeSelector = ({ setTheme }) => {
 };
 
 export default ThemeSelector;
+
+
+ThemeSelector.propTypes = {
+    setTheme: PropTypes.func.isRequired,
+};
+
+ThemeSelector.defaultProps = {
+    setTheme: () => {},
+};

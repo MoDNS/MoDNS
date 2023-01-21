@@ -6,7 +6,6 @@ const Dashboard = () => {
     return (
         <MainBox
             title={"Dashboard"}
-            divider
         >
         </MainBox>
     );

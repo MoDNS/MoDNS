@@ -43,6 +43,7 @@ const Login = ({setLoggedIn}) => {
             sx={{ position: 'relative', top: 150, marginLeft: 'auto', marginRight: 'auto', width: 415, }} 
             title={'Login'}
             titleCentered
+            noDivider
         >
 
             <Box 
@@ -51,6 +52,7 @@ const Login = ({setLoggedIn}) => {
             >
                 <InputField
                     fullWidth
+                    autoFocus
                     onKeyPress={(e) => handleKeyPress(e)} //this adds enter to submit
                     required
                     type={ showPass ? 'text' : 'password' }
@@ -66,7 +68,6 @@ const Login = ({setLoggedIn}) => {
                         endAdornment: (
                             <InputAdornment position='end'>
                                 <IconButton
-                                    sx={{ color: theme.palette.text.primary }}
                                     onClick={ () => setShowPass(!showPass) }
                                     onMouseDown= { (e) => { e.preventDefault() } }
                                 >

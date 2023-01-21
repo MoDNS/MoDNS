@@ -2,7 +2,7 @@ import { Divider, Typography } from '@mui/material';
 import React from 'react';
 import { PropTypes } from 'prop-types';
 
-const Title = ({children, sx, divider, titleCentered}) => {
+const Title = ({children, sx, noDivider, titleCentered}) => {
     return (
         <>
             <Typography
@@ -12,14 +12,13 @@ const Title = ({children, sx, divider, titleCentered}) => {
                         marginLeft: 1,
                         marginRight: 1,
                         marginTop: 0,
-                        color: 'text.main',
                         textAlign: `${ titleCentered ? 'center' : 'left'}`,
                         ...sx
                     }}
                     >
                     {children}
             </Typography>
-            {divider && <Divider sx={{ marginLeft: 0, marginRight: 0, marginTop: 0.5, }} />}
+            {!noDivider && <Divider sx={{ marginLeft: 0, marginRight: 0, marginTop: 0.5, }} />}
         </>
     );
 };
@@ -27,13 +26,15 @@ const Title = ({children, sx, divider, titleCentered}) => {
 export default Title;
 
 Title.propTypes = {
+    children: PropTypes.any,
     sx: PropTypes.object,
-    divider: PropTypes.bool,
+    noDivider: PropTypes.bool,
     titleCentered: PropTypes.bool,
 };
 
 Title.defaultProps = {
+    children: null,
     sx: {},
-    divider: false,
+    noDivider: false,
     titleCentered: false,
 };

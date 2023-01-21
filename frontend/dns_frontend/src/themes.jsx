@@ -2,17 +2,17 @@ import { createTheme } from "@mui/material";
 
 /////////////////////////////////////////////// THEME ONE ///////////////////////////////////////////////
 const t1_p = '#444554';
-const t1_pl = '#6f7080';
-const t1_pd = '#1d1e2b';
+const t1_pl = '#5B5C70';
+const t1_pd = '#2D2E38';
 
 const t1_s = '#545344';
-const t1_sl = '#817f6f';
-const t1_sd = '#2b2b1d';
+const t1_sl = '#706F5B';
+const t1_sd = '#38372D';
 
 const t1_b = '#172121';
 
 const t1_tp = '#e8efef';
-const t1_ts = '#ACC5C5';
+const t1_ts = '#cadada';
 
 const t1_l = '#a9a6c5';
 
@@ -45,7 +45,35 @@ const themeOne = createTheme({
   },
   components: {
     // Name of the component
-    MuiTextField:{
+    MuiAccordionSummary: {
+      styleOverrides: {
+        root: {
+          backgroundColor: t1_p,
+        },
+      },
+    },
+    MuiAccordionDetails: {
+      styleOverrides: {
+        root: {
+          backgroundColor: t1_pd,
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          color: t1_tp,
+        },
+      },
+    },
+    MuiIcon: {
+      styleOverrides: {
+        root: {
+          color: t1_tp,
+        },
+      },
+    },
+    MuiTextField: {
       styleOverrides: {
         root: {
           "input::-ms-reveal": {
@@ -61,6 +89,11 @@ const themeOne = createTheme({
       defaultProps: {
         noWrap: true,
       },
+      styleOverrides: {
+        root: {
+          color: t1_tp,
+        }
+      }
     },
     MuiButton: {
       defaultProps: {
@@ -114,12 +147,12 @@ const themeOne = createTheme({
 
 /////////////////////////////////////////////// THEME TWO ///////////////////////////////////////////////
 const t2_p = '#014778';
-const t2_pl = '#4472a7';
-const t2_pd = '#00204c';
+const t2_pl = '#0165AB';
+const t2_pd = '#012945';
 
 const t2_s = '#783201';
-const t2_sl = '#ac5d2d';
-const t2_sd = '#490500';
+const t2_sl = '#AB4701';
+const t2_sd = '#461D01';
 
 const t2_b = '#d9efff';
 
@@ -157,6 +190,34 @@ const themeTwo = createTheme({
   },
   components: {
     // Name of the component
+    MuiAccordionSummary: {
+      styleOverrides: {
+        root: {
+          backgroundColor: t2_p,
+        },
+      },
+    },
+    MuiAccordionDetails: {
+      styleOverrides: {
+        root: {
+          backgroundColor: t2_pd,
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          color: t2_tp,
+        },
+      },
+    },
+    MuiIcon: {
+      styleOverrides: {
+        root: {
+          color: t2_tp,
+        },
+      },
+    },
     MuiTextField:{
       styleOverrides: {
         root: {
@@ -173,6 +234,11 @@ const themeTwo = createTheme({
       defaultProps: {
         noWrap: true,
       },
+      styleOverrides: {
+        root: {
+          color: t2_tp,
+        }
+      }
     },
     MuiButton: {
       defaultProps: {
