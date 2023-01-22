@@ -1,8 +1,9 @@
-import { Typography } from '@mui/material';
+import { FormControlLabel, IconButton, Switch, Typography } from '@mui/material';
 import React from 'react';
 import { PropTypes } from 'prop-types';
 import { Box } from '@mui/system';
 import { useTheme } from '@emotion/react';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 const ModOverview = ({ name, description, implementations }) => {
     const theme = useTheme();
@@ -20,6 +21,7 @@ const ModOverview = ({ name, description, implementations }) => {
         return output;
     }
 
+
     return (
         <Box
             sx={{
@@ -28,29 +30,50 @@ const ModOverview = ({ name, description, implementations }) => {
                 paddingY: 1,
                 paddingX: 3,
                 display: 'flex',
-                flexDirection: 'column',
+                flexDirection: 'row',
+                flexGrow: 1,
                 border: `4px solid ${theme.palette.primary.dark}`,
             }}
         >
-            <div style={{ display: 'flex', flexDirection: 'row', }} >
+            <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }} >
+                <div style={{ display: 'flex', flexDirection: 'row'}} >
+                    <Typography
+                        sx={{ fontSize: 35, flexShrink: 0 }}
+                    >
+                        {name}
+                    </Typography>
+                    <Typography
+                        noWrap={false}
+                        sx={{ marginTop: 'auto', marginBottom: 'auto', textAlign: 'right', flexGrow: 1 }}
+                    >
+                        {description}
+                    </Typography>
+                </div>
                 <Typography
-                    sx={{ fontSize: 35, flexShrink: 0 }}
                 >
-                    {name}
-                </Typography>
-                <Typography
-                    noWrap={false}
-                    sx={{ marginTop: 'auto', marginBottom: 'auto', textAlign: 'right', flexGrow: 1 }}
-                >
-                    {description}
+                    {
+                    listImplementations()
+                    }
                 </Typography>
             </div>
-            <Typography
+            <IconButton
+                sx={{ marginLeft: 3, }}
             >
-                {
-                   listImplementations()
-                }
-            </Typography>
+                <SettingsIcon 
+                    fontSize='large' 
+                    sx={{ 
+                        transitionProperty: 'transform',
+                        '&:hover': {
+                            transform: 'rotate(90deg)',
+                          },
+                    }}
+                />
+            </IconButton>
+            <FormControlLabel 
+                control={<Switch />} 
+                labelPlacement='top'
+                sx={{ marginRight: 0, marginY: 'auto' }}
+            />
         </Box>
     );
 };

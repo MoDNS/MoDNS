@@ -1,5 +1,9 @@
 import { createTheme } from "@mui/material";
 
+const switch_h = 30;
+const switch_w = 60;
+
+
 /////////////////////////////////////////////// THEME ONE ///////////////////////////////////////////////
 const t1_p = '#444554';
 const t1_pl = '#5B5C70';
@@ -15,6 +19,8 @@ const t1_tp = '#e8efef';
 const t1_ts = '#cadada';
 
 const t1_l = '#a9a6c5';
+
+const t1_green = '#8C8B72';
 
 const themeOne = createTheme({
   palette: {
@@ -60,6 +66,9 @@ const themeOne = createTheme({
       },
     },
     MuiIconButton: {
+      defaultProps: {
+        disableRipple: true,
+      },
       styleOverrides: {
         root: {
           color: t1_tp,
@@ -95,14 +104,13 @@ const themeOne = createTheme({
         }
       }
     },
-    MuiToggleButton: {
+    MuiButtonBase: {
       defaultProps: {
         disableRipple: true,
-      },
+      }
     },
     MuiButton: {
       defaultProps: {
-        disableRipple: true,
         disableElevation: true,
       },
       styleOverrides: {
@@ -138,6 +146,36 @@ const themeOne = createTheme({
         }
       }
     },
+    MuiSwitch: {
+      styleOverrides: {
+        root: {
+          width: switch_w,
+          height: switch_h,
+          padding: 0,
+          '& .MuiSwitch-switchBase': {
+            padding: 0,
+            margin: 2,
+            '&.Mui-checked': {
+              transform: `translateX(${switch_w - (switch_h)}px)`,
+              color: t1_tp,
+              '& + .MuiSwitch-track': {
+                backgroundColor: t1_green,
+              },
+            },
+          },
+          '& .MuiSwitch-thumb': {
+            boxSizing: 'border-box',
+            width: switch_h - 4,
+            height: switch_h - 4,
+          },
+          '& .MuiSwitch-track': {
+            borderRadius: switch_w / 2,
+            backgroundColor: t1_pd,
+            opacity: 1,
+          },
+        }
+      }
+    },
   },
   props: {
     MuiTextField: {
@@ -165,6 +203,8 @@ const t2_tp = '#ffffff';
 const t2_ts = '#E6E6E6';
 
 const t2_l = '#02AA9B';
+
+const t2_green = '#65AB01';
 
 const themeTwo = createTheme({
   palette: {
@@ -209,7 +249,15 @@ const themeTwo = createTheme({
         },
       },
     },
+    MuiButtonBase: {
+      defaultProps: {
+        disableRipple: true,
+      },
+    },
     MuiIconButton: {
+      defaultProps: {
+        disableRipple: true,
+      },
       styleOverrides: {
         root: {
           color: t2_tp,
@@ -245,14 +293,8 @@ const themeTwo = createTheme({
         }
       }
     },
-    MuiToggleButton: {
-      defaultProps: {
-        disableRipple: true,
-      },
-    },
     MuiButton: {
       defaultProps: {
-        disableRipple: true,
         disableElevation: true,
       },
       styleOverrides: {
@@ -285,6 +327,36 @@ const themeTwo = createTheme({
           '&.Mui-checked': {
             color: t2_tp,
           }
+        }
+      }
+    },
+    MuiSwitch: {
+      styleOverrides: {
+        root: {
+          width: switch_w,
+          height: switch_h,
+          padding: 0,
+          '& .MuiSwitch-switchBase': {
+            padding: 0,
+            margin: 2,
+            '&.Mui-checked': {
+              transform: `translateX(${switch_w - (switch_h)}px)`,
+              color: t2_tp,
+              '& + .MuiSwitch-track': {
+                backgroundColor: t2_green,
+              },
+            },
+          },
+          '& .MuiSwitch-thumb': {
+            boxSizing: 'border-box',
+            width: switch_h - 4,
+            height: switch_h - 4,
+          },
+          '& .MuiSwitch-track': {
+            borderRadius: switch_w / 2,
+            backgroundColor: t2_pd,
+            opacity: 1,
+          },
         }
       }
     },
