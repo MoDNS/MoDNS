@@ -11,7 +11,7 @@ async fn main() -> std::io::Result<()> {
         ApiListener::Unix(UnixListener::bind("./modnsd.sock")?)
     ];
 
-    api::listen_on(apiaddrs).await;
+    api::listen_api(apiaddrs).await;
 
     Ok(())
 
