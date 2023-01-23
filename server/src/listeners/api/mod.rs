@@ -13,7 +13,7 @@ pub enum ApiListener {
     Unix(UnixListener),
 }
 
-pub async fn listen_on(listeners: Vec<ApiListener>) {
+pub async fn listen_api(listeners: Vec<ApiListener>) {
     let frontend_routes = root_redirect().or(frontend_filter()).with(warp::log("http::frontend"));
 
     join_all(listeners.into_iter().map(|l| {
