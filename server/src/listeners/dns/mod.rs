@@ -1,6 +1,7 @@
 
 use futures::future::try_join_all;
 use tokio::net::UdpSocket;
+use tokio::sync::broadcast;
 use std::error::Error;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -15,18 +16,22 @@ pub enum DnsListener{
 /// 
 /// When listener recieves a request, it spawns a new async task to
 /// handle that request with the `handle_request` function
-pub async fn listen_dns(listeners: Vec<DnsListener>) -> Result<(), Box<dyn Error + Sync + Send>> {
+pub async fn listen_dns(listeners: Vec<DnsListener>, shutdown_sig: broadcast::Sender<()>) -> Result<(), Box<dyn Error + Sync + Send>> {
 
     try_join_all(listeners.into_iter().map(|l| async {
+
+        let shutdown_rx = shutdown_sig.subscribe();
+
         match l {
-            DnsListener::Udp(s) => listen_dns_udp(s).await
+            DnsListener::Udp(s) => listen_dns_udp(s, shutdown_rx).await
         }
+
     })).await?;
 
     Ok(())
 }
 
-pub async fn listen_dns_udp(sock: UdpSocket) -> Result<(), Box<dyn Error + Sync + Send>> {
+pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<()>) -> Result<(), Box<dyn Error + Sync + Send>> {
     
     let sock = Arc::new(sock);
 
@@ -35,29 +40,46 @@ pub async fn listen_dns_udp(sock: UdpSocket) -> Result<(), Box<dyn Error + Sync 
     let mut buf = [0; MAX_DGRAM_SIZE];
 
     loop {
-        let (req_size, req_addr) = sock.recv_from(&mut buf).await?;
 
-        log::debug!(target: "dns::listener","Got {req_size}-byte DNS request from {req_addr}");
+        tokio::select! {
 
-        let responder = sock.clone();
+            _ = shutdown.recv() => {
 
-        tokio::spawn(async move {
-            match handle_request(&buf[..req_size], req_addr.is_ipv4()).await {
-                Err(e) => {
-                    log::warn!(target: "dns::responder", "Got `Err` while fulfilling request from {req_addr}: {e:?}");
-                },
-                Ok(resp) => {
-                    match responder.send_to(&resp, req_addr).await {
+                log::info!(target: "dns::listener", "Shutting down DNS listener on {}", sock.local_addr()?);
+
+                return Ok(())
+            },
+
+            res = sock.recv_from(&mut buf) => {
+
+                let (req_size, req_addr) = res?;
+
+                log::debug!(target: "dns::listener","Got {req_size}-byte DNS request from {req_addr}");
+
+                let responder = sock.clone();
+
+                tokio::spawn(async move {
+                    match handle_request(&buf[..req_size], req_addr.is_ipv4()).await {
                         Err(e) => {
-                            log::warn!(target: "dns::responder", "Got `Err` while responding to {req_addr}: {e:?}");
-                        }
-                        Ok(resp_len) => {
-                            log::trace!(target: "dns::responder", "Sucessfully sent {resp_len}-byte response to {req_addr}")
-                        }
+                            log::warn!(target: "dns::responder", "Got `Err` while fulfilling request from {req_addr}: {e:?}");
+                        },
+                        Ok(resp) => {
+                            match responder.send_to(&resp, req_addr).await {
+                                Err(e) => {
+                                    log::warn!(target: "dns::responder", "Got `Err` while responding to {req_addr}: {e:?}");
+                                }
+                                Ok(resp_len) => {
+                                    log::trace!(target: "dns::responder", "Sucessfully sent {resp_len}-byte response to {req_addr}")
+                                }
+                            };
+                        },
                     };
-                },
-            };
-        });
+                });
+
+            }
+
+        }
+
     }
 
 }
