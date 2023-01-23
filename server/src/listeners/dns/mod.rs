@@ -1,21 +1,36 @@
 
+use futures::future::try_join_all;
 use tokio::net::UdpSocket;
 use std::error::Error;
 use std::net::SocketAddr;
-use std::io;
 use std::sync::Arc;
 
 const MAX_DGRAM_SIZE: usize = 65_507;
+
+pub enum DnsListener{
+    Udp(UdpSocket)
+}
 
 /// Starts a single DNS listener bound to the provided socket address
 /// 
 /// When listener recieves a request, it spawns a new async task to
 /// handle that request with the `handle_request` function
-pub async fn listen_dns(bind_addr: SocketAddr) -> Result<(), io::Error> {
-    
-    let sock = Arc::new(UdpSocket::bind(bind_addr).await?);
+pub async fn listen_dns(listeners: Vec<DnsListener>) -> Result<(), Box<dyn Error + Sync + Send>> {
 
-    log::info!(target: "dns::listener", "Started DNS listener on {bind_addr}");
+    try_join_all(listeners.into_iter().map(|l| async {
+        match l {
+            DnsListener::Udp(s) => listen_dns_udp(s).await
+        }
+    })).await?;
+
+    Ok(())
+}
+
+pub async fn listen_dns_udp(sock: UdpSocket) -> Result<(), Box<dyn Error + Sync + Send>> {
+    
+    let sock = Arc::new(sock);
+
+    log::info!(target: "dns::listener", "Started DNS listener on {}", sock.local_addr()?);
 
     let mut buf = [0; MAX_DGRAM_SIZE];
 

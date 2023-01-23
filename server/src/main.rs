@@ -1,8 +1,7 @@
 use std::error::Error;
 
-use futures::future::join;
-use modnsd::listeners::{api::{ApiListener, self}, dns};
-use tokio::net::{TcpListener, UnixListener};
+use modnsd::listeners::{ApiListener, DnsListener, self};
+use tokio::net::{TcpListener, UnixListener, UdpSocket};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -14,7 +13,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         ApiListener::Unix(UnixListener::bind("./modnsd.sock")?)
     ];
 
-    join(api::listen_api(apiaddrs), dns::listen_dns("0.0.0.0:53".parse()?)).await.1?;
+    let dnsaddrs = vec![
+        DnsListener::Udp(UdpSocket::bind(("0.0.0.0", 53)).await?)
+    ];
+
+    listeners::listen(apiaddrs, dnsaddrs).await;
 
     Ok(())
 
