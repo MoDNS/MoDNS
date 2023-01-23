@@ -1,8 +1,11 @@
-use modnsd::listeners::api::{ApiListener, self};
+use std::error::Error;
+
+use futures::future::join;
+use modnsd::listeners::{api::{ApiListener, self}, dns};
 use tokio::net::{TcpListener, UnixListener};
 
 #[tokio::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> Result<(), Box<dyn Error>> {
 
     pretty_env_logger::init();
 
@@ -11,7 +14,7 @@ async fn main() -> std::io::Result<()> {
         ApiListener::Unix(UnixListener::bind("./modnsd.sock")?)
     ];
 
-    api::listen_api(apiaddrs).await;
+    join(api::listen_api(apiaddrs), dns::listen_dns("0.0.0.0:53".parse()?)).await.1?;
 
     Ok(())
 

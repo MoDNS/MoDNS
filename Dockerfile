@@ -56,7 +56,7 @@ RUN npm run build
 #Finally, copy server over to a bare image to reduce bulk of final image
 FROM debian:buster-slim AS runtime
 
-EXPOSE 80
+EXPOSE 80 53/udp
 
 WORKDIR /app
 
