@@ -8,7 +8,7 @@ import {
     ValueAxis,
   } from '@devexpress/dx-react-chart-material-ui';
 import MainBox from '../Components/MainBox';
-import { render } from 'vue';
+// import { render } from 'vue';
 const data = [
     { country: 'Russia', area: 12 },
     { country: 'Canada', area: 7 },
