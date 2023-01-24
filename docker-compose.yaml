@@ -6,4 +6,8 @@ services:
     ports: 
     - 80:80
     environment:
+<<<<<<< HEAD
       - "RUST_LOG=http::frontend=info"
+=======
+      - "RUST_LOG=dns::listener=debug,warn"
+>>>>>>> 0b6625b... Implemented graceful shutdown for DNS and API
