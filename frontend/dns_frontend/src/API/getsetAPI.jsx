@@ -3,9 +3,9 @@
 
 //////////////////////////////////////////////////////// SETTINGS ////////////////////////////////////////////////////////
 
-/////////////////////////////////// HTTP ///////////////////////////////////
+/////////////////////////////// SERVER MANAGE ///////////////////////////////
 export const setServerConfig = (key, value) => {
-
+    
 }
 
 export const getServerConfig = (key) => {
@@ -29,33 +29,27 @@ export const installMod = (file) => {
 
 }
 
-export const uninstallMod = (id) => {
+export const uninstallMod = (uuid) => {
 
 }
 
-export const getModLogo= (id) => {
+export const getModLogo= (uuid) => {
     return null;
 }
 
-export const setModOrder = (implementation, idList) => {
+export const setModOrder = (implementation, uuidList) => {
     
 }
 
-export const enableMod = (id) => {
+export const enabledisableMod = (uuid, enabled) => {
     
 }
 
-export const disableMod = (id) => {
-    
-}
-
-/////////////////////////////// MODS ADVANCED ///////////////////////////////
-
-export const configureMod = (id, key, value) => {
+export const configureMod = (uuid, key, value) => {
 
 }
 
-export const getModConfig = (id, key, value) => {
+export const getModConfig = (uuid, key, value) => {
     return null;
 }
 

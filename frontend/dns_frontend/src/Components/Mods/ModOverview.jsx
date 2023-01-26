@@ -4,9 +4,20 @@ import { PropTypes } from 'prop-types';
 import { Box } from '@mui/system';
 import { useTheme } from '@emotion/react';
 import SettingsIcon from '@mui/icons-material/Settings';
+import { useState } from 'react';
+import { enabledisableMod } from '../../API/getsetAPI';
+import SettingsDialog from '../SettingsDialog';
 
-const ModOverview = ({ name, description, implementations }) => {
+const ModOverview = ({ uuid, name, description, home, implementations, enabled }) => {
+
     const theme = useTheme();
+    const [modEnabled, setModEnabled] = useState(enabled);
+    const [dialogOpen, setDialogStatus] = useState(false);
+
+    const handleModSwitch = () => {
+        enabledisableMod(uuid, !modEnabled);
+        setModEnabled(!modEnabled);
+    }
 
     const listImplementations = () => {
         let output = "";
@@ -58,6 +69,7 @@ const ModOverview = ({ name, description, implementations }) => {
             </div>
             <IconButton
                 sx={{ marginLeft: 3, }}
+                onClick={() => setDialogStatus(true)}
             >
                 <SettingsIcon 
                     fontSize='large' 
@@ -70,10 +82,28 @@ const ModOverview = ({ name, description, implementations }) => {
                 />
             </IconButton>
             <FormControlLabel 
-                control={<Switch />} 
-                labelPlacement='top'
-                sx={{ marginRight: 0, marginY: 'auto' }}
+                control={
+                    <Switch 
+                        checked={modEnabled}
+                        onChange={handleModSwitch}
+                    />
+                } 
+                sx={{ marginRight: 0, marginY: 'auto',marginLeft: 1 }}
             />
+
+
+
+            <SettingsDialog
+                uuid={uuid}
+                name={name}
+                description={description}
+                home={home}
+                implementations={implementations}
+                dialogOpen={dialogOpen}
+                setDialogStatus={setDialogStatus}
+                handleModSwitch={handleModSwitch}
+                modEnabled={modEnabled}
+                 />
         </Box>
     );
 };
@@ -81,13 +111,19 @@ const ModOverview = ({ name, description, implementations }) => {
 export default ModOverview;
 
 ModOverview.propTypes = {
+    uuid: PropTypes.string,
     name: PropTypes.string,
     description: PropTypes.string,
+    home: PropTypes.string,
     implementations: PropTypes.array,
+    enabled: PropTypes.bool,
 };
 
 ModOverview.defaultProps = {
+    uuid: 'default8-uuid-48aa-825f-23ba6b212fc3',
     name: "Mod Name",
-    description: "description of mod capabilities and functions",
-    implementations: ["impl 1", "impl 2"],
+    description: "description of mod capabilities and functions description of mod capabilities and functions description of mod capabilities and functions",
+    home: "home/directory",
+    implementations: ["impl 1", "impl 2", "impl 3", "impl 4", "impl 5"],
+    enabled: false,
 };
