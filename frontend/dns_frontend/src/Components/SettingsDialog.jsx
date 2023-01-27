@@ -3,7 +3,7 @@ import React from 'react';
 import { PropTypes } from 'prop-types';
 import CloseIcon from '@mui/icons-material/Close';
 
-const SettingsDialog = ({ uuid, name, description, home, implementations, dialogOpen, setDialogStatus, modEnabled, handleModSwitch }) => {
+const SettingsDialog = ({ uuid, name, description, home, implementations, interceptPosition, dialogOpen, setDialogStatus, modEnabled, handleModSwitch }) => {
     const theme = useTheme();
 
     return (
@@ -22,14 +22,22 @@ const SettingsDialog = ({ uuid, name, description, home, implementations, dialog
                 <div style={{ display: 'flex', flexDirection: 'row' }}
                 >
                     <DialogTitle
-                        fontSize={30}
-                        sx={{ width: '80%', marginRight: 0, marginBottom: 0 }}
+                        fontSize={35}
+                        sx={{ marginRight: 'auto', marginBottom: 0, paddingBottom: 1, }}
                     >
                         { name }
                     </DialogTitle>
+                    <Typography fontWeight={'bold'} sx={{ marginTop: 'auto', marginBottom: 2.2, marginRight: 1.25}}>
+                        UUID: 
+                    </Typography>
+                    <Typography
+                        sx={{ marginTop: 'auto', marginBottom: 2.2, }}
+                    >
+                        { uuid }
+                    </Typography>
                     <IconButton
                         onClick={() => setDialogStatus(false)}
-                        sx={{ marginLeft: 'auto', marginY: 'auto', marginRight: 2, padding: 1, height: 30, width: 30, backgroundColor: theme.palette.secondary.main }}
+                        sx={{ marginLeft: 5.5, marginTop: 2, marginBottom: 'auto', marginRight: 2, padding: 1, height: 30, width: 30, backgroundColor: theme.palette.secondary.main }}
                     >
                         <CloseIcon />
                     </IconButton>
@@ -93,7 +101,8 @@ SettingsDialog.propTypes = {
     description: PropTypes.string.isRequired,
     home: PropTypes.string.isRequired,
     implementations: PropTypes.array.isRequired,
+    interceptPosition: PropTypes.number,
+    modEnabled: PropTypes.bool.isRequired,
     dialogOpen: PropTypes.bool.isRequired,
     setDialogStatus: PropTypes.func.isRequired,
-    modEnabled: PropTypes.bool.isRequired,
 };

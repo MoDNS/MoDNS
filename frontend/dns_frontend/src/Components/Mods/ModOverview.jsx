@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { enabledisableMod } from '../../API/getsetAPI';
 import SettingsDialog from '../SettingsDialog';
 
-const ModOverview = ({ uuid, name, description, home, implementations, enabled }) => {
+const ModOverview = ({ uuid, name, description, home, implementations, interceptPosition, enabled }) => {
 
     const theme = useTheme();
     const [modEnabled, setModEnabled] = useState(enabled);
@@ -49,26 +49,34 @@ const ModOverview = ({ uuid, name, description, home, implementations, enabled }
             <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }} >
                 <div style={{ display: 'flex', flexDirection: 'row'}} >
                     <Typography
-                        sx={{ fontSize: 35, flexShrink: 0 }}
+                        sx={{ fontSize: 35, flexShrink: 0, }}
                     >
                         {name}
                     </Typography>
                     <Typography
                         noWrap={false}
-                        sx={{ marginTop: 'auto', marginBottom: 'auto', textAlign: 'right', flexGrow: 1 }}
+                        sx={{ marginTop: 'auto', marginBottom: 'auto', textAlign: 'right', flexGrow: 1, padding: 1, }}
                     >
                         {description}
                     </Typography>
                 </div>
-                <Typography
-                >
-                    {
-                    listImplementations()
-                    }
-                </Typography>
+                <div style={{ display: 'flex', flexDirection: 'row'}} >
+                    <Typography
+                        fontWeight={"bold"}
+                        marginRight={2}
+                    >
+                        Implementations:
+                    </Typography>
+                    <Typography
+                    > 
+                        {
+                        listImplementations()
+                        }
+                    </Typography>
+                </div>
             </div>
             <IconButton
-                sx={{ marginLeft: 3, }}
+                sx={{ marginLeft: 1, }}
                 onClick={() => setDialogStatus(true)}
             >
                 <SettingsIcon 
@@ -111,19 +119,11 @@ const ModOverview = ({ uuid, name, description, home, implementations, enabled }
 export default ModOverview;
 
 ModOverview.propTypes = {
-    uuid: PropTypes.string,
-    name: PropTypes.string,
-    description: PropTypes.string,
-    home: PropTypes.string,
-    implementations: PropTypes.array,
-    enabled: PropTypes.bool,
-};
-
-ModOverview.defaultProps = {
-    uuid: 'default8-uuid-48aa-825f-23ba6b212fc3',
-    name: "Mod Name",
-    description: "description of mod capabilities and functions description of mod capabilities and functions description of mod capabilities and functions",
-    home: "home/directory",
-    implementations: ["impl 1", "impl 2", "impl 3", "impl 4", "impl 5"],
-    enabled: false,
+    uuid: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    description: PropTypes.string.isRequired,
+    home: PropTypes.string.isRequired,
+    implementations: PropTypes.array.isRequired,
+    interceptPosition: PropTypes.number,
+    enabled: PropTypes.bool.isRequired,
 };

@@ -5,6 +5,7 @@ import { ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useState } from 'react';
 import SequentialView from '../Components/Mods/SequentialView';
 import Overview from '../Components/Mods/Overview';
+import { getModList } from '../API/getsetAPI';
 
 
 const Mods = () => {
@@ -16,6 +17,8 @@ const Mods = () => {
             setView(newView);
         }
     }
+    
+    const modList = getModList();
 
     return (
         <MainBox
@@ -46,10 +49,15 @@ const Mods = () => {
                 </ToggleButton>
             </ToggleButtonGroup>
 
-            {!view ? <SequentialView /> : <Overview />}
+            { !view ? 
+                <SequentialView modList={modList} /> 
+                : 
+                <Overview modList={modList} />
+            }
 
         </MainBox>
     );
 };
 
 export default Mods;
+
