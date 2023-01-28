@@ -3,7 +3,7 @@ import React from 'react';
 import { PropTypes } from 'prop-types';
 import CloseIcon from '@mui/icons-material/Close';
 
-const SettingsDialog = ({ uuid, name, description, home, implementations, interceptPosition, dialogOpen, setDialogStatus, modEnabled, handleModSwitch }) => {
+const SettingsDialog = ({ uuid, name, description, home, modules, interceptPosition, dialogOpen, setDialogStatus, modEnabled, handleModSwitch }) => {
     const theme = useTheme();
 
     return (
@@ -71,10 +71,10 @@ const SettingsDialog = ({ uuid, name, description, home, implementations, interc
                         <Typography
                             fontSize={25}
                         >
-                            Implementations
+                            modules
                         </Typography>
                         {
-                            implementations && implementations.map((implementation, index) => {
+                            modules && modules.map((implementation, index) => {
                                 return (
                                     <ListItem
                                         key={index}
@@ -100,7 +100,7 @@ SettingsDialog.propTypes = {
     name: PropTypes.string.isRequired,
     description: PropTypes.string.isRequired,
     home: PropTypes.string.isRequired,
-    implementations: PropTypes.array.isRequired,
+    modules: PropTypes.array.isRequired,
     interceptPosition: PropTypes.number,
     modEnabled: PropTypes.bool.isRequired,
     dialogOpen: PropTypes.bool.isRequired,

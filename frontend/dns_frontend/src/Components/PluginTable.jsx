@@ -1,10 +1,8 @@
 import { Table, TableBody, TableCell, TableContainer, TableRow } from '@mui/material';
 import React from 'react';
-import { DndContext, useDraggable } from '@dnd-kit/core';
-
-const ModTable = ({ type }) => {
 
 
+const PluginTable = ({ type }) => {
 
     return (
         <div>
@@ -36,4 +34,4 @@ const ModTable = ({ type }) => {
     );
 };
 
-export default ModTable;
+export default PluginTable;

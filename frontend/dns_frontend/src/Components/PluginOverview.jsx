@@ -5,10 +5,10 @@ import { Box } from '@mui/system';
 import { useTheme } from '@emotion/react';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useState } from 'react';
-import { enabledisableMod } from '../../API/getsetAPI';
-import SettingsDialog from '../SettingsDialog';
+import { enabledisableMod } from '../API/getsetAPI';
+import SettingsDialog from './SettingsDialog';
 
-const ModOverview = ({ uuid, name, description, home, implementations, interceptPosition, enabled }) => {
+const PluginOverview = ({ uuid, name, description, home, modules, interceptPosition, enabled }) => {
 
     const theme = useTheme();
     const [modEnabled, setModEnabled] = useState(enabled);
@@ -19,12 +19,12 @@ const ModOverview = ({ uuid, name, description, home, implementations, intercept
         setModEnabled(!modEnabled);
     }
 
-    const listImplementations = () => {
+    const listModules = () => {
         let output = "";
-        const num = implementations.length;
+        const num = modules.length;
 
         for(var i = 0; i < num; i++) {
-            output += implementations[i];
+            output += modules[i].charAt(0).toUpperCase() + modules[i].slice(1);
             if (i !== num - 1) {
                 output += ", ";
             }
@@ -44,6 +44,7 @@ const ModOverview = ({ uuid, name, description, home, implementations, intercept
                 flexDirection: 'row',
                 flexGrow: 1,
                 border: `4px solid ${theme.palette.primary.dark}`,
+                marginRight: 2,
             }}
         >
             <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }} >
@@ -65,12 +66,12 @@ const ModOverview = ({ uuid, name, description, home, implementations, intercept
                         fontWeight={"bold"}
                         marginRight={2}
                     >
-                        Implementations:
+                        modules:
                     </Typography>
                     <Typography
                     > 
                         {
-                        listImplementations()
+                        listModules()
                         }
                     </Typography>
                 </div>
@@ -106,7 +107,7 @@ const ModOverview = ({ uuid, name, description, home, implementations, intercept
                 name={name}
                 description={description}
                 home={home}
-                implementations={implementations}
+                modules={modules}
                 dialogOpen={dialogOpen}
                 setDialogStatus={setDialogStatus}
                 handleModSwitch={handleModSwitch}
@@ -116,14 +117,14 @@ const ModOverview = ({ uuid, name, description, home, implementations, intercept
     );
 };
 
-export default ModOverview;
+export default PluginOverview;
 
-ModOverview.propTypes = {
+PluginOverview.propTypes = {
     uuid: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired,
     description: PropTypes.string.isRequired,
     home: PropTypes.string.isRequired,
-    implementations: PropTypes.array.isRequired,
+    modules: PropTypes.array.isRequired,
     interceptPosition: PropTypes.number,
     enabled: PropTypes.bool.isRequired,
 };

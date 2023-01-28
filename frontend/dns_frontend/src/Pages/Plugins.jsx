@@ -3,12 +3,12 @@ import React from 'react';
 import MainBox from '../Components/MainBox';
 import { ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useState } from 'react';
-import SequentialView from '../Components/Mods/SequentialView';
-import Overview from '../Components/Mods/Overview';
-import { getModList } from '../API/getsetAPI';
+import SequentialView from '../Components/Plugins/SequentialView';
+import Overview from '../Components/Plugins/Overview';
+import { getPluginList } from '../API/getsetAPI';
 
 
-const Mods = () => {
+const Plugins = () => {
 
     const [view, setView] = useState(0);
 
@@ -18,11 +18,11 @@ const Mods = () => {
         }
     }
     
-    const modList = getModList();
+    const modList = getPluginList();
 
     return (
         <MainBox
-            title={"Mods"}
+            title={"Plugins"}
             divider
         >
             <ToggleButtonGroup
@@ -59,5 +59,5 @@ const Mods = () => {
     );
 };
 
-export default Mods;
+export default Plugins;
 

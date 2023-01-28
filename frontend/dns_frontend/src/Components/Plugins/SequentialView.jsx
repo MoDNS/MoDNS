@@ -1,10 +1,10 @@
 import React from 'react';
 import DropDown from '../DropDown';
-import ModTable from '../ModTable';
+import ModTable from '../PluginTable';
 
 const SequentialView = () => {
     return (
-        <div style={{ overflowY: 'auto',  margin: 10 }} >
+        <div style={{ overflowY: 'auto',  margin: 10, marginRight: 0, }} >
                 
             <DropDown title={"Listeners"} description={"Receives DNS Queries"} >
                 <ModTable type={"listeners"} />
