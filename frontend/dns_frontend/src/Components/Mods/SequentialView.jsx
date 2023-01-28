@@ -1,28 +1,29 @@
 import React from 'react';
 import DropDown from '../DropDown';
+import ModTable from '../ModTable';
 
 const SequentialView = () => {
     return (
         <div style={{ overflowY: 'auto',  margin: 10 }} >
                 
             <DropDown title={"Listeners"} description={"Receives DNS Queries"} >
-                test item 1
+                <ModTable type={"listeners"} />
             </DropDown>
 
             <DropDown title={"Interceptors"} description={"Immediately Respond to or Drop Queries"} >
-                test item 2
+                <ModTable type={"interceptors"} />
             </DropDown>
 
             <DropDown title={"Resolvers"} description={"Resolves a Request by Querying external DNS Server"} >
-                test item 3
+                <ModTable type={"resolvers"}/>
             </DropDown>
 
             <DropDown title={"Validators"} description={"Validates the External DNS Responce"} >
-                test item 4
+                <ModTable type={"validators"} />
             </DropDown>
             
             <DropDown title={"Inspectors"} description={"Views the Outbound Query and Response"} >
-                test item 5
+                <ModTable type={"inspectors"} />
             </DropDown>
 
         </div>

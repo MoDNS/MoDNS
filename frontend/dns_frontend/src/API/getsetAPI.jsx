@@ -45,11 +45,11 @@ export const getModList = () => {
 }
 
 export const installMod = (file) => {
-
+    console.log("installing...");
 }
 
 export const uninstallMod = (uuid) => {
-
+    console.log("uninstalling...");
 }
 
 export const getModLogo= (uuid) => {
@@ -61,7 +61,7 @@ export const setModOrder = (implementation, uuidList) => {
 }
 
 export const enabledisableMod = (uuid, enabled) => {
-    
+    console.log(uuid + ": " + enabled);
 }
 
 export const configureMod = (uuid, key, value) => {
