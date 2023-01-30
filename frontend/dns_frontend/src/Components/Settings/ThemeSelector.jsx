@@ -4,7 +4,7 @@ import SquareIcon from '@mui/icons-material/Square';
 import themes from '../../themes';
 import { PropTypes } from 'prop-types';
 
-import { getThemeStorage, setThemeStroage } from '../../scripts/getsetLocalStorage';
+import { getThemeStorage, setThemeStorage } from '../../scripts/getsetLocalStorage';
 
 const ThemeSelector = ({ setTheme }) => {
 
@@ -20,7 +20,7 @@ const ThemeSelector = ({ setTheme }) => {
 
     const handleApplyChanges = () => {
         setTheme(selectedTheme);
-        setThemeStroage(selectedTheme);
+        setThemeStorage(selectedTheme);
     }
 
     Object.keys(themes).forEach(function(key) {

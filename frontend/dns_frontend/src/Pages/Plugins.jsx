@@ -6,15 +6,17 @@ import { useState } from 'react';
 import SequentialView from '../Components/Plugins/SequentialView';
 import Overview from '../Components/Plugins/Overview';
 import { getPluginList } from '../API/getsetAPI';
+import { getPluginViewStorage, setPluginViewStorage } from '../scripts/getsetLocalStorage';
 
 
 const Plugins = () => {
 
-    const [view, setView] = useState(0);
+    const [view, setView] = useState(getPluginViewStorage());
 
     const handleViewSwitch = (e, newView) => {
         if (newView != null) {
             setView(newView);
+            setPluginViewStorage(newView);
         }
     }
     
@@ -32,7 +34,7 @@ const Plugins = () => {
                 onChange={handleViewSwitch}
             >
                 <ToggleButton
-                    value={0}
+                    value={'s'}
                     sx={{ paddingY: 0.2 }}
                 >
                     <Typography sx={{ color: 'text.primary' }}>
@@ -41,7 +43,7 @@ const Plugins = () => {
                 </ToggleButton>
                 <ToggleButton 
                     sx={{ paddingY: 0.2 }}
-                    value={1}
+                    value={'o'}
                 >
                     <Typography sx={{ color: 'text.primary' }}>
                         Overview
@@ -49,7 +51,7 @@ const Plugins = () => {
                 </ToggleButton>
             </ToggleButtonGroup>
 
-            { !view ? 
+            { view === 's' ? 
                 <SequentialView modList={modList} /> 
                 : 
                 <Overview modList={modList} />
