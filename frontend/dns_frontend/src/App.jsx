@@ -6,7 +6,7 @@ import TopBar from './Components/TopBar';
 import About from './Pages/About';
 import Dashboard from './Pages/Dashboard';
 import Login from './Pages/Login';
-import Mods from './Pages/Mods';
+import Plugins from './Pages/Plugins';
 import Settings from './Pages/Settings';
 import ProtectedRoute from './ProtectedRoute';
 import { getThemeStorage } from './scripts/getsetLocalStorage';
@@ -29,7 +29,7 @@ const App = () => {
             <Routes>
               <Route path='/manage' element={<Login setLoggedIn={setLoggedIn} />}/>
               <Route exact path = '/manage/dashboard' element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Dashboard/> } /> } />
-              <Route exact path = '/manage/mods'      element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Mods/> } /> } />
+              <Route exact path = '/manage/plugins'      element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Plugins/> } /> } />
               <Route exact path = '/manage/settings'  element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Settings setTheme={setTheme} /> } /> } />
               <Route exact path = '/manage/about'     element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <About/> } /> } />
 
