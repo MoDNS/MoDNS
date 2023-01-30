@@ -66,7 +66,7 @@ const PluginOverview = ({ uuid, name, description, home, modules, interceptPosit
                         fontWeight={"bold"}
                         marginRight={2}
                     >
-                        modules:
+                        Modules:
                     </Typography>
                     <Typography
                     > 

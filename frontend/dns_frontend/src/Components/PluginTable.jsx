@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableContainer, TableRow } from '@mui/mate
 import React from 'react';
 
 
-const PluginTable = ({ type }) => {
+const PluginTable = () => {
 
     return (
         <div>

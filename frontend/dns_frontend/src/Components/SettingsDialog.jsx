@@ -71,7 +71,7 @@ const SettingsDialog = ({ uuid, name, description, home, modules, interceptPosit
                         <Typography
                             fontSize={25}
                         >
-                            modules
+                            Modules
                         </Typography>
                         {
                             modules && modules.map((implementation, index) => {
@@ -80,7 +80,7 @@ const SettingsDialog = ({ uuid, name, description, home, modules, interceptPosit
                                         key={index}
                                         sx={{ display: 'list-item', paddingY: 0}}
                                     >
-                                        {implementation}
+                                        {implementation.charAt(0).toUpperCase() + implementation.slice(1)}
                                     </ListItem>
                                 )
                             })

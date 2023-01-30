@@ -1,8 +1,7 @@
 import React from 'react';
 import PluginOverview from '../PluginOverview';
-import { PropTypes } from 'prop-types';
 
-const Overview = ({modList}) => {
+const Overview = ({ modList }) => {
 
 
     return (
@@ -27,7 +26,3 @@ const Overview = ({modList}) => {
 };
 
 export default Overview;
-
-Overview.defaultProps = {
-    modList: PropTypes.dict.isRequired,
-};
