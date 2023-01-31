@@ -4,7 +4,10 @@ services:
   dns-server:
     build: "."
     ports: 
-    - 80:80
-    - 53:53/udp
-    environment:
-      - "RUST_LOG=dns::listener=debug,warn"
+      - 80:80
+      - 53:53/udp
+    # environment: "RUST_LOG=dns::listener=debug,warn"
+    volumes:
+      - type: bind
+        source: .
+        target: /CABSTone
