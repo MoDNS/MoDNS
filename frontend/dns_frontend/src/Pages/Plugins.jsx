@@ -58,7 +58,7 @@ const Plugins = () => {
             </ToggleButtonGroup>
 
             { view === 's' ? 
-                <SequentialView listenerList={listenerList} interceptorList={interceptorList} resolverList={resolverList} validatorList={validatorList} inspectorList={inspectorList} /> 
+                <SequentialView pluginList={pluginList} listenerList={listenerList} interceptorList={interceptorList} resolverList={resolverList} validatorList={validatorList} inspectorList={inspectorList} /> 
                 : 
                 <Overview pluginList={pluginList} />
             }

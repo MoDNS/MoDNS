@@ -2,9 +2,7 @@ import { Table, TableBody, TableContainer } from '@mui/material';
 import PluginTableRow from './PluginTableRow';
 import { PropTypes } from 'prop-types';
 
-
-const PluginTable = ({ pluginList, dragNDrop, onlyOneEnabled }) => {
-
+const PluginTable = ({ pluginList, togglePlugin, pluginState, dragNDrop, onlyOneEnabled }) => {
     return (
         <div>
             <TableContainer >
@@ -21,7 +19,9 @@ const PluginTable = ({ pluginList, dragNDrop, onlyOneEnabled }) => {
                                     home={plugin.home} 
                                     modules={plugin.modules} 
                                     interceptPosition={plugin.interceptPosition} 
-                                    enabled={plugin.enabled} 
+                                    pluginState={pluginState[plugin.uuid]}
+
+                                    togglePlugin={togglePlugin}
 
                                 />
                             ))
@@ -39,13 +39,13 @@ export default PluginTable;
 
 
 PluginTable.propTypes = {
-    pluginList: PropTypes.object,
+    pluginList: PropTypes.array,
     dragNDrop: PropTypes.bool,
     onlyOneEnabled: PropTypes.bool,
 };
 
 PluginTable.defaultProps = {
-    pluginList: {},
+    pluginList: [],
     dragNDrop: false,
     onlyOneEnabled: false,
 };

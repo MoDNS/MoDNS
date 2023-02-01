@@ -7,9 +7,23 @@ import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrow
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
 import { useState } from 'react';
 
-const SequentialView = ({ listenerList, interceptorList, resolverList, validatorList, inspectorList }) => {
+const SequentialView = ({ pluginList, listenerList, interceptorList, resolverList, validatorList, inspectorList }) => {
 
-    
+    //////////////// Plugin Enabled Dict ////////////////
+    let enabledNess = {}
+    pluginList.forEach((plugin) => {
+        enabledNess[plugin.uuid] = plugin.enabled;
+    });
+
+    const [pluginState, setPluginState] = useState(enabledNess);
+
+    const togglePlugin = (uuid) => {
+        let dict = pluginState;
+        dict[uuid] = !dict[uuid];
+        setPluginState({...dict});
+    }
+
+    //////////////// Accordion Expansion ////////////////
     const [expanded, setExpanded] = useState([false, false, false, false, false]);
 
     let accordionList = [];
@@ -28,23 +42,23 @@ const SequentialView = ({ listenerList, interceptorList, resolverList, validator
     const collapseAll = () => {
         setExpanded([false, false, false, false, false]);
     }
-
+    
     
     return (
         <div style={{ overflowY: 'auto',  margin: 10, marginRight: 0, }} >
             <Button
                 variant='contained'
-                sx={{marginRight: 2}}
+                sx={{marginRight: 2, }}
                 onClick={() => expandAll()}
             >
-                <KeyboardDoubleArrowDownIcon sx={{ marginRight: 1 }} />
+                <KeyboardDoubleArrowDownIcon sx={{ marginRight: 1.5 }} />
                 Expand All
             </Button>
             <Button
                 variant='contained'
                 onClick={() => collapseAll()}
             >
-                <KeyboardDoubleArrowUpIcon sx={{ marginRight: 1 }} />
+                <KeyboardDoubleArrowUpIcon sx={{ marginRight: 1.5 }} />
                 Collapse All
             </Button>
                 
@@ -56,7 +70,7 @@ const SequentialView = ({ listenerList, interceptorList, resolverList, validator
                 title={"Listeners"} 
                 description={"Receives DNS Queries"} 
             >
-                <PluginTable pluginList={listenerList} onlyOneEnabled />
+                <PluginTable pluginList={listenerList} togglePlugin={togglePlugin} pluginState={pluginState} onlyOneEnabled />
             </DropDown>
 
             <DropDown 
@@ -66,7 +80,7 @@ const SequentialView = ({ listenerList, interceptorList, resolverList, validator
                 title={"Interceptors"} 
                 description={"Immediately Respond to or Drop Queries"} 
             >
-                <PluginTable pluginList={interceptorList} dragNDrop />
+                <PluginTable pluginList={interceptorList} togglePlugin={togglePlugin} pluginState={pluginState} dragNDrop />
             </DropDown>
 
             <DropDown x={2} 
@@ -75,7 +89,7 @@ const SequentialView = ({ listenerList, interceptorList, resolverList, validator
                 title={"Resolvers"} 
                 description={"Resolves a Request by Querying external DNS Server"} 
             >
-                <PluginTable pluginList={resolverList} onlyOneEnabled />
+                <PluginTable pluginList={resolverList} togglePlugin={togglePlugin} pluginState={pluginState} onlyOneEnabled />
             </DropDown>
 
             <DropDown 
@@ -85,7 +99,7 @@ const SequentialView = ({ listenerList, interceptorList, resolverList, validator
                 title={"Validators"} 
                 description={"Validates the External DNS Responce"} 
             >
-                <PluginTable pluginList={validatorList} />
+                <PluginTable pluginList={validatorList} togglePlugin={togglePlugin} pluginState={pluginState} />
             </DropDown>
             
             <DropDown 
@@ -95,7 +109,7 @@ const SequentialView = ({ listenerList, interceptorList, resolverList, validator
                 title={"Inspectors"} 
                 description={"Views the Outbound Query and Response"} 
             >
-                <PluginTable pluginList={inspectorList} />
+                <PluginTable pluginList={inspectorList} togglePlugin={togglePlugin} pluginState={pluginState} />
             </DropDown>
 
         </div>

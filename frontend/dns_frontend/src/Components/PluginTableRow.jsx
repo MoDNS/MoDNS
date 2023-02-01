@@ -8,13 +8,12 @@ import SettingsDialog from './SettingsDialog';
 import defaultPluginLogo from '../images/default_plugin_logo.svg';
 
 
-const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interceptPosition, enabled }) => {
+const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interceptPosition, pluginState, togglePlugin }) => {
     const [dialogOpen, setDialogStatus] = useState(false);
-    const [pluginEnabled, setpluginEnabled] = useState(enabled);
     
     const handleModSwitch = () => {
-        enabledisableMod(uuid, !pluginEnabled);
-        setpluginEnabled(!pluginEnabled);
+        enabledisableMod(uuid, !pluginState);
+        togglePlugin(uuid);
     }
 
     return (
@@ -61,7 +60,7 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interc
                 <FormControlLabel 
                     control={
                         <Switch 
-                            checked={pluginEnabled}
+                            checked={pluginState}
                             onChange={handleModSwitch}
                         />
                     } 
@@ -77,7 +76,7 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interc
                 dialogOpen={dialogOpen}
                 setDialogStatus={setDialogStatus}
                 handleModSwitch={handleModSwitch}
-                pluginEnabled={pluginEnabled}
+                pluginEnabled={pluginState}
             />
 
         </TableRow>
@@ -93,5 +92,5 @@ PluginTableRow.propTypes = {
     home: PropTypes.string.isRequired,
     modules: PropTypes.array.isRequired,
     interceptPosition: PropTypes.number,
-    enabled: PropTypes.bool.isRequired,
+    pluginState: PropTypes.bool.isRequired,
 };

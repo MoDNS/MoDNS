@@ -51,7 +51,7 @@ export const getPluginList = (filter) => {
                 "enabled": true
             },
             {
-                "uuid": "cd9735cb-5c12-491a-b032-6ccd8cfd6855",
+                "uuid": "20b06ef0-cf6b-447b-85b2-12033e974543",
                 "friendlyName": "DNSSEC Validator",
                 "description": "Validates DNS responses using public key cryptography",
                 "home": "/opt/modns/plugins/dnssec/",
@@ -142,7 +142,7 @@ export const getPluginList = (filter) => {
     if (filter === 'validator') {
         return [
             {
-                "uuid": "cd9735cb-5c12-491a-b032-6ccd8cfd6855",
+                "uuid": "20b06ef0-cf6b-447b-85b2-12033e974543",
                 "friendlyName": "DNSSEC Validator",
                 "description": "Validates DNS responses using public key cryptography",
                 "home": "/opt/modns/plugins/dnssec/",
@@ -184,7 +184,7 @@ export const setModOrder = (uuidList) => {
 }
 
 export const enabledisableMod = (uuid, enabled) => {
-    console.log(uuid + ": " + enabled);
+    // console.log(uuid + ": " + enabled);
 }
 
 export const configureMod = (uuid, key, value) => {
