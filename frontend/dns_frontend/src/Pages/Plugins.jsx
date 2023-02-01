@@ -3,23 +3,28 @@ import React from 'react';
 import MainBox from '../Components/MainBox';
 import { ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useState } from 'react';
-import SequentialView from '../Components/Mods/SequentialView';
-import Overview from '../Components/Mods/Overview';
+import SequentialView from '../Components/Plugins/SequentialView';
+import Overview from '../Components/Plugins/Overview';
+import { getPluginList } from '../API/getsetAPI';
+import { getPluginViewStorage, setPluginViewStorage } from '../scripts/getsetLocalStorage';
 
 
-const Mods = () => {
+const Plugins = () => {
 
-    const [view, setView] = useState(0);
+    const [view, setView] = useState(getPluginViewStorage());
 
     const handleViewSwitch = (e, newView) => {
         if (newView != null) {
             setView(newView);
+            setPluginViewStorage(newView);
         }
     }
+    
+    const modList = getPluginList();
 
     return (
         <MainBox
-            title={"Mods"}
+            title={"Plugins"}
             divider
         >
             <ToggleButtonGroup
@@ -29,7 +34,7 @@ const Mods = () => {
                 onChange={handleViewSwitch}
             >
                 <ToggleButton
-                    value={0}
+                    value={'s'}
                     sx={{ paddingY: 0.2 }}
                 >
                     <Typography sx={{ color: 'text.primary' }}>
@@ -38,7 +43,7 @@ const Mods = () => {
                 </ToggleButton>
                 <ToggleButton 
                     sx={{ paddingY: 0.2 }}
-                    value={1}
+                    value={'o'}
                 >
                     <Typography sx={{ color: 'text.primary' }}>
                         Overview
@@ -46,10 +51,15 @@ const Mods = () => {
                 </ToggleButton>
             </ToggleButtonGroup>
 
-            {!view ? <SequentialView /> : <Overview />}
+            { view === 's' ? 
+                <SequentialView modList={modList} /> 
+                : 
+                <Overview modList={modList} />
+            }
 
         </MainBox>
     );
 };
 
-export default Mods;
+export default Plugins;
+
