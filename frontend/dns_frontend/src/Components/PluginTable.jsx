@@ -1,37 +1,51 @@
-import { Table, TableBody, TableCell, TableContainer, TableRow } from '@mui/material';
-import React from 'react';
+import { Table, TableBody, TableContainer } from '@mui/material';
+import PluginTableRow from './PluginTableRow';
+import { PropTypes } from 'prop-types';
 
 
-const PluginTable = () => {
+const PluginTable = ({ pluginList, dragNDrop, onlyOneEnabled }) => {
 
     return (
         <div>
             <TableContainer >
                 <Table >
-                    <TableBody>
-                        <TableRow>
-                            <TableCell> test </TableCell>
-                            <TableCell> test </TableCell>
-                            <TableCell> test </TableCell>
-                            <TableCell> test </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell> test </TableCell>
-                            <TableCell> test </TableCell>
-                            <TableCell> test </TableCell>
-                            <TableCell> test </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell> test </TableCell>
-                            <TableCell> test </TableCell>
-                            <TableCell> test </TableCell>
-                            <TableCell> test </TableCell>
-                        </TableRow>
+                    <TableBody >
+                        {
+                            pluginList.map((plugin, index) => (
+                                <PluginTableRow 
+                                    key={index} 
+
+                                    uuid={plugin.uuid} 
+                                    friendlyName={plugin.friendlyName} 
+                                    description={plugin.description} 
+                                    home={plugin.home} 
+                                    modules={plugin.modules} 
+                                    interceptPosition={plugin.interceptPosition} 
+                                    enabled={plugin.enabled} 
+
+                                />
+                            ))
+                        }
                     </TableBody>
                 </Table>
             </TableContainer>
+            
+            
         </div>
     );
 };
 
 export default PluginTable;
+
+
+PluginTable.propTypes = {
+    pluginList: PropTypes.object,
+    dragNDrop: PropTypes.bool,
+    onlyOneEnabled: PropTypes.bool,
+};
+
+PluginTable.defaultProps = {
+    pluginList: {},
+    dragNDrop: false,
+    onlyOneEnabled: false,
+};

@@ -1,7 +1,7 @@
 import React from 'react';
 import PluginOverview from '../PluginOverview';
 
-const Overview = ({ modList }) => {
+const Overview = ({ pluginList }) => {
 
 
     return (
@@ -15,9 +15,9 @@ const Overview = ({ modList }) => {
             }}
         >
             {
-                modList.map((mod, index) => {
+                pluginList.map((mod, index) => {
                     return (
-                        <PluginOverview key={index} uuid={mod.uuid} name={mod.friendlyName} description={mod.description} home={mod.home} modules={mod.modules} interceptPosition={mod.interceptPosition} enabled={mod.enabled} />
+                        <PluginOverview key={index} uuid={mod.uuid} friendlyName={mod.friendlyName} description={mod.description} home={mod.home} modules={mod.modules} interceptPosition={mod.interceptPosition} enabled={mod.enabled} />
                     )
                 })
             }

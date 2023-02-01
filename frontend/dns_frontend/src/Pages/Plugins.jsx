@@ -20,7 +20,13 @@ const Plugins = () => {
         }
     }
     
-    const modList = getPluginList();
+    const pluginList = getPluginList();
+
+    const listenerList = getPluginList('listener');
+    const interceptorList = getPluginList('interceptor');
+    const resolverList = getPluginList('resolver');
+    const validatorList = getPluginList('validator');
+    const inspectorList = getPluginList('inspector');
 
     return (
         <MainBox
@@ -52,9 +58,9 @@ const Plugins = () => {
             </ToggleButtonGroup>
 
             { view === 's' ? 
-                <SequentialView modList={modList} /> 
+                <SequentialView listenerList={listenerList} interceptorList={interceptorList} resolverList={resolverList} validatorList={validatorList} inspectorList={inspectorList} /> 
                 : 
-                <Overview modList={modList} />
+                <Overview pluginList={pluginList} />
             }
 
         </MainBox>

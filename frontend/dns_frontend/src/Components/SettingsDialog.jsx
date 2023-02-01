@@ -3,7 +3,7 @@ import React from 'react';
 import { PropTypes } from 'prop-types';
 import CloseIcon from '@mui/icons-material/Close';
 
-const SettingsDialog = ({ uuid, name, description, home, modules, interceptPosition, dialogOpen, setDialogStatus, modEnabled, handleModSwitch }) => {
+const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interceptPosition, dialogOpen, setDialogStatus, pluginEnabled, handleModSwitch }) => {
     const theme = useTheme();
 
     return (
@@ -25,16 +25,8 @@ const SettingsDialog = ({ uuid, name, description, home, modules, interceptPosit
                         fontSize={35}
                         sx={{ marginRight: 'auto', marginBottom: 0, paddingBottom: 1, }}
                     >
-                        { name }
+                        { friendlyName }
                     </DialogTitle>
-                    <Typography fontWeight={'bold'} sx={{ marginTop: 'auto', marginBottom: 2.2, marginRight: 1.25}}>
-                        UUID: 
-                    </Typography>
-                    <Typography
-                        sx={{ marginTop: 'auto', marginBottom: 2.2, }}
-                    >
-                        { uuid }
-                    </Typography>
                     <IconButton
                         onClick={() => setDialogStatus(false)}
                         sx={{ marginLeft: 5.5, marginTop: 2, marginBottom: 'auto', marginRight: 2, padding: 1, height: 30, width: 30, backgroundColor: theme.palette.secondary.main }}
@@ -61,7 +53,7 @@ const SettingsDialog = ({ uuid, name, description, home, modules, interceptPosit
                             control={
                                 <Switch 
                                     sx={{ marginLeft: 3, }}
-                                    checked={modEnabled}
+                                    checked={pluginEnabled}
                                     onChange={handleModSwitch}
                                 />
                             } 
@@ -97,12 +89,12 @@ export default SettingsDialog;
 
 SettingsDialog.propTypes = {
     uuid: PropTypes.string.isRequired,
-    name: PropTypes.string.isRequired,
+    friendlyName: PropTypes.string.isRequired,
     description: PropTypes.string.isRequired,
     home: PropTypes.string.isRequired,
     modules: PropTypes.array.isRequired,
     interceptPosition: PropTypes.number,
-    modEnabled: PropTypes.bool.isRequired,
+    pluginEnabled: PropTypes.bool.isRequired,
     dialogOpen: PropTypes.bool.isRequired,
     setDialogStatus: PropTypes.func.isRequired,
 };

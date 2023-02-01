@@ -8,15 +8,17 @@ import { useState } from 'react';
 import { enabledisableMod } from '../API/getsetAPI';
 import SettingsDialog from './SettingsDialog';
 
-const PluginOverview = ({ uuid, name, description, home, modules, interceptPosition, enabled }) => {
+import defaultPluginLogo from '../images/default_plugin_logo.svg';
+
+const PluginOverview = ({ uuid, friendlyName, description, home, modules, interceptPosition, enabled }) => {
 
     const theme = useTheme();
-    const [modEnabled, setModEnabled] = useState(enabled);
+    const [pluginEnabled, setpluginEnabled] = useState(enabled);
     const [dialogOpen, setDialogStatus] = useState(false);
 
     const handleModSwitch = () => {
-        enabledisableMod(uuid, !modEnabled);
-        setModEnabled(!modEnabled);
+        enabledisableMod(uuid, !pluginEnabled);
+        setpluginEnabled(!pluginEnabled);
     }
 
     const listModules = () => {
@@ -47,16 +49,17 @@ const PluginOverview = ({ uuid, name, description, home, modules, interceptPosit
                 marginRight: 2,
             }}
         >
-            <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }} >
+            <img src={defaultPluginLogo} alt="No Logo Found" width={65} height={65} style={{ margin: 10, marginLeft: 0 }}/>
+            <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1}} >
                 <div style={{ display: 'flex', flexDirection: 'row'}} >
                     <Typography
                         sx={{ fontSize: 35, flexShrink: 0, }}
                     >
-                        {name}
+                        {friendlyName}
                     </Typography>
                     <Typography
                         noWrap={false}
-                        sx={{ marginTop: 'auto', marginBottom: 'auto', textAlign: 'right', flexGrow: 1, padding: 1, }}
+                        sx={{ marginTop: 'auto', marginBottom: 'auto', padding: 1, width: '50%', marginLeft: 'auto' }}
                     >
                         {description}
                     </Typography>
@@ -77,7 +80,7 @@ const PluginOverview = ({ uuid, name, description, home, modules, interceptPosit
                 </div>
             </div>
             <IconButton
-                sx={{ marginLeft: 1, }}
+                sx={{ marginLeft: 1, marginY: 'auto' }}
                 onClick={() => setDialogStatus(true)}
             >
                 <SettingsIcon 
@@ -93,7 +96,7 @@ const PluginOverview = ({ uuid, name, description, home, modules, interceptPosit
             <FormControlLabel 
                 control={
                     <Switch 
-                        checked={modEnabled}
+                        checked={pluginEnabled}
                         onChange={handleModSwitch}
                     />
                 } 
@@ -104,14 +107,14 @@ const PluginOverview = ({ uuid, name, description, home, modules, interceptPosit
 
             <SettingsDialog
                 uuid={uuid}
-                name={name}
+                friendlyName={friendlyName}
                 description={description}
                 home={home}
                 modules={modules}
                 dialogOpen={dialogOpen}
                 setDialogStatus={setDialogStatus}
                 handleModSwitch={handleModSwitch}
-                modEnabled={modEnabled}
+                pluginEnabled={pluginEnabled}
                  />
         </Box>
     );
@@ -121,7 +124,7 @@ export default PluginOverview;
 
 PluginOverview.propTypes = {
     uuid: PropTypes.string.isRequired,
-    name: PropTypes.string.isRequired,
+    friendlyName: PropTypes.string.isRequired,
     description: PropTypes.string.isRequired,
     home: PropTypes.string.isRequired,
     modules: PropTypes.array.isRequired,
