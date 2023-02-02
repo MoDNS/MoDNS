@@ -184,7 +184,7 @@ export const setModOrder = (uuidList) => {
 }
 
 export const enabledisableMod = (uuid, enabled) => {
-    // console.log(uuid + ": " + enabled);
+    console.log(uuid + ": " + enabled);
 }
 
 export const configureMod = (uuid, key, value) => {

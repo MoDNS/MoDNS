@@ -52,6 +52,19 @@ const themeOne = createTheme({
   },
   components: {
     // Name of the component
+    MuiAccordion: {
+      defaultProps: {
+        square: true,
+      },
+      styleOverrides: {
+        root: {
+          backgroundColor: t1_p,
+          '&:before': {
+              display: 'none',
+          },
+        },
+      },
+    },
     MuiAccordionSummary: {
       styleOverrides: {
         root: {
@@ -63,6 +76,28 @@ const themeOne = createTheme({
       styleOverrides: {
         root: {
           backgroundColor: t1_pd,
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          top: 0,
+          height: 50,
+          flexDirection: 'row',
+          alignItems: 'center',
+        },
+      },
+    },
+    MuiDialog: {
+      defaultProps: {
+        PaperProps: {
+          style: {
+              backgroundColor: t1_p,
+              width: '125vh',
+              height: '100vh',
+              maxWidth: 1400,
+          },
         },
       },
     },
@@ -80,6 +115,23 @@ const themeOne = createTheme({
       styleOverrides: {
         root: {
           color: t1_tp,
+        },
+      },
+    },
+    MuiInput: {
+      styleOverrides: {
+        root: {
+          "&.Mui-focused": {
+            color: t1_tp,
+          },
+        },
+        underline: {
+          '&:after': {
+            borderBottomColor: t1_tp,
+          },
+          '&:before': {
+            borderBottomColor: t1_tp,
+          },
         },
       },
     },
@@ -272,6 +324,19 @@ const themeTwo = createTheme({
   },
   components: {
     // Name of the component
+    MuiAccordion: {
+      defaultProps: {
+        square: true,
+      },
+      styleOverrides: {
+        root: {
+          backgroundColor: t1_p,
+          '&:before': {
+              display: 'none',
+          },
+        },
+      },
+    },
     MuiAccordionSummary: {
       styleOverrides: {
         root: {
@@ -290,45 +355,6 @@ const themeTwo = createTheme({
       defaultProps: {
         disableRipple: true,
       },
-    },
-    MuiIconButton: {
-      defaultProps: {
-        disableRipple: true,
-      },
-      styleOverrides: {
-        root: {
-          color: t2_tp,
-        },
-      },
-    },
-    MuiIcon: {
-      styleOverrides: {
-        root: {
-          color: t2_tp,
-        },
-      },
-    },
-    MuiTextField:{
-      styleOverrides: {
-        root: {
-          "input::-ms-reveal": {
-            display: "none",
-          },
-          "input::-ms-clear": {
-            display: 'none',
-          },
-        }
-      }
-    },
-    MuiTypography: {
-      defaultProps: {
-        noWrap: true,
-      },
-      styleOverrides: {
-        root: {
-          color: t2_tp,
-        }
-      }
     },
     MuiButton: {
       defaultProps: {
@@ -356,6 +382,84 @@ const themeTwo = createTheme({
           },
         },
       },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          top: 0,
+          height: 50,
+          flexDirection: 'row',
+          alignItems: 'center',
+        },
+      },
+    },
+    MuiDialog: {
+      defaultProps: {
+        PaperProps: {
+          style: {
+              backgroundColor: t2_p,
+              width: '125vh',
+              height: '100vh',
+              maxWidth: 1400,
+          },
+        },
+      },
+    },
+    MuiIconButton: {
+      defaultProps: {
+        disableRipple: true,
+      },
+      styleOverrides: {
+        root: {
+          color: t2_tp,
+        },
+      },
+    },
+    MuiIcon: {
+      styleOverrides: {
+        root: {
+          color: t2_tp,
+        },
+      },
+    },
+    MuiInput: {
+      styleOverrides: {
+        root: {
+          "&.Mui-focused": {
+            color: t2_tp,
+          },
+        },
+        underline: {
+          '&:after': {
+            borderBottomColor: t2_tp,
+          },
+          '&:before': {
+            borderBottomColor: t2_tp,
+          },
+        },
+      },
+    },
+    MuiTextField:{
+      styleOverrides: {
+        root: {
+          "input::-ms-reveal": {
+            display: "none",
+          },
+          "input::-ms-clear": {
+            display: 'none',
+          },
+        }
+      }
+    },
+    MuiTypography: {
+      defaultProps: {
+        noWrap: true,
+      },
+      styleOverrides: {
+        root: {
+          color: t2_tp,
+        }
+      }
     },
     MuiRadio: {
       styleOverrides: {
@@ -434,6 +538,11 @@ const themeTwo = createTheme({
   },
   spacing: 8,
 })
+
+
+
+
+
 
 
 const themes = {

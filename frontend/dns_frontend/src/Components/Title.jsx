@@ -18,7 +18,7 @@ const Title = ({children, sx, noDivider, titleCentered}) => {
                     >
                     {children}
             </Typography>
-            {!noDivider && <Divider sx={{ marginLeft: 0, marginRight: 0, marginTop: 0.5, }} />}
+            { !noDivider && <Divider sx={{ marginLeft: 0, marginRight: 0, marginTop: 0.5, }} /> }
         </>
     );
 };

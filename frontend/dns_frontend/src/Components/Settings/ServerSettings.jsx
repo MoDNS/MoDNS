@@ -50,11 +50,12 @@ const ServerSettings = () => {
                             defaultValue={webAddress}
                             placeholder={'modns'}
                             inputProps={{style: { textAlign: 'right', paddingRight: 0, }}}
+                            onFocus={ (e) => e.target.select() }
                             onInput={ e => setWebAddress(e.target.value) }
                             sx={{ marginLeft: 'auto', width: 195, }}
                             InputProps={{
                                 endAdornment: (
-                                    <InputAdornment sx={{ color: 'text.primary', marginLeft: 0,}} position='end'>
+                                    <InputAdornment sx={{ marginLeft: 0,}} position='end'>
                                         <Typography >
                                             .local
                                         </Typography>

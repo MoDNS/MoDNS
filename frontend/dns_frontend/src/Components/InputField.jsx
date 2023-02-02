@@ -9,18 +9,6 @@ const InputField = ({ sx, ...other }) => {
             variant='standard'
             {...other}
             sx={{  
-                '& label.Mui-focused': {
-                    color: 'text.primary',
-                },
-                "& .MuiInput-underline:after": {
-                    borderBottomColor: 'text.primary',
-                },
-                "& .MuiInput-underline:before": {
-                    borderBottomColor: 'text.primary',
-                },
-                "& .MuiInput-root:hover::before": {
-                    borderBottomColor: 'text.secondary',
-                },
                 ...sx,
             }}    
         />

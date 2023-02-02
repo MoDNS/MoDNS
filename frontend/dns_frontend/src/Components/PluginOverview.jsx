@@ -50,6 +50,7 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
             }}
         >
             <img src={defaultPluginLogo} alt="No Logo Found" width={65} height={65} style={{ margin: 10, marginLeft: 0 }}/>
+            
             <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1}} >
                 <div style={{ display: 'flex', flexDirection: 'row'}} >
                     <Typography

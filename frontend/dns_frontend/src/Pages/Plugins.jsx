@@ -27,6 +27,7 @@ const Plugins = () => {
     const resolverList = getPluginList('resolver');
     const validatorList = getPluginList('validator');
     const inspectorList = getPluginList('inspector');
+    
 
     return (
         <MainBox

@@ -9,14 +9,6 @@ const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interc
     return (
         <Dialog 
             open={dialogOpen}
-            PaperProps={{
-                style: {
-                    backgroundColor: theme.palette.primary.main,
-                    width: 900,
-                    height: 600,
-                    maxWidth: 1400,
-                },
-            }}
         >
             <div style={{ display: 'flex', flexDirection: 'column' }} >
                 <div style={{ display: 'flex', flexDirection: 'row' }}

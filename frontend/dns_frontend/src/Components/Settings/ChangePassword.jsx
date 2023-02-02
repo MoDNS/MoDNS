@@ -21,13 +21,19 @@ const ChangePassword = () => {
         }}
       >
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <InputField placeholder="Enter Password" label="Old Password" />
+          <InputField 
+            placeholder="Enter Password" 
+            label="Old Password" 
+          />
           <InputField
             placeholder="Enter New Password"
             label="New Password"
             sx={{ marginTop: 5 }}
           />
-          <InputField placeholder="Confirm New Password" label="Confirm Password" />
+          <InputField 
+            placeholder="Confirm New Password" 
+            label="Confirm Password" 
+          />
         </div>
       </div>
       <Button

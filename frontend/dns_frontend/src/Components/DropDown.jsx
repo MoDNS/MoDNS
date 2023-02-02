@@ -1,27 +1,20 @@
 import React from 'react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary, Icon, Typography, useTheme } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Icon, Typography } from '@mui/material';
 import { PropTypes } from 'prop-types';
 import { useEffect } from 'react';
 
 
 const DropDown = ({ x, expanded, toggleSelf, title, description, children }) => {
-    const theme = useTheme();
 
     useEffect(() => {
     }, [expanded]);
 
     return (
         <Accordion
-            disableGutters
-            square
             expanded={expanded}
             sx={{
                 paddingRight: 2,
-                backgroundColor: theme.palette.primary.main,
-                '&:before': {
-                    display: 'none',
-                },
             }}
         >
             <AccordionSummary
