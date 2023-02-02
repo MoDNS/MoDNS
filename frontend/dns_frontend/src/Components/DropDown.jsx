@@ -13,6 +13,7 @@ const DropDown = ({ x, expanded, toggleSelf, title, description, children }) => 
     return (
         <Accordion
             expanded={expanded}
+            disableGutters
             sx={{
                 paddingRight: 2,
             }}

@@ -330,7 +330,7 @@ const themeTwo = createTheme({
       },
       styleOverrides: {
         root: {
-          backgroundColor: t1_p,
+          backgroundColor: t2_p,
           '&:before': {
               display: 'none',
           },
