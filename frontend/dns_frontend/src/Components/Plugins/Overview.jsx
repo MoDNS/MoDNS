@@ -1,7 +1,7 @@
 import React from 'react';
 import PluginOverview from '../PluginOverview';
 
-const Overview = ({ togglePlugin, pluginState, pluginList }) => {
+const Overview = ({ togglePlugin, pluginStates, pluginList }) => {
 
 
     return (
@@ -15,9 +15,21 @@ const Overview = ({ togglePlugin, pluginState, pluginList }) => {
             }}
         >
             {
-                pluginList.map((mod, index) => {
+                pluginList.map((plugin, index) => {
                     return (
-                        <PluginOverview key={index} uuid={mod.uuid} friendlyName={mod.friendlyName} description={mod.description} home={mod.home} modules={mod.modules} interceptPosition={mod.interceptPosition} pluginState={pluginState[mod.uuid]} togglePlugin={togglePlugin} />
+                        <PluginOverview 
+                            key={index} 
+                            // plugin info
+                            uuid={plugin.uuid} 
+                            friendlyName={plugin.friendlyName} 
+                            description={plugin.description} 
+                            home={plugin.home} 
+                            modules={plugin.modules} 
+                            interceptPosition={plugin.interceptPosition} 
+
+                            pluginState={pluginStates[plugin.uuid]}         // plugin state dict decoded into state for this individual plugin
+                            togglePlugin={togglePlugin}                     // toggle plugin function passed down
+                        />
                     )
                 })
             }

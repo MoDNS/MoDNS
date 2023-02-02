@@ -5,7 +5,6 @@ import { Box } from '@mui/system';
 import { useTheme } from '@emotion/react';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useState } from 'react';
-import { enabledisableMod } from '../API/getsetAPI';
 import SettingsDialog from './SettingsDialog';
 
 import defaultPluginLogo from '../images/default_plugin_logo.svg';
@@ -13,8 +12,10 @@ import defaultPluginLogo from '../images/default_plugin_logo.svg';
 const PluginOverview = ({ uuid, friendlyName, description, home, modules, interceptPosition, pluginState, togglePlugin }) => {
 
     const theme = useTheme();
+
     const [dialogOpen, setDialogStatus] = useState(false);
 
+    // creates list of modules for plugin to display
     const listModules = () => {
         let output = "";
         const num = modules.length;
@@ -26,11 +27,6 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
             }
         }
         return output;
-    }
-
-    const handleModSwitch = () => {
-        enabledisableMod(uuid, !pluginState);
-        togglePlugin(uuid);
     }
 
     return (
@@ -47,7 +43,7 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
                 marginRight: 2,
             }}
         >
-            <img src={defaultPluginLogo} alt="No Logo Found" width={65} height={65} style={{ margin: 10, marginLeft: 0 }}/>
+            <img src={defaultPluginLogo} alt="No Logo Found" width={65} height={65} style={{ margin: 10, marginLeft: 0 }}/>         { /* dummy logo */ }
             
             <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1}} >
                 <div style={{ display: 'flex', flexDirection: 'row'}} >
@@ -96,7 +92,7 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
                 control={
                     <Switch 
                         checked={pluginState}
-                        onChange={handleModSwitch}
+                        onChange={() => togglePlugin(uuid)}         // toggles the plugin with this uuid
                     />
                 } 
                 sx={{ marginRight: 0, marginY: 'auto',marginLeft: 1 }}
@@ -105,16 +101,20 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
 
 
             <SettingsDialog
+                // plugin info
                 uuid={uuid}
                 friendlyName={friendlyName}
                 description={description}
                 home={home}
                 modules={modules}
+                interceptPosition={interceptPosition}
+                // pass dialog open controls and status to dialog
                 dialogOpen={dialogOpen}
                 setDialogStatus={setDialogStatus}
-                handleModSwitch={handleModSwitch}
-                pluginState={pluginState}
-                 />
+                
+                togglePlugin={togglePlugin}                         // pass the toggle plugin function to the settings dialog box
+                pluginState={pluginState}                           // pass the plugin state to the dialog box
+            />
         </Box>
     );
 };

@@ -2,26 +2,29 @@ import { Table, TableBody, TableContainer } from '@mui/material';
 import PluginTableRow from './PluginTableRow';
 import { PropTypes } from 'prop-types';
 
-const PluginTable = ({ pluginList, togglePlugin, pluginState, dragNDrop, onlyOneEnabled }) => {
+const PluginTable = ({ pluginList, togglePlugin, pluginStates, dragNDrop, onlyOneEnabled }) => {
     return (
         <div>
             <TableContainer >
                 <Table >
                     <TableBody >
                         {
+                            // map the plugins in the given list to a row containing
                             pluginList.map((plugin, index) => (
                                 <PluginTableRow 
                                     key={index} 
-
+                                    // plugin elements
                                     uuid={plugin.uuid} 
                                     friendlyName={plugin.friendlyName} 
                                     description={plugin.description} 
                                     home={plugin.home} 
                                     modules={plugin.modules} 
                                     interceptPosition={plugin.interceptPosition} 
-                                    pluginState={pluginState[plugin.uuid]}
+                                    
+                                    pluginState={pluginStates[plugin.uuid]}         // plugin state dict decoded into state for this individual plugin
+                                    togglePlugin={togglePlugin}                     // toggle plugin function passed down
 
-                                    togglePlugin={togglePlugin}
+                                    dragNDrop={dragNDrop}                                       // enables dragging and dropping of rows
 
                                 />
                             ))

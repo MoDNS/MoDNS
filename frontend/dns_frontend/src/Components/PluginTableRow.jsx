@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { PropTypes } from 'prop-types';
-import { enabledisableMod } from '../API/getsetAPI';
 import { FormControlLabel, IconButton, Switch, TableCell, TableRow, Typography } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SettingsDialog from './SettingsDialog';
@@ -8,13 +7,9 @@ import SettingsDialog from './SettingsDialog';
 import defaultPluginLogo from '../images/default_plugin_logo.svg';
 
 
-const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interceptPosition, pluginState, togglePlugin }) => {
+const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interceptPosition, pluginState, togglePlugin, dragNDrop }) => {
     const [dialogOpen, setDialogStatus] = useState(false);
     
-    const handleModSwitch = () => {
-        enabledisableMod(uuid, !pluginState);
-        togglePlugin(uuid);
-    }
 
     return (
         <TableRow>
@@ -23,7 +18,7 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interc
                 height={90}
                 align='left'
                 >
-                <img src={defaultPluginLogo} alt="No Logo Found" width={65} height={65} style={{ margin: 10 }}/>
+                <img src={defaultPluginLogo} alt="No Logo Found" width={65} height={65} style={{ margin: 10 }}/>    { /* dummy logo */ }
             </TableCell>
             <TableCell
                 align='left'
@@ -45,7 +40,7 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interc
             >
                 <IconButton
                     sx={{ marginLeft: 1, }}
-                    onClick={() => setDialogStatus(true)}
+                    onClick={() => setDialogStatus(true)}                  // open dialog
                 >
                     <SettingsIcon 
                         fontSize='large' 
@@ -61,22 +56,26 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interc
                     control={
                         <Switch 
                             checked={pluginState}
-                            onChange={handleModSwitch}
+                            onChange={() => togglePlugin(uuid)}         // toggles the plugin with this uuid
                         />
                     } 
                     sx={{ marginRight: 0, marginY: 'auto', marginLeft: 1 }}
                 />
             </TableCell>
             <SettingsDialog
+                // plugin info
                 uuid={uuid}
                 friendlyName={friendlyName}
                 description={description}
                 home={home}
                 modules={modules}
+                interceptPosition={interceptPosition}
+                // pass dialog open controls and status to dialog
                 dialogOpen={dialogOpen}
                 setDialogStatus={setDialogStatus}
-                handleModSwitch={handleModSwitch}
-                pluginEnabled={pluginState}
+                
+                togglePlugin={togglePlugin}                             // pass the toggle plugin function to the settings dialog box
+                pluginState={pluginState}                               // pass the plugin state to the dialog box
             />
 
         </TableRow>

@@ -5,14 +5,16 @@ import { ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useState } from 'react';
 import SequentialView from '../Components/Plugins/SequentialView';
 import Overview from '../Components/Plugins/Overview';
-import { getPluginList } from '../API/getsetAPI';
+import { enabledisableMod, getPluginList } from '../API/getsetAPI';
 import { getPluginViewStorage, setPluginViewStorage } from '../scripts/getsetLocalStorage';
 
 
 const Plugins = () => {
 
+    // sets sequential or overview
     const [view, setView] = useState(getPluginViewStorage());
 
+    // switch for sequential or overview
     const handleViewSwitch = (e, newView) => {
         if (newView != null) {
             setView(newView);
@@ -20,8 +22,9 @@ const Plugins = () => {
         }
     }
     
-    const pluginList = getPluginList();
 
+    // gets plugin lists from api
+    const pluginList = getPluginList();
     const listenerList = getPluginList('listener');
     const interceptorList = getPluginList('interceptor');
     const resolverList = getPluginList('resolver');
@@ -30,16 +33,20 @@ const Plugins = () => {
     
 
     //////////////// Plugin Enabled Dict ////////////////
-    let enabledNess = {}
+    // pulls out the status of each plugin installed
+    // make dictionary of plugins enabled/disabled statuses
+    let pluginStatesDict = {}
     pluginList.forEach((plugin) => {
-        enabledNess[plugin.uuid] = plugin.enabled;
+        pluginStatesDict[plugin.uuid] = plugin.enabled;
     });
 
-    const [pluginState, setPluginState] = useState(enabledNess);
+    const [pluginStates, setPluginState] = useState(pluginStatesDict);
 
+    // toggle plugin function, toggles the enabled/disabled status of a plugin with the given uuid
     const togglePlugin = (uuid) => {
-        let dict = pluginState;
+        let dict = pluginStates;
         dict[uuid] = !dict[uuid];
+        enabledisableMod(uuid, dict[uuid]);
         setPluginState({...dict});
     }
 
@@ -50,10 +57,10 @@ const Plugins = () => {
             divider
         >
             <ToggleButtonGroup
-                sx={{ marginLeft: 'auto', width: 'fit' }} 
+                sx={{ marginLeft: 'auto', width: 'fit' }}
                 value={view}
                 exclusive
-                onChange={handleViewSwitch}
+                onChange={handleViewSwitch}                     // handles the switching between sequential and overview
             >
                 <ToggleButton
                     value={'s'}
@@ -73,10 +80,26 @@ const Plugins = () => {
                 </ToggleButton>
             </ToggleButtonGroup>
 
-            { view === 's' ? 
-                <SequentialView togglePlugin={togglePlugin} pluginState={pluginState} listenerList={listenerList} interceptorList={interceptorList} resolverList={resolverList} validatorList={validatorList} inspectorList={inspectorList} /> 
-                : 
-                <Overview togglePlugin={togglePlugin} pluginState={pluginState} pluginList={pluginList} />
+            { 
+                // shoes sequential or overview
+                view === 's' ? 
+                    <SequentialView 
+                        togglePlugin={togglePlugin}             // toggle plugin function passed down
+                        pluginStates={pluginStates}             // plugin state dictionary based on uuids
+                        // lists of plugins that imlement each module
+                        listenerList={listenerList} 
+                        interceptorList={interceptorList} 
+                        resolverList={resolverList} 
+                        validatorList={validatorList} 
+                        inspectorList={inspectorList} 
+                    /> 
+                    : 
+                    <Overview 
+                        togglePlugin={togglePlugin}             // toggle plugin function passed down
+                        pluginStates={pluginStates}             // plugin state dictionary based on uuids
+
+                        pluginList={pluginList}                 // list of all plugins
+                    />
             }
 
         </MainBox>

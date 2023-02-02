@@ -7,25 +7,25 @@ import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrow
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
 import { useState } from 'react';
 
-const SequentialView = ({ togglePlugin, pluginState, listenerList, interceptorList, resolverList, validatorList, inspectorList }) => {
+const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorList, resolverList, validatorList, inspectorList }) => {
 
 
     //////////////// Accordion Expansion ////////////////
     const [expanded, setExpanded] = useState([false, false, false, false, false]);
-
-    let accordionList = [];
+    // toggle single accordion in state array
     const toggleSelf = (x) => {
+        let accordionList = [];
         accordionList = expanded;
         accordionList[x] = !accordionList[x];
         
         // I hate that this works
         setExpanded([...accordionList]);
     }
-
+    // expand all accordions
     const expandAll = () => {
         setExpanded([true, true, true, true, true]);
     }
-
+    // collapse all accordions
     const collapseAll = () => {
         setExpanded([false, false, false, false, false]);
     }
@@ -53,12 +53,17 @@ const SequentialView = ({ togglePlugin, pluginState, listenerList, interceptorLi
             <div style={{ overflowY: 'auto',  margin: 10, marginRight: 0, height: '100%' }} >
                 <DropDown 
                     x={0} 
-                    expanded={expanded[0]} 
+                    expanded={expanded[0]}
                     toggleSelf={toggleSelf} 
                     title={"Listeners"} 
                     description={"Receives DNS Queries"} 
                 >
-                    <PluginTable pluginList={listenerList} togglePlugin={togglePlugin} pluginState={pluginState} onlyOneEnabled />
+                    <PluginTable 
+                        pluginList={listenerList}           // dropdown is for listeners
+                        togglePlugin={togglePlugin}         // toggle plugin function passed down
+                        pluginStates={pluginStates}         // plugin state dict passed down
+                        onlyOneEnabled                      // only one plugin in the table can be enabled
+                    />
                 </DropDown>
 
                 <DropDown 
@@ -68,7 +73,12 @@ const SequentialView = ({ togglePlugin, pluginState, listenerList, interceptorLi
                     title={"Interceptors"} 
                     description={"Immediately Respond to or Drop Queries"} 
                 >
-                    <PluginTable pluginList={interceptorList} togglePlugin={togglePlugin} pluginState={pluginState} dragNDrop />
+                    <PluginTable 
+                        pluginList={interceptorList}        // dropdown is for interceptors
+                        togglePlugin={togglePlugin}         // toggle plugin function passed down
+                        pluginStates={pluginStates}         // plugin state dict passed down
+                        dragNDrop                           // enables drag and drop rows
+                    />
                 </DropDown>
 
                 <DropDown x={2} 
@@ -77,7 +87,12 @@ const SequentialView = ({ togglePlugin, pluginState, listenerList, interceptorLi
                     title={"Resolvers"} 
                     description={"Resolves a Request by Querying external DNS Server"} 
                 >
-                    <PluginTable pluginList={resolverList} togglePlugin={togglePlugin} pluginState={pluginState} onlyOneEnabled />
+                    <PluginTable 
+                        pluginList={resolverList}           // dropdown is for resolvers
+                        togglePlugin={togglePlugin}         // toggle plugin function passed down
+                        pluginStates={pluginStates}         // plugin states dict passed down
+                        onlyOneEnabled                      // only one plugin in the table can be enabled
+                    />
                 </DropDown>
 
                 <DropDown 
@@ -87,7 +102,11 @@ const SequentialView = ({ togglePlugin, pluginState, listenerList, interceptorLi
                     title={"Validators"} 
                     description={"Validates the External DNS Responce"} 
                 >
-                    <PluginTable pluginList={validatorList} togglePlugin={togglePlugin} pluginState={pluginState} />
+                    <PluginTable 
+                        pluginList={validatorList}          // dropdown is for validators
+                        togglePlugin={togglePlugin}         // toggle plugin function passed down
+                        pluginStates={pluginStates}         // plugin states dict passed down
+                    />
                 </DropDown>
                 
                 <DropDown 
@@ -97,7 +116,11 @@ const SequentialView = ({ togglePlugin, pluginState, listenerList, interceptorLi
                     title={"Inspectors"} 
                     description={"Views the Outbound Query and Response"} 
                 >
-                    <PluginTable pluginList={inspectorList} togglePlugin={togglePlugin} pluginState={pluginState} />
+                    <PluginTable 
+                        pluginList={inspectorList}          // dropdown is for inspectors
+                        togglePlugin={togglePlugin}         // toggle plugin function passed down
+                        pluginStates={pluginStates}         // plugin states dict passed down
+                    />
                 </DropDown>
 
             </div>
