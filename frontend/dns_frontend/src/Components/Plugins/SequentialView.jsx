@@ -7,21 +7,8 @@ import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrow
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
 import { useState } from 'react';
 
-const SequentialView = ({ pluginList, listenerList, interceptorList, resolverList, validatorList, inspectorList }) => {
+const SequentialView = ({ togglePlugin, pluginState, listenerList, interceptorList, resolverList, validatorList, inspectorList }) => {
 
-    //////////////// Plugin Enabled Dict ////////////////
-    let enabledNess = {}
-    pluginList.forEach((plugin) => {
-        enabledNess[plugin.uuid] = plugin.enabled;
-    });
-
-    const [pluginState, setPluginState] = useState(enabledNess);
-
-    const togglePlugin = (uuid) => {
-        let dict = pluginState;
-        dict[uuid] = !dict[uuid];
-        setPluginState({...dict});
-    }
 
     //////////////// Accordion Expansion ////////////////
     const [expanded, setExpanded] = useState([false, false, false, false, false]);

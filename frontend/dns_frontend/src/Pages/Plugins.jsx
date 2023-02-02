@@ -29,6 +29,21 @@ const Plugins = () => {
     const inspectorList = getPluginList('inspector');
     
 
+    //////////////// Plugin Enabled Dict ////////////////
+    let enabledNess = {}
+    pluginList.forEach((plugin) => {
+        enabledNess[plugin.uuid] = plugin.enabled;
+    });
+
+    const [pluginState, setPluginState] = useState(enabledNess);
+
+    const togglePlugin = (uuid) => {
+        let dict = pluginState;
+        dict[uuid] = !dict[uuid];
+        setPluginState({...dict});
+    }
+
+
     return (
         <MainBox
             title={"Plugins"}
@@ -59,9 +74,9 @@ const Plugins = () => {
             </ToggleButtonGroup>
 
             { view === 's' ? 
-                <SequentialView pluginList={pluginList} listenerList={listenerList} interceptorList={interceptorList} resolverList={resolverList} validatorList={validatorList} inspectorList={inspectorList} /> 
+                <SequentialView togglePlugin={togglePlugin} pluginState={pluginState} listenerList={listenerList} interceptorList={interceptorList} resolverList={resolverList} validatorList={validatorList} inspectorList={inspectorList} /> 
                 : 
-                <Overview pluginList={pluginList} />
+                <Overview togglePlugin={togglePlugin} pluginState={pluginState} pluginList={pluginList} />
             }
 
         </MainBox>

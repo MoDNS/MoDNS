@@ -10,16 +10,10 @@ import SettingsDialog from './SettingsDialog';
 
 import defaultPluginLogo from '../images/default_plugin_logo.svg';
 
-const PluginOverview = ({ uuid, friendlyName, description, home, modules, interceptPosition, enabled }) => {
+const PluginOverview = ({ uuid, friendlyName, description, home, modules, interceptPosition, pluginState, togglePlugin }) => {
 
     const theme = useTheme();
-    const [pluginEnabled, setpluginEnabled] = useState(enabled);
     const [dialogOpen, setDialogStatus] = useState(false);
-
-    const handleModSwitch = () => {
-        enabledisableMod(uuid, !pluginEnabled);
-        setpluginEnabled(!pluginEnabled);
-    }
 
     const listModules = () => {
         let output = "";
@@ -34,6 +28,10 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
         return output;
     }
 
+    const handleModSwitch = () => {
+        enabledisableMod(uuid, !pluginState);
+        togglePlugin(uuid);
+    }
 
     return (
         <Box
@@ -97,7 +95,7 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
             <FormControlLabel 
                 control={
                     <Switch 
-                        checked={pluginEnabled}
+                        checked={pluginState}
                         onChange={handleModSwitch}
                     />
                 } 
@@ -115,7 +113,7 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
                 dialogOpen={dialogOpen}
                 setDialogStatus={setDialogStatus}
                 handleModSwitch={handleModSwitch}
-                pluginEnabled={pluginEnabled}
+                pluginState={pluginState}
                  />
         </Box>
     );
@@ -130,5 +128,6 @@ PluginOverview.propTypes = {
     home: PropTypes.string.isRequired,
     modules: PropTypes.array.isRequired,
     interceptPosition: PropTypes.number,
-    enabled: PropTypes.bool.isRequired,
+    pluginState: PropTypes.bool.isRequired,
+    togglePlugin: PropTypes.func.isRequired,
 };
