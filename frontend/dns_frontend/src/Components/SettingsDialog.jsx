@@ -3,7 +3,7 @@ import React from 'react';
 import { PropTypes } from 'prop-types';
 import CloseIcon from '@mui/icons-material/Close';
 
-const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interceptPosition, dialogOpen, setDialogStatus, pluginEnabled, handleModSwitch }) => {
+const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interceptPosition, dialogOpen, setDialogStatus, pluginState, handleModSwitch }) => {
     const theme = useTheme();
 
     return (
@@ -45,7 +45,7 @@ const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interc
                             control={
                                 <Switch 
                                     sx={{ marginLeft: 3, }}
-                                    checked={pluginEnabled}
+                                    checked={pluginState}
                                     onChange={handleModSwitch}
                                 />
                             } 
@@ -86,7 +86,7 @@ SettingsDialog.propTypes = {
     home: PropTypes.string.isRequired,
     modules: PropTypes.array.isRequired,
     interceptPosition: PropTypes.number,
-    pluginEnabled: PropTypes.bool.isRequired,
+    pluginState: PropTypes.bool.isRequired,
     dialogOpen: PropTypes.bool.isRequired,
     setDialogStatus: PropTypes.func.isRequired,
 };
