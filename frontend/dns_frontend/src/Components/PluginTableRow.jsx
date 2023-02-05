@@ -6,19 +6,32 @@ import SettingsDialog from './SettingsDialog';
 
 import defaultPluginLogo from '../images/default_plugin_logo.svg';
 
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
-const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interceptPosition, pluginState, togglePlugin, dragNDrop }) => {
+
+const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interceptPosition, pluginState, togglePlugin, dragNDrop, index, dragStart, dragEnter, dragDrop }) => {
     const [dialogOpen, setDialogStatus] = useState(false);
     
 
     return (
-        <TableRow>
+        <TableRow
+            draggable={dragNDrop}
+            onDragStart={ (e) => dragStart(e, index) }
+            onDragEnter={ (e) => dragEnter(e, index) }
+            onDragEnd={ dragNDrop ? dragDrop : null }
+        >
+            { dragNDrop && 
+                <TableCell width={30} >
+                    < DragIndicatorIcon />
+                </TableCell>
+            }
             <TableCell
                 width={90}
                 height={90}
                 align='left'
+                
                 >
-                <img src={defaultPluginLogo} alt="No Logo Found" width={65} height={65} style={{ margin: 10 }}/>    { /* dummy logo */ }
+                <img src={defaultPluginLogo} alt="No Logo Found" width={65} height={65} style={{ margin: 10 }} draggable={false}/>    { /* dummy logo */ }
             </TableCell>
             <TableCell
                 align='left'

@@ -51,6 +51,15 @@ export const getPluginList = (filter) => {
                 "enabled": true
             },
             {
+                "uuid": "c77818df-750f-417c-9194-d6867ea87ecf",
+                "friendlyName": "DNS over HTTP",
+                "description": "Default plugin that uses http",
+                "home": "/opt/modns/plugins/dohttp",
+                "modules": ["listener", "interceptor", "resolver"],
+                "interceptPosition": 3,
+                "enabled": true
+            },
+            {
                 "uuid": "20b06ef0-cf6b-447b-85b2-12033e974543",
                 "friendlyName": "DNSSEC Validator",
                 "description": "Validates DNS responses using public key cryptography",
@@ -102,7 +111,16 @@ export const getPluginList = (filter) => {
                 "home": "/opt/modns/plugins/dot/",
                 "modules": ["listener"],
                 "enabled": false
-            }
+            },
+            {
+                "uuid": "c77818df-750f-417c-9194-d6867ea87ecf",
+                "friendlyName": "DNS over HTTP",
+                "description": "Default plugin that uses http",
+                "home": "/opt/modns/plugins/dohttp",
+                "modules": ["listener", "interceptor", "resolver"],
+                "interceptPosition": 3,
+                "enabled": true
+            },
         ]
     }
     if (filter === 'interceptor') {
@@ -125,6 +143,15 @@ export const getPluginList = (filter) => {
                 "interceptPosition": 2,
                 "enabled": true
             },
+            {
+                "uuid": "c77818df-750f-417c-9194-d6867ea87ecf",
+                "friendlyName": "DNS over HTTP",
+                "description": "Default plugin that uses http",
+                "home": "/opt/modns/plugins/dohttp",
+                "modules": ["listener", "interceptor", "resolver"],
+                "interceptPosition": 3,
+                "enabled": true
+            },
         ]
     }
     if (filter === 'resolver') {
@@ -135,6 +162,15 @@ export const getPluginList = (filter) => {
                 "description": "Sends DNS request over TLS encrypted channel",
                 "home": "/opt/modns/plugins/dot/",
                 "modules": ["resolver"],
+                "enabled": true
+            },
+            {
+                "uuid": "c77818df-750f-417c-9194-d6867ea87ecf",
+                "friendlyName": "DNS over HTTP",
+                "description": "Default plugin that uses http",
+                "home": "/opt/modns/plugins/dohttp",
+                "modules": ["listener", "interceptor", "resolver"],
+                "interceptPosition": 3,
                 "enabled": true
             },
         ]
@@ -167,31 +203,31 @@ export const getPluginList = (filter) => {
     
 }
 
-export const installMod = (file) => {
+export const installPlugin = (file) => {
     console.log("installing...");
 }
 
-export const uninstallMod = (uuid) => {
+export const uninstallPlugin = (uuid) => {
     console.log("uninstalling...");
 }
 
-export const getModLogo= (uuid) => {
+export const getPluginLogo = (uuid) => {
     return null;
 }
 
-export const setModOrder = (uuidList) => {
-    
+export const setPluginOrder = (uuidList) => {
+    console.log(uuidList);
 }
 
 export const enabledisableMod = (uuid, enabled) => {
     console.log(uuid + ": " + enabled);
 }
 
-export const configureMod = (uuid, key, value) => {
+export const configurePlugin = (uuid, key, value) => {
 
 }
 
-export const getModConfig = (uuid, key, value) => {
+export const getPluginConfig = (uuid, key, value) => {
     return null;
 }
 

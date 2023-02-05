@@ -7,7 +7,7 @@ import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrow
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
 import { useState } from 'react';
 
-const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorList, resolverList, validatorList, inspectorList }) => {
+const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorList, resolverList, validatorList, inspectorList, rowLists, setRowLists, onlyOneEnabledDict }) => {
 
 
     //////////////// Accordion Expansion ////////////////
@@ -62,7 +62,11 @@ const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorL
                         pluginList={listenerList}           // dropdown is for listeners
                         togglePlugin={togglePlugin}         // toggle plugin function passed down
                         pluginStates={pluginStates}         // plugin state dict passed down
-                        onlyOneEnabled                      // only one plugin in the table can be enabled
+                        onlyOneEnabled={onlyOneEnabledDict['listener']}
+
+                        rowList={rowLists['listener']}
+                        setRowList={setRowLists}
+                        listType={'listener'}
                     />
                 </DropDown>
 
@@ -78,6 +82,12 @@ const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorL
                         togglePlugin={togglePlugin}         // toggle plugin function passed down
                         pluginStates={pluginStates}         // plugin state dict passed down
                         dragNDrop                           // enables drag and drop rows
+
+                        rowList={rowLists['interceptor']}
+                        setRowList={setRowLists}
+                        listType={'interceptor'}
+                        onlyOneEnabled={onlyOneEnabledDict['interceptor']}
+
                     />
                 </DropDown>
 
@@ -91,7 +101,12 @@ const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorL
                         pluginList={resolverList}           // dropdown is for resolvers
                         togglePlugin={togglePlugin}         // toggle plugin function passed down
                         pluginStates={pluginStates}         // plugin states dict passed down
-                        onlyOneEnabled                      // only one plugin in the table can be enabled
+                        onlyOneEnabled={onlyOneEnabledDict['resolver']}
+
+                        rowList={rowLists['resolver']}
+                        setRowList={setRowLists}
+                        listType={'resolver'}
+
                     />
                 </DropDown>
 
@@ -106,6 +121,12 @@ const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorL
                         pluginList={validatorList}          // dropdown is for validators
                         togglePlugin={togglePlugin}         // toggle plugin function passed down
                         pluginStates={pluginStates}         // plugin states dict passed down
+
+                        rowList={rowLists['validator']}
+                        setRowList={setRowLists}
+                        listType={'validator'}
+                        onlyOneEnabled={onlyOneEnabledDict['validator']}
+
                     />
                 </DropDown>
                 
@@ -120,6 +141,12 @@ const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorL
                         pluginList={inspectorList}          // dropdown is for inspectors
                         togglePlugin={togglePlugin}         // toggle plugin function passed down
                         pluginStates={pluginStates}         // plugin states dict passed down
+
+                        rowList={rowLists['inspector']}
+                        setRowList={setRowLists}
+                        listType={'inspector'}
+                        onlyOneEnabled={onlyOneEnabledDict['inspector']}
+
                     />
                 </DropDown>
 
