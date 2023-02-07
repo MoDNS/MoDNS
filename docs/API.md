@@ -120,9 +120,9 @@ CLI: `modns plugin set-priority <something>`
 
 Sets the order for querying interceptor plugins. Request body should be a json list of plugin `id`s in desired order
 
-#### POST `/api/plugins/enable?uuid=<plugin uuid>&enabled=<bool>[&impl=<enum>]`
+#### POST `/api/plugins/enable?uuid=<plugin uuid>&enabled=<bool>`
 
-CLI: `modns plugin (enable|disable) <name|id> [--mod <module>]`
+CLI: `modns plugin (enable|disable) <name|id>`
 
 Enable a plugin or a module that plugin implements
 
