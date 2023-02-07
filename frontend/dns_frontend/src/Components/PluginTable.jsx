@@ -3,32 +3,22 @@ import PluginTableRow from './PluginTableRow';
 import { PropTypes } from 'prop-types';
 import { useRef } from 'react';
 
-const PluginTable = ({ pluginStates, dragNDrop, rowList, setRowList, listType, togglePlugin }) => {
+const PluginTable = ({ pluginStates, dragNDrop, rowList, setRowLists, listType, togglePlugin, numInterceptors, interceptorOrderDict }) => {
 
     const dragItem = useRef();
     const dragOverItem = useRef();
 
-    const dragStart = (e, position) => {
+    const dragStart = (position) => {
         dragItem.current = position;
       };
     
-      const dragEnter = (e, position) => {
+      const dragEnter = (position) => {
         dragOverItem.current = position;
       };
     
-      const dragDrop = (e) => {
-        const copyListItems = [...rowList];
-        const dragItemContent = copyListItems[dragItem.current];
-        copyListItems.splice(dragItem.current, 1);
-        copyListItems.splice(dragOverItem.current, 0, dragItemContent);
-        dragItem.current = null;
-        dragOverItem.current = null;
-        setRowList(listType, copyListItems);
+      const dragDrop = () => {
+        setRowLists(listType, dragItem.current, dragOverItem.current);
       };
-
-      const enablePluginMidCheck = (uuid) => {
-        togglePlugin(uuid, listType);
-      }
 
     return (
         <div>
@@ -45,16 +35,21 @@ const PluginTable = ({ pluginStates, dragNDrop, rowList, setRowList, listType, t
                                     description={plugin.description} 
                                     home={plugin.home} 
                                     modules={plugin.modules} 
-                                    interceptPosition={plugin.interceptPosition} 
+                                    interceptPosition={ plugin.uuid in interceptorOrderDict ? interceptorOrderDict[plugin.uuid] : null}
                                     
                                     pluginState={pluginStates[plugin.uuid]}         // plugin state dict decoded into state for this individual plugin
-                                    togglePlugin={enablePluginMidCheck}                     // toggle plugin function passed down
+                                    togglePlugin={togglePlugin}                     // toggle plugin function passed down
 
                                     dragNDrop={dragNDrop}                           // enables dragging and dropping of rows
                                     index={index}
                                     dragStart={dragStart}
                                     dragEnter={dragEnter}
                                     dragDrop={dragDrop}
+
+                                    rowList={rowList}
+                                    setRowLists={setRowLists}
+
+                                    numInterceptors={numInterceptors}
                                 />
                             ))
                         }

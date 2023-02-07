@@ -7,7 +7,7 @@ import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrow
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
 import { useState } from 'react';
 
-const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorList, resolverList, validatorList, inspectorList, rowLists, setRowLists, onlyOneEnabledDict }) => {
+const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorList, resolverList, validatorList, inspectorList, rowLists, setRowLists, numInterceptors, interceptorOrderDict }) => {
 
 
     //////////////// Accordion Expansion ////////////////
@@ -62,11 +62,14 @@ const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorL
                         pluginList={listenerList}           // dropdown is for listeners
                         togglePlugin={togglePlugin}         // toggle plugin function passed down
                         pluginStates={pluginStates}         // plugin state dict passed down
-                        onlyOneEnabled={onlyOneEnabledDict['listener']}
 
                         rowList={rowLists['listener']}
-                        setRowList={setRowLists}
+                        setRowLists={setRowLists}
                         listType={'listener'}
+
+                        numInterceptors={numInterceptors}
+
+                        interceptorOrderDict={interceptorOrderDict}
                     />
                 </DropDown>
 
@@ -84,9 +87,12 @@ const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorL
                         dragNDrop                           // enables drag and drop rows
 
                         rowList={rowLists['interceptor']}
-                        setRowList={setRowLists}
+                        setRowLists={setRowLists}
                         listType={'interceptor'}
-                        onlyOneEnabled={onlyOneEnabledDict['interceptor']}
+
+                        numInterceptors={numInterceptors}
+
+                        interceptorOrderDict={interceptorOrderDict}
 
                     />
                 </DropDown>
@@ -101,11 +107,14 @@ const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorL
                         pluginList={resolverList}           // dropdown is for resolvers
                         togglePlugin={togglePlugin}         // toggle plugin function passed down
                         pluginStates={pluginStates}         // plugin states dict passed down
-                        onlyOneEnabled={onlyOneEnabledDict['resolver']}
 
                         rowList={rowLists['resolver']}
-                        setRowList={setRowLists}
+                        setRowLists={setRowLists}
                         listType={'resolver'}
+
+                        numInterceptors={numInterceptors}
+
+                        interceptorOrderDict={interceptorOrderDict}
 
                     />
                 </DropDown>
@@ -123,9 +132,12 @@ const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorL
                         pluginStates={pluginStates}         // plugin states dict passed down
 
                         rowList={rowLists['validator']}
-                        setRowList={setRowLists}
+                        setRowLists={setRowLists}
                         listType={'validator'}
-                        onlyOneEnabled={onlyOneEnabledDict['validator']}
+
+                        numInterceptors={numInterceptors}
+
+                        interceptorOrderDict={interceptorOrderDict}
 
                     />
                 </DropDown>
@@ -143,9 +155,12 @@ const SequentialView = ({ togglePlugin, pluginStates, listenerList, interceptorL
                         pluginStates={pluginStates}         // plugin states dict passed down
 
                         rowList={rowLists['inspector']}
-                        setRowList={setRowLists}
+                        setRowLists={setRowLists}
                         listType={'inspector'}
-                        onlyOneEnabled={onlyOneEnabledDict['inspector']}
+
+                        numInterceptors={numInterceptors}
+
+                        interceptorOrderDict={interceptorOrderDict}
 
                     />
                 </DropDown>

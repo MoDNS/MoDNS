@@ -1,4 +1,4 @@
-import { Button, IconButton, InputAdornment, useTheme } from '@mui/material';
+import { Button, IconButton, InputAdornment, TextField, useTheme } from '@mui/material';
 import { Box } from '@mui/system';
 import React from 'react';
 import { useState } from 'react';
@@ -7,8 +7,6 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Visibility from '@mui/icons-material/Visibility';
 
 import MainBox from '../Components/MainBox';
-import InputField from '../Components/InputField';
-
 
 
 const Login = ({setLoggedIn}) => {
@@ -50,7 +48,7 @@ const Login = ({setLoggedIn}) => {
                 type='form'
                 sx={{ marginTop: 20, width: '100%' }}
             >
-                <InputField
+                <TextField
                     fullWidth
                     autoFocus
                     onKeyPress={(e) => handleKeyPress(e)} //this adds enter to submit
@@ -77,7 +75,7 @@ const Login = ({setLoggedIn}) => {
                         )
                     }}
                 >
-                </InputField>
+                </TextField>
                 <Box 
                     display='flex'
                     justifyContent="right"

@@ -9,7 +9,7 @@ import SettingsDialog from './SettingsDialog';
 
 import defaultPluginLogo from '../images/default_plugin_logo.svg';
 
-const PluginOverview = ({ uuid, friendlyName, description, home, modules, interceptPosition, pluginState, togglePlugin }) => {
+const PluginOverview = ({ uuid, friendlyName, description, home, modules, interceptPosition, pluginState, togglePlugin, numInterceptors, rowLists, setRowLists, intereptOrderDict }) => {
 
     const theme = useTheme();
 
@@ -92,7 +92,7 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
                 control={
                     <Switch 
                         checked={pluginState}
-                        onChange={() => togglePlugin(uuid)}         // toggles the plugin with this uuid
+                        onChange={() => togglePlugin(uuid, modules[0])}         // toggles the plugin with this uuid
                     />
                 } 
                 sx={{ marginRight: 0, marginY: 'auto',marginLeft: 1 }}
@@ -114,6 +114,13 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
                 
                 togglePlugin={togglePlugin}                         // pass the toggle plugin function to the settings dialog box
                 pluginState={pluginState}                           // pass the plugin state to the dialog box
+
+                numInterceptors={numInterceptors}
+                rowLists={rowLists}                                       // order of rows
+                setRowLists={setRowLists}                                 // set order of rows
+
+                intereptOrderDict={intereptOrderDict}
+                
             />
         </Box>
     );

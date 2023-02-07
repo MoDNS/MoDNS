@@ -1,10 +1,20 @@
-import { Dialog, DialogTitle, FormControlLabel, IconButton, ListItem, Switch, Typography, useTheme } from '@mui/material';
-import React from 'react';
+import { Button, Dialog, DialogTitle, FormControlLabel, IconButton, ListItem, Switch, TextField, Typography, useTheme } from '@mui/material';
+import React, { useState } from 'react';
 import { PropTypes } from 'prop-types';
 import CloseIcon from '@mui/icons-material/Close';
 
-const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interceptPosition, dialogOpen, setDialogStatus, pluginState, togglePlugin }) => {
+const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interceptPosition, dialogOpen, setDialogStatus, pluginState, togglePlugin, numInterceptors, rowList, rowLists, setRowLists, interceptOrderDict }) => {
     const theme = useTheme();
+
+    const [interceptPosState, setInterceptPositionState] = useState(interceptPosition);
+
+    const applyInterceptPosition = (e) => {
+        if (interceptPosState) {
+            setRowLists('interceptor', interceptPosition - 1, interceptPosState - 1);
+            setDialogStatus(false);
+        }
+    }
+
 
     return (
         <Dialog 
@@ -27,7 +37,7 @@ const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interc
                     </IconButton>
                 </div>
                 <div style={{ paddingLeft: 25, paddingRight: 25, paddingBottom: 25, display: 'flex', flexDirection: 'row' }} >
-                    <div style={{ width: '60%' }}>
+                    <div style={{ width: '60%', flexDirection: 'column', display: 'flex' }}>
                         <Typography
                             fontSize={25}
                         >
@@ -39,17 +49,45 @@ const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interc
                             {description}
                         </Typography>
                         <FormControlLabel
-                            sx={{ marginRight: 0, marginY: 2, marginLeft: 0}}
-                            label={<Typography fontSize={25} >Mod Status</Typography>}
+                            sx={{ marginRight: 'auto', marginTop: 2, marginLeft: 0 }}
+                            label={<Typography fontSize={25} > Mod Status </Typography>}
                             labelPlacement={'start'}
                             control={
                                 <Switch 
                                     sx={{ marginLeft: 3, }}
                                     checked={pluginState}
-                                    onChange={() => togglePlugin(uuid)}
+                                    onChange={() => togglePlugin(uuid, modules[0])}
                                 />
                             } 
                         />
+                        {
+                            interceptPosition &&
+                            <FormControlLabel
+                                sx={{ marginRight: 'auto', marginY: 2, marginLeft: 0}}
+                                label={<Typography fontSize={25} > Interceptor Position </Typography>}
+                                labelPlacement={'start'}
+                                control={
+                                    <div>
+
+                                    <TextField 
+                                        type={"number"}
+                                        placeholder={ `${interceptPosition}` }
+                                        inputProps={{style: { textAlign: 'center', }, min: 1, max: numInterceptors }}
+                                        sx={{ marginX: 3, width: 60, }}
+                                        defaultValue={ interceptPosition }
+                                        onInput={ (e) => setInterceptPositionState(e.target.value) }
+                                        
+                                    />
+                                    <Button
+                                        onClick={(e) => applyInterceptPosition(e) }
+                                        variant="contained"
+                                    >
+                                        Apply
+                                    </Button>
+                                    </div>
+                                } 
+                            />
+                        }
                     </div>
                     <div style={{ width: '30%', marginLeft: 'auto' }}>
                         <Typography

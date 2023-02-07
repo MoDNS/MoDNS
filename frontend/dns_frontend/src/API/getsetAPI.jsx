@@ -39,7 +39,7 @@ export const getPluginList = (filter) => {
                 "description": "Default listener plugin",
                 "home": "/opt/modns/plugins/default-listener",
                 "modules": ["listener"],
-                "enabled": true
+                "enabled": false
             },
             {
                 "uuid": "cd9735cb-5c12-491a-b032-6ccd8cfd6855",
@@ -102,7 +102,7 @@ export const getPluginList = (filter) => {
                 "description": "Default listener plugin",
                 "home": "/opt/modns/plugins/default-listener",
                 "modules": ["listener"],
-                "enabled": true
+                "enabled": false
             },
             {
                 "uuid": "600a45c3-0543-4e85-92ba-7c8727142d49dot",

@@ -1,9 +1,8 @@
-import { Button, InputAdornment, Typography } from '@mui/material';
+import { Button, InputAdornment, TextField, Typography } from '@mui/material';
 import React from 'react';
 import { useState } from 'react';
 
 import { getServerConfig, setServerConfig } from '../../API/getsetAPI';
-import InputField from '../InputField';
 
 const ServerSettings = () => {
 
@@ -46,7 +45,7 @@ const ServerSettings = () => {
                             Web Address:
                         </Typography>
 
-                        <InputField
+                        <TextField
                             defaultValue={webAddress}
                             placeholder={'modns'}
                             inputProps={{style: { textAlign: 'right', paddingRight: 0, }}}
@@ -74,7 +73,7 @@ const ServerSettings = () => {
                             Static IP:
                         </Typography>
 
-                        <InputField
+                        <TextField
                             onFocus={ (e) => e.target.select() }
                             defaultValue={staticIP}
                             inputProps={{style: { textAlign: 'right', paddingRight: 0, }}}

@@ -9,15 +9,15 @@ import defaultPluginLogo from '../images/default_plugin_logo.svg';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 
-const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interceptPosition, pluginState, togglePlugin, dragNDrop, index, dragStart, dragEnter, dragDrop }) => {
+const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interceptPosition, numInterceptors, pluginState, togglePlugin, dragNDrop, index, dragStart, dragEnter, dragDrop, rowList, setRowLists, }) => {
     const [dialogOpen, setDialogStatus] = useState(false);
     
 
     return (
         <TableRow
             draggable={dragNDrop}
-            onDragStart={ (e) => dragStart(e, index) }
-            onDragEnter={ (e) => dragEnter(e, index) }
+            onDragStart={ () => dragStart(index) }
+            onDragEnter={ () => dragEnter(index) }
             onDragEnd={ dragNDrop ? dragDrop : null }
         >
             { dragNDrop && 
@@ -69,7 +69,7 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interc
                     control={
                         <Switch 
                             checked={pluginState}
-                            onChange={() => togglePlugin(uuid)}         // toggles the plugin with this uuid
+                            onChange={() => togglePlugin(uuid, modules[0])}         // toggles the plugin with this uuid
                         />
                     } 
                     sx={{ marginRight: 0, marginY: 'auto', marginLeft: 1 }}
@@ -89,6 +89,11 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interc
                 
                 togglePlugin={togglePlugin}                             // pass the toggle plugin function to the settings dialog box
                 pluginState={pluginState}                               // pass the plugin state to the dialog box
+
+                rowList={rowList}                                       // order of rows
+                setRowLists={setRowLists}                                 // set order of rows
+
+                numInterceptors={numInterceptors}
             />
 
         </TableRow>

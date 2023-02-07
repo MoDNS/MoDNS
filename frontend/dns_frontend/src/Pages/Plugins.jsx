@@ -23,34 +23,42 @@ const Plugins = () => {
     }
     
 
-    // gets plugin lists from api
-    const pluginList = getPluginList();
-    const listenerList = getPluginList('listener');
-    const interceptorList = getPluginList('interceptor');
-    const resolverList = getPluginList('resolver');
-    const validatorList = getPluginList('validator');
-    const inspectorList = getPluginList('inspector');
-    
 
     ///////////////// Plugin Lists /////////////////
     
     const [rowLists, setRowList] = useState({
-        'listener': listenerList,
-        'interceptor': interceptorList,
-        'resolver': resolverList,
-        'validator': validatorList,
-        'inspector': inspectorList,
+        'all' : getPluginList(),
+        'listener': getPluginList('listener'),
+        'interceptor': getPluginList('interceptor'),
+        'resolver': getPluginList('resolver'),
+        'validator': getPluginList('validator'),
+        'inspector': getPluginList('inspector'),
     });
 
-    const setRowLists = (listType, newList) => {
+    let interceptorOrderDict = {}
+    for (let i = 0; i < rowLists['interceptor'].length; i++) {
+        interceptorOrderDict[rowLists['interceptor'][i].uuid] = i + 1
+    }
+
+
+    const setRowLists = (listType, old_pos, new_pos) => {
+        let rowListCopy = [...rowLists[listType]];
+
+        const itemCopy = rowListCopy[old_pos]
+        rowListCopy.splice(old_pos, 1);
+        rowListCopy.splice(new_pos, 0, itemCopy);
+
         let rowListDict = rowLists;
-        rowListDict[listType] = newList;
+        rowListDict[listType] = rowListCopy;
         let uuidList = [];
         setRowList({...rowListDict});
-        newList.forEach(plugin => {
-            uuidList.push(plugin.uuid);
-        });
+        for (let i = 0; i < rowListCopy.length; i++) {
+            uuidList.push(rowListCopy[i].uuid);
+        }
         setPluginOrder(uuidList);
+        for (let i = 0; i < uuidList.length; i++) {
+            interceptorOrderDict[uuidList[i]] = i + 1;
+        }
 
     };
 
@@ -59,7 +67,7 @@ const Plugins = () => {
     // pulls out the status of each plugin installed
     // make dictionary of plugins enabled/disabled statuses
     let pluginStatesDict = {}
-    pluginList.forEach((plugin) => {
+    rowLists['all'].forEach((plugin) => {
         pluginStatesDict[plugin.uuid] = plugin.enabled;
     });
 
@@ -114,8 +122,6 @@ const Plugins = () => {
 
     
 
-
-
     return (
         <MainBox
             title={"Plugins"}
@@ -151,25 +157,36 @@ const Plugins = () => {
                     <SequentialView 
                         togglePlugin={checkOthersEnabled}             // toggle plugin function passed down
                         pluginStates={pluginStates}                   // plugin state dictionary based on uuids
+                        onlyOneEnabledDict={onlyOneEnabledDict}
                         // lists of plugins that imlement each module
-                        listenerList={listenerList} 
-                        interceptorList={interceptorList} 
-                        resolverList={resolverList} 
-                        validatorList={validatorList} 
-                        inspectorList={inspectorList} 
+                        listenerList={rowLists['listener']} 
+                        interceptorList={rowLists['interceptor']} 
+                        resolverList={rowLists['resolver']} 
+                        validatorList={rowLists['validator']} 
+                        inspectorList={rowLists['inspector']} 
                         // drag and drop
                         rowLists={rowLists}
                         setRowLists={setRowLists}
-                        onlyOneEnabledDict={onlyOneEnabledDict}
+                        numInterceptors={rowLists['interceptor'].length}
+
+                        interceptorOrderDict={interceptorOrderDict}
+
                     /> 
                     : 
                     <Overview 
                         togglePlugin={checkOthersEnabled}             // toggle plugin function passed down
                         pluginStates={pluginStates}                   // plugin state dictionary based on uuids
 
-                        pluginList={pluginList}                 // list of all plugins
-                        checkOthersEnabled={checkOthersEnabled}
+                        pluginList={rowLists['all']}                 // list of all plugins
                         onlyOneEnabledDict={onlyOneEnabledDict}
+                        
+                        rowLists={rowLists}
+                        setRowLists={setRowLists}
+                        numInterceptors={rowLists['interceptor'].length}
+
+                        interceptorOrderDict={interceptorOrderDict}
+
+
                     />
             }
 

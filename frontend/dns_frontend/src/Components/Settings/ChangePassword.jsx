@@ -1,6 +1,5 @@
-import { Typography, Button } from "@mui/material";
+import { Typography, Button, TextField } from "@mui/material";
 import React from "react";
-import InputField from "../InputField";
 
 const ChangePassword = () => {
   return (
@@ -21,16 +20,16 @@ const ChangePassword = () => {
         }}
       >
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <InputField 
+          <TextField 
             placeholder="Enter Password" 
             label="Old Password" 
           />
-          <InputField
+          <TextField
             placeholder="Enter New Password"
             label="New Password"
             sx={{ marginTop: 5 }}
           />
-          <InputField 
+          <TextField 
             placeholder="Confirm New Password" 
             label="Confirm Password" 
           />

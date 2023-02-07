@@ -136,6 +136,12 @@ const themeOne = createTheme({
       },
     },
     MuiTextField: {
+      defaultProps: {
+        variant: 'standard',
+        margin: 'dense',
+        size: 'small',
+        color: 'text',
+      },
       styleOverrides: {
         root: {
           "input::-ms-reveal": {
@@ -263,13 +269,6 @@ const themeOne = createTheme({
           },
         },
       },
-    },
-  },
-  props: {
-    MuiTextField: {
-      margin: 'dense',
-      size: 'small',
-      color: 'text',
     },
   },
   spacing: 8,
@@ -440,6 +439,12 @@ const themeTwo = createTheme({
       },
     },
     MuiTextField:{
+      defaultProps: {
+        variant: 'standard',
+        margin: 'dense',
+        size: 'small',
+        color: 'text',
+      },
       styleOverrides: {
         root: {
           "input::-ms-reveal": {
@@ -527,13 +532,6 @@ const themeTwo = createTheme({
           },
         },
       },
-    },
-  },
-  props: {
-    MuiTextField: {
-      margin: 'dense',
-      size: 'small',
-      color: 'text',
     },
   },
   spacing: 8,

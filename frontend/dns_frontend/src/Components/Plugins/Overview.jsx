@@ -1,8 +1,11 @@
 import React from 'react';
 import PluginOverview from '../PluginOverview';
 
-const Overview = ({ togglePlugin, pluginStates, pluginList }) => {
+const Overview = ({ togglePlugin, pluginStates, pluginList, numInterceptors, rowLists, setRowLists, interceptorOrderDict }) => {
 
+    // const enablePluginMidCheck = (uuid) => {
+    //     togglePlugin(uuid, listType);
+    //   }
 
     return (
         <div 
@@ -25,10 +28,14 @@ const Overview = ({ togglePlugin, pluginStates, pluginList }) => {
                             description={plugin.description} 
                             home={plugin.home} 
                             modules={plugin.modules} 
-                            interceptPosition={plugin.interceptPosition} 
+                            interceptPosition={ interceptorOrderDict[plugin.uuid] } 
 
                             pluginState={pluginStates[plugin.uuid]}         // plugin state dict decoded into state for this individual plugin
-                            togglePlugin={togglePlugin}                     // toggle plugin function passed down
+                            togglePlugin={togglePlugin}
+
+                            numInterceptors={numInterceptors}
+                            rowLists={rowLists}
+                            setRowLists={setRowLists}
                         />
                     )
                 })
