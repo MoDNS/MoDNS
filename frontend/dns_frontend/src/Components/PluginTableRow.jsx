@@ -9,10 +9,9 @@ import defaultPluginLogo from '../images/default_plugin_logo.svg';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 
-const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interceptPosition, numInterceptors, pluginState, togglePlugin, dragNDrop, index, dragStart, dragEnter, dragDrop, rowList, setRowLists, }) => {
+const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interceptPosition, numInterceptors, pluginState, togglePlugin, dragNDrop, index, dragStart, dragEnter, dragDrop, pluginList, setPluginLists, }) => {
     const [dialogOpen, setDialogStatus] = useState(false);
     
-
     return (
         <TableRow
             draggable={dragNDrop}
@@ -90,8 +89,8 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interc
                 togglePlugin={togglePlugin}                             // pass the toggle plugin function to the settings dialog box
                 pluginState={pluginState}                               // pass the plugin state to the dialog box
 
-                rowList={rowList}                                       // order of rows
-                setRowLists={setRowLists}                                 // set order of rows
+                pluginList={pluginList}                                       // order of rows
+                setPluginLists={setPluginLists}                                 // set order of rows
 
                 numInterceptors={numInterceptors}
             />
@@ -110,4 +109,13 @@ PluginTableRow.propTypes = {
     modules: PropTypes.array.isRequired,
     interceptPosition: PropTypes.number,
     pluginState: PropTypes.bool.isRequired,
+    togglePlugin: PropTypes.func.isRequired,
+    dragNDrop: PropTypes.bool.isRequired, 
+    index: PropTypes.number.isRequired, 
+    dragStart: PropTypes.func.isRequired, 
+    dragEnter: PropTypes.func.isRequired, 
+    dragDrop:PropTypes.func.isRequired, 
+    pluginList: PropTypes.array.isRequired, 
+    setPluginLists: PropTypes.func.isRequired,
+    
 };

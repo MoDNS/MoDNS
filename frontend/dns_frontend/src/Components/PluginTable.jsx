@@ -3,7 +3,7 @@ import PluginTableRow from './PluginTableRow';
 import { PropTypes } from 'prop-types';
 import { useRef } from 'react';
 
-const PluginTable = ({ pluginStates, dragNDrop, rowList, setRowLists, listType, togglePlugin, numInterceptors, interceptorOrderDict }) => {
+const PluginTable = ({ pluginStates, dragNDrop, pluginList, setPluginLists, listType, togglePlugin, numInterceptors, interceptorOrderDict }) => {
 
     const dragItem = useRef();
     const dragOverItem = useRef();
@@ -17,7 +17,7 @@ const PluginTable = ({ pluginStates, dragNDrop, rowList, setRowLists, listType, 
       };
     
       const dragDrop = () => {
-        setRowLists(listType, dragItem.current, dragOverItem.current);
+        setPluginLists(listType, dragItem.current, dragOverItem.current);
       };
 
     return (
@@ -26,12 +26,12 @@ const PluginTable = ({ pluginStates, dragNDrop, rowList, setRowLists, listType, 
                 <Table >
                     <TableBody >
                         {
-                            rowList && rowList.map((plugin, index) => (
+                            pluginList && pluginList.map((plugin, index) => (
                                 <PluginTableRow 
                                     key={index} 
                                     // plugin elements
                                     uuid={plugin.uuid} 
-                                    friendlyName={plugin.friendlyName} 
+                                    friendlyName={plugin.friendly_name} 
                                     description={plugin.description} 
                                     home={plugin.home} 
                                     modules={plugin.modules} 
@@ -46,8 +46,8 @@ const PluginTable = ({ pluginStates, dragNDrop, rowList, setRowLists, listType, 
                                     dragEnter={dragEnter}
                                     dragDrop={dragDrop}
 
-                                    rowList={rowList}
-                                    setRowLists={setRowLists}
+                                    pluginList={pluginList}
+                                    setPluginLists={setPluginLists}
 
                                     numInterceptors={numInterceptors}
                                 />

@@ -9,7 +9,7 @@ import SettingsDialog from './SettingsDialog';
 
 import defaultPluginLogo from '../images/default_plugin_logo.svg';
 
-const PluginOverview = ({ uuid, friendlyName, description, home, modules, interceptPosition, pluginState, togglePlugin, numInterceptors, rowLists, setRowLists, intereptOrderDict }) => {
+const PluginOverview = ({ uuid, friendlyName, description, home, modules, interceptPosition, pluginState, togglePlugin, numInterceptors, pluginLists, setPluginLists, intereptOrderDict }) => {
 
     const theme = useTheme();
 
@@ -116,8 +116,8 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
                 pluginState={pluginState}                           // pass the plugin state to the dialog box
 
                 numInterceptors={numInterceptors}
-                rowLists={rowLists}                                       // order of rows
-                setRowLists={setRowLists}                                 // set order of rows
+                pluginLists={pluginLists}                                       // order of rows
+                setPluginLists={setPluginLists}                                 // set order of rows
 
                 intereptOrderDict={intereptOrderDict}
                 

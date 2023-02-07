@@ -3,14 +3,14 @@ import React, { useState } from 'react';
 import { PropTypes } from 'prop-types';
 import CloseIcon from '@mui/icons-material/Close';
 
-const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interceptPosition, dialogOpen, setDialogStatus, pluginState, togglePlugin, numInterceptors, rowList, rowLists, setRowLists, interceptOrderDict }) => {
+const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interceptPosition, dialogOpen, setDialogStatus, pluginState, togglePlugin, numInterceptors, setPluginLists, interceptOrderDict }) => {
     const theme = useTheme();
 
     const [interceptPosState, setInterceptPositionState] = useState(interceptPosition);
 
     const applyInterceptPosition = (e) => {
         if (interceptPosState) {
-            setRowLists('interceptor', interceptPosition - 1, interceptPosState - 1);
+            setPluginLists('interceptor', interceptPosition - 1, interceptPosState - 1);
             setDialogStatus(false);
         }
     }
