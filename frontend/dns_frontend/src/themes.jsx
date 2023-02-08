@@ -150,7 +150,7 @@ const themeOne = createTheme({
           "input::-ms-clear": {
             display: 'none',
           },
-        }
+        },
       }
     },
     MuiTypography: {

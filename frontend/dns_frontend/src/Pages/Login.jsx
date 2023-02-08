@@ -7,6 +7,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Visibility from '@mui/icons-material/Visibility';
 import { PropTypes } from 'prop-types';
 import MainBox from '../Components/MainBox';
+import { getAuthentication } from '../API/getsetAPI';
 
 
 const Login = ({ setLoggedIn }) => {
@@ -19,9 +20,11 @@ const Login = ({ setLoggedIn }) => {
     function handleSubmit(e) {
         e.preventDefault();
 
-        if(password){
+        if(getAuthentication(password)){
             setLoggedIn(true);
             navigate('/manage/dashboard');
+        } else {
+            alert("Incorrect Password");
         }
         
     }

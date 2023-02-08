@@ -23,7 +23,6 @@ const Plugins = () => {
     }
     
     ////////////////////// Plugin Lists //////////////////////
-    
     const [pluginLists, setPluginList] = useState({
         'all' : getPluginList(),
         'listener': getPluginList('listener'),

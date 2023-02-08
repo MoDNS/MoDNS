@@ -113,7 +113,7 @@ PluginTableRow.propTypes = {
     dragStart: PropTypes.func.isRequired,               // function called when dragging is start
     dragEnter: PropTypes.func.isRequired,               // function called when dragging over a drop area
     dragDrop:PropTypes.func.isRequired,                 // function called when dropping a dragged item
-    setPluginLists: PropTypes.func.isRequired,
+    setPluginLists: PropTypes.func.isRequired,          // function to set order of rows on table
     
 };
 

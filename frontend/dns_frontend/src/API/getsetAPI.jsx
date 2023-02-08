@@ -5,19 +5,33 @@
 
 /////////////////////////////// SERVER MANAGE ///////////////////////////////
 export const setServerConfig = (key, value) => {
-    
+    console.log(key, value);
 }
 
 export const getServerConfig = (key) => {
-    return null;
+    if (key === 'static_ip') {
+        return "192.168.0.101";
+    }
+    if (key === 'use_static_ip') {
+        return true;
+    }
 }
 
 export const restartServer = () => {
-
+    
 }
 
 export const shutdownServer = () => {
 
+}
+
+export const getAuthentication = (password) => {
+    return true;
+}
+
+export const setNewPassword = (oldPass, newPass) => {
+    // api call for authentication of old pass
+    return true;
 }
 
 /////////////////////////////// MODS MANAGE ////////////////////////////////
