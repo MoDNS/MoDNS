@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { PropTypes } from 'prop-types';
 import CloseIcon from '@mui/icons-material/Close';
 
-const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interceptPosition, dialogOpen, setDialogStatus, pluginState, togglePlugin, numInterceptors, setPluginLists, interceptOrderDict }) => {
+const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interceptPosition, numInterceptors, dialogOpen, setDialogStatus, togglePlugin, pluginState, setPluginLists }) => {
     const theme = useTheme();
 
     const [interceptPosState, setInterceptPositionState] = useState(interceptPosition);
@@ -118,13 +118,16 @@ export default SettingsDialog;
 
 
 SettingsDialog.propTypes = {
-    uuid: PropTypes.string.isRequired,
-    friendlyName: PropTypes.string.isRequired,
-    description: PropTypes.string.isRequired,
-    home: PropTypes.string.isRequired,
-    modules: PropTypes.array.isRequired,
-    interceptPosition: PropTypes.number,
-    pluginState: PropTypes.bool.isRequired,
-    dialogOpen: PropTypes.bool.isRequired,
-    setDialogStatus: PropTypes.func.isRequired,
+    uuid: PropTypes.string.isRequired,                  // plugin attributes
+    friendlyName: PropTypes.string.isRequired,          //
+    description: PropTypes.string.isRequired,           //
+    home: PropTypes.string.isRequired,                  //
+    modules: PropTypes.array.isRequired,                //
+    interceptPosition: PropTypes.number,                //
+    numInterceptors: PropTypes.number,                  // total number of interceptor plugins installed
+    dialogOpen: PropTypes.bool.isRequired,              // dialog open/close status
+    setDialogStatus: PropTypes.func.isRequired,         // open/close dialog
+    togglePlugin: PropTypes.func.isRequired,            // function to enable / disable a plugin
+    pluginState: PropTypes.bool.isRequired,             // enabled / disabled state of plugin
+    setPluginLists: PropTypes.func.isRequired,          // reorder plugins that allow drag n drop
 };

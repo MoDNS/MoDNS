@@ -14,9 +14,9 @@ import { getThemeStorage } from './scripts/getsetLocalStorage';
 import themes from './themes';
 
 const App = () => {
+  // user logged in status
   const [isLoggedIn, setLoggedIn] = useState(false);
-  
-  
+  // theming state
   const [theme, setTheme] = useState(getThemeStorage());
 
   return (
@@ -28,10 +28,10 @@ const App = () => {
             
             <Routes>
               <Route path='/manage' element={<Login setLoggedIn={setLoggedIn} />}/>
-              <Route exact path = '/manage/dashboard' element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Dashboard/> } /> } />
-              <Route exact path = '/manage/plugins'      element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Plugins/> } /> } />
+              <Route exact path = '/manage/dashboard' element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Dashboard /> } /> } /> 
+              <Route exact path = '/manage/plugins'   element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Plugins /> } /> } />
               <Route exact path = '/manage/settings'  element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Settings setTheme={setTheme} /> } /> } />
-              <Route exact path = '/manage/about'     element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <About/> } /> } />
+              <Route exact path = '/manage/about'     element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <About /> } /> } />
 
               <Route path='/*' element={ <Navigate to={isLoggedIn ? '/manage/dashboard' : '/manage'} /> } />
               

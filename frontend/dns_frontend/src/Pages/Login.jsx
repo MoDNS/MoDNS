@@ -5,11 +5,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Visibility from '@mui/icons-material/Visibility';
-
+import { PropTypes } from 'prop-types';
 import MainBox from '../Components/MainBox';
 
 
-const Login = ({setLoggedIn}) => {
+const Login = ({ setLoggedIn }) => {
     const theme = useTheme();
     const navigate = useNavigate();
 
@@ -20,7 +20,6 @@ const Login = ({setLoggedIn}) => {
         e.preventDefault();
 
         if(password){
-            console.log(password);
             setLoggedIn(true);
             navigate('/manage/dashboard');
         }
@@ -109,3 +108,7 @@ const Login = ({setLoggedIn}) => {
 };
 
 export default Login;
+
+Login.propTypes = {
+    setLoggedIn: PropTypes.func.isRequired,     // sets the logged in status to true if login successful
+};

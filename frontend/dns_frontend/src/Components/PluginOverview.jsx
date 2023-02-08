@@ -9,7 +9,7 @@ import SettingsDialog from './SettingsDialog';
 
 import defaultPluginLogo from '../images/default_plugin_logo.svg';
 
-const PluginOverview = ({ uuid, friendlyName, description, home, modules, interceptPosition, pluginState, togglePlugin, numInterceptors, pluginLists, setPluginLists, intereptOrderDict }) => {
+const PluginOverview = ({ uuid, friendlyName, description, home, modules, interceptPosition, numInterceptors, pluginState, togglePlugin, setPluginLists }) => {
 
     const theme = useTheme();
 
@@ -101,26 +101,18 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
 
 
             <SettingsDialog
-                // plugin info
                 uuid={uuid}
                 friendlyName={friendlyName}
                 description={description}
                 home={home}
                 modules={modules}
                 interceptPosition={interceptPosition}
-                // pass dialog open controls and status to dialog
+                numInterceptors={numInterceptors}
                 dialogOpen={dialogOpen}
                 setDialogStatus={setDialogStatus}
-                
                 togglePlugin={togglePlugin}                         // pass the toggle plugin function to the settings dialog box
                 pluginState={pluginState}                           // pass the plugin state to the dialog box
-
-                numInterceptors={numInterceptors}
-                pluginLists={pluginLists}                                       // order of rows
-                setPluginLists={setPluginLists}                                 // set order of rows
-
-                intereptOrderDict={intereptOrderDict}
-                
+                setPluginLists={setPluginLists}                     // set order of rows
             />
         </Box>
     );
@@ -129,12 +121,14 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
 export default PluginOverview;
 
 PluginOverview.propTypes = {
-    uuid: PropTypes.string.isRequired,
-    friendlyName: PropTypes.string.isRequired,
-    description: PropTypes.string.isRequired,
-    home: PropTypes.string.isRequired,
-    modules: PropTypes.array.isRequired,
-    interceptPosition: PropTypes.number,
-    pluginState: PropTypes.bool.isRequired,
-    togglePlugin: PropTypes.func.isRequired,
+    uuid: PropTypes.string.isRequired,                  // plugin attributes
+    friendlyName: PropTypes.string.isRequired,          //
+    description: PropTypes.string.isRequired,           //
+    home: PropTypes.string.isRequired,                  //
+    modules: PropTypes.array.isRequired,                //
+    interceptPosition: PropTypes.number,                //
+    numInterceptors: PropTypes.number.isRequired,       // total number of interceptor plugins installed
+    togglePlugin: PropTypes.func.isRequired,            // function to enable / disable a plugin
+    pluginState: PropTypes.bool.isRequired,             // enabled / disabled state of plugin
+    setPluginLists: PropTypes.func.isRequired,          // reorder plugins that allow drag n drop
 };

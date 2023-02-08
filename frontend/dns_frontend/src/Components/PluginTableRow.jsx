@@ -9,7 +9,7 @@ import defaultPluginLogo from '../images/default_plugin_logo.svg';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 
-const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interceptPosition, numInterceptors, pluginState, togglePlugin, dragNDrop, index, dragStart, dragEnter, dragDrop, pluginList, setPluginLists, }) => {
+const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interceptPosition, numInterceptors, pluginState, togglePlugin, dragNDrop, index, dragStart, dragEnter, dragDrop, setPluginLists, }) => {
     const [dialogOpen, setDialogStatus] = useState(false);
     
     return (
@@ -82,17 +82,14 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interc
                 home={home}
                 modules={modules}
                 interceptPosition={interceptPosition}
+                numInterceptors={numInterceptors}
                 // pass dialog open controls and status to dialog
                 dialogOpen={dialogOpen}
                 setDialogStatus={setDialogStatus}
-                
                 togglePlugin={togglePlugin}                             // pass the toggle plugin function to the settings dialog box
                 pluginState={pluginState}                               // pass the plugin state to the dialog box
-
-                pluginList={pluginList}                                       // order of rows
                 setPluginLists={setPluginLists}                                 // set order of rows
 
-                numInterceptors={numInterceptors}
             />
 
         </TableRow>
@@ -102,20 +99,24 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interc
 export default PluginTableRow;
 
 PluginTableRow.propTypes = {
-    uuid: PropTypes.string.isRequired,
-    friendlyName: PropTypes.string.isRequired,
-    description: PropTypes.string.isRequired,
-    home: PropTypes.string.isRequired,
-    modules: PropTypes.array.isRequired,
-    interceptPosition: PropTypes.number,
-    pluginState: PropTypes.bool.isRequired,
-    togglePlugin: PropTypes.func.isRequired,
-    dragNDrop: PropTypes.bool.isRequired, 
-    index: PropTypes.number.isRequired, 
-    dragStart: PropTypes.func.isRequired, 
-    dragEnter: PropTypes.func.isRequired, 
-    dragDrop:PropTypes.func.isRequired, 
-    pluginList: PropTypes.array.isRequired, 
+    uuid: PropTypes.string.isRequired,                  // plugin attributes
+    friendlyName: PropTypes.string.isRequired,          //
+    description: PropTypes.string.isRequired,           //
+    home: PropTypes.string.isRequired,                  //
+    modules: PropTypes.array.isRequired,                //
+    interceptPosition: PropTypes.number,                //
+    numInterceptors: PropTypes.number,                  // total number of interceptor plugins installed
+    pluginState: PropTypes.bool.isRequired,             // enabled / disabled state of plugin
+    togglePlugin: PropTypes.func.isRequired,            // function to enable / disable a plugin
+    dragNDrop: PropTypes.bool,                          // if table should implement Drag and Drop Features
+    index: PropTypes.number.isRequired,                 // current index of row in table
+    dragStart: PropTypes.func.isRequired,               // function called when dragging is start
+    dragEnter: PropTypes.func.isRequired,               // function called when dragging over a drop area
+    dragDrop:PropTypes.func.isRequired,                 // function called when dropping a dragged item
     setPluginLists: PropTypes.func.isRequired,
     
+};
+
+PluginTableRow.defaultProps = {
+    dragNDrop: false,
 };

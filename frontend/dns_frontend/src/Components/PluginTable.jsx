@@ -3,7 +3,7 @@ import PluginTableRow from './PluginTableRow';
 import { PropTypes } from 'prop-types';
 import { useRef } from 'react';
 
-const PluginTable = ({ pluginStates, dragNDrop, pluginList, setPluginLists, listType, togglePlugin, numInterceptors, interceptorOrderDict }) => {
+const PluginTable = ({ pluginStates, togglePlugin, dragNDrop, pluginList, setPluginLists, listType, numInterceptors, interceptorOrderDict }) => {
 
     const dragItem = useRef();
     const dragOverItem = useRef();
@@ -36,6 +36,7 @@ const PluginTable = ({ pluginStates, dragNDrop, pluginList, setPluginLists, list
                                     home={plugin.home} 
                                     modules={plugin.modules} 
                                     interceptPosition={ plugin.uuid in interceptorOrderDict ? interceptorOrderDict[plugin.uuid] : null}
+                                    numInterceptors={numInterceptors}
                                     
                                     pluginState={pluginStates[plugin.uuid]}         // plugin state dict decoded into state for this individual plugin
                                     togglePlugin={togglePlugin}                     // toggle plugin function passed down
@@ -46,10 +47,8 @@ const PluginTable = ({ pluginStates, dragNDrop, pluginList, setPluginLists, list
                                     dragEnter={dragEnter}
                                     dragDrop={dragDrop}
 
-                                    pluginList={pluginList}
                                     setPluginLists={setPluginLists}
 
-                                    numInterceptors={numInterceptors}
                                 />
                             ))
                         }
@@ -66,13 +65,16 @@ export default PluginTable;
 
 
 PluginTable.propTypes = {
-    pluginList: PropTypes.array,
-    dragNDrop: PropTypes.bool,
-    onlyOneEnabled: PropTypes.bool,
+    pluginStates: PropTypes.object.isRequired,          // enabled / disabled state of plugin
+    togglePlugin: PropTypes.func.isRequired,            // function to enable / disable a plugin
+    dragNDrop: PropTypes.bool,                          // if table should implement Drag and Drop Features
+    pluginList: PropTypes.array.isRequired,             // list of plugins to display
+    setPluginLists: PropTypes.func.isRequired,          // function to change the order displayed in the table
+    listType: PropTypes.string.isRequired,              // what type of modules are in this table
+    numInterceptors: PropTypes.number,                  // total number of interceptor plugins installed
+    interceptorOrderDict: PropTypes.object.isRequired,  // dictionary of intercept order based on uuid
 };
 
 PluginTable.defaultProps = {
-    pluginList: [],
-    dragNDrop: false,
-    onlyOneEnabled: false,
+    dragNDrop: false,                                   // table allows drag n drop or not, default no
 };

@@ -157,33 +157,20 @@ const Plugins = () => {
                     <SequentialView 
                         togglePlugin={checkOthersEnabled}             // toggle plugin function passed down
                         pluginStates={pluginStates}                   // plugin state dictionary based on uuids
-                        onlyOneEnabledDict={onlyOneEnabledDict}
                         // lists of plugins that imlement each module
-                        listenerList={pluginLists['listener']} 
-                        interceptorList={pluginLists['interceptor']} 
-                        resolverList={pluginLists['resolver']} 
-                        validatorList={pluginLists['validator']} 
-                        inspectorList={pluginLists['inspector']} 
-                        // drag and drop
                         pluginLists={pluginLists}
                         setPluginLists={setPluginLists}
                         numInterceptors={pluginLists['interceptor'].length}
-
                         interceptorOrderDict={interceptorOrderDict}
 
                     /> 
                     : 
                     <Overview 
-                        togglePlugin={checkOthersEnabled}             // toggle plugin function passed down
-                        pluginStates={pluginStates}                   // plugin state dictionary based on uuids
-
-                        pluginList={pluginLists['all']}                 // list of all plugins
-                        onlyOneEnabledDict={onlyOneEnabledDict}
-                        
-                        pluginLists={pluginLists}
-                        setPluginLists={setPluginLists}
+                        togglePlugin={checkOthersEnabled}               // toggle plugin function passed down
+                        pluginStates={pluginStates}                     // plugin state dictionary based on uuids
                         numInterceptors={pluginLists['interceptor'].length}
-
+                        pluginList={pluginLists['all']}                 // list of all plugins                        
+                        setPluginLists={setPluginLists}
                         interceptorOrderDict={interceptorOrderDict}
 
                     />

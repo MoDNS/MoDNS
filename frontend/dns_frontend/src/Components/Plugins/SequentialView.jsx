@@ -61,13 +61,10 @@ const SequentialView = ({ togglePlugin, pluginStates, pluginLists, setPluginList
                     <PluginTable 
                         togglePlugin={togglePlugin}         // toggle plugin function passed down
                         pluginStates={pluginStates}         // plugin state dict passed down
-
                         pluginList={pluginLists['listener']}
                         setPluginLists={setPluginLists}
                         listType={'listener'}
-
                         numInterceptors={numInterceptors}
-
                         interceptorOrderDict={interceptorOrderDict}
                     />
                 </DropDown>
@@ -80,16 +77,13 @@ const SequentialView = ({ togglePlugin, pluginStates, pluginLists, setPluginList
                     description={"Immediately Respond to or Drop Queries"} 
                 >
                     <PluginTable 
-                        togglePlugin={togglePlugin}         // toggle plugin function passed down
                         pluginStates={pluginStates}         // plugin state dict passed down
+                        togglePlugin={togglePlugin}         // toggle plugin function passed down
                         dragNDrop                           // enables drag and drop rows
                         pluginList={pluginLists['interceptor']}
-
                         setPluginLists={setPluginLists}
                         listType={'interceptor'}
-
                         numInterceptors={numInterceptors}
-
                         interceptorOrderDict={interceptorOrderDict}
 
                     />
@@ -104,13 +98,10 @@ const SequentialView = ({ togglePlugin, pluginStates, pluginLists, setPluginList
                     <PluginTable 
                         togglePlugin={togglePlugin}         // toggle plugin function passed down
                         pluginStates={pluginStates}         // plugin states dict passed down
-
                         pluginList={pluginLists['resolver']}
                         setPluginLists={setPluginLists}
                         listType={'resolver'}
-
                         numInterceptors={numInterceptors}
-
                         interceptorOrderDict={interceptorOrderDict}
 
                     />
@@ -124,15 +115,12 @@ const SequentialView = ({ togglePlugin, pluginStates, pluginLists, setPluginList
                     description={"Validates the External DNS Responce"} 
                 >
                     <PluginTable 
-                        togglePlugin={togglePlugin}         // toggle plugin function passed down
                         pluginStates={pluginStates}         // plugin states dict passed down
-
+                        togglePlugin={togglePlugin}         // toggle plugin function passed down
                         pluginList={pluginLists['validator']}
                         setPluginLists={setPluginLists}
                         listType={'validator'}
-
                         numInterceptors={numInterceptors}
-
                         interceptorOrderDict={interceptorOrderDict}
 
                     />
@@ -146,15 +134,12 @@ const SequentialView = ({ togglePlugin, pluginStates, pluginLists, setPluginList
                     description={"Views the Outbound Query and Response"} 
                 >
                     <PluginTable 
-                        togglePlugin={togglePlugin}         // toggle plugin function passed down
                         pluginStates={pluginStates}         // plugin states dict passed down
-
+                        togglePlugin={togglePlugin}         // toggle plugin function passed down
                         pluginList={pluginLists['inspector']}
                         setPluginLists={setPluginLists}
                         listType={'inspector'}
-
                         numInterceptors={numInterceptors}
-
                         interceptorOrderDict={interceptorOrderDict}
 
                     />

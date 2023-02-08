@@ -506,6 +506,14 @@ const themeTwo = createTheme({
         }
       }
     },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          padding: 2,
+          paddingBottom: 0,
+        }
+      }
+    },
     MuiCssBaseline: {
       styleOverrides: {
         body: {
