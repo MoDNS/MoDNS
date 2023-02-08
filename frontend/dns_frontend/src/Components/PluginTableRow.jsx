@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PropTypes } from 'prop-types';
-import { FormControlLabel, IconButton, Switch, TableCell, TableRow, Typography } from '@mui/material';
+import { FormControlLabel, Icon, IconButton, Switch, TableCell, TableRow, Typography } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SettingsDialog from './SettingsDialog';
 
@@ -11,17 +11,26 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 const PluginTableRow = ({ uuid, friendlyName, description, home, modules, interceptPosition, numInterceptors, pluginState, togglePlugin, dragNDrop, index, dragStart, dragEnter, dragDrop, setPluginLists, }) => {
     const [dialogOpen, setDialogStatus] = useState(false);
+
+    const [drag, startDrag] = useState(false);
     
     return (
         <TableRow
-            draggable={dragNDrop}
-            onDragStart={ () => dragStart(index) }
-            onDragEnter={ () => dragEnter(index) }
+            draggable={drag}
+            onDragStart={ (e) => dragStart(e, index) }
+            onDragEnter={ (e) => dragEnter(e, index) }
             onDragEnd={ dragNDrop ? dragDrop : null }
+            onDragOver={ dragNDrop ? (e) => { e.preventDefault() } : null }
         >
             { dragNDrop && 
                 <TableCell width={30} >
-                    < DragIndicatorIcon />
+                    <Icon>
+                        <DragIndicatorIcon
+                            sx={{ ":hover": { cursor: 'move' } }} 
+                            onMouseDown={() => startDrag(true) }
+                            onMouseUp={ () => startDrag(false) }
+                        />
+                    </Icon>
                 </TableCell>
             }
             <TableCell

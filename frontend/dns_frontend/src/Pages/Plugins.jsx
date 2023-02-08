@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 
 import MainBox from '../Components/MainBox';
-import { ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useState } from 'react';
 import SequentialView from '../Components/Plugins/SequentialView';
 import Overview from '../Components/Plugins/Overview';
@@ -119,37 +119,45 @@ const Plugins = () => {
         togglePlugin(uuid);
       }
 
-    
+    const inputFile = useRef(null);
 
     return (
         <MainBox
             title={"Plugins"}
             divider
         >
-            <ToggleButtonGroup
-                sx={{ marginLeft: 'auto', width: 'fit' }}
-                value={view}
-                exclusive
-                onChange={handleViewSwitch}                     // handles the switching between sequential and overview
-            >
-                <ToggleButton
-                    value={'s'}
-                    sx={{ paddingY: 0.2 }}
+            <div style={{ display: 'flex'}}>
+                <input ref={inputFile} type='file' id='file' style={{ display: 'none' }} />
+                <Button 
+                    variant='contained'
+                    onClick={() => inputFile.current.click()}
                 >
-                    <Typography sx={{ color: 'text.primary' }}>
-                        Sequential
-                    </Typography>
-                </ToggleButton>
-                <ToggleButton 
-                    sx={{ paddingY: 0.2 }}
-                    value={'o'}
+                    Install
+                </Button>
+                <ToggleButtonGroup
+                    sx={{ marginLeft: 'auto', width: 'fit' }}
+                    value={view}
+                    exclusive
+                    onChange={handleViewSwitch}                     // handles the switching between sequential and overview
                 >
-                    <Typography sx={{ color: 'text.primary' }}>
-                        Overview
-                    </Typography>
-                </ToggleButton>
-            </ToggleButtonGroup>
-
+                    <ToggleButton
+                        value={'s'}
+                        sx={{ paddingY: 0.2 }}
+                    >
+                        <Typography sx={{ color: 'text.primary' }}>
+                            Sequential
+                        </Typography>
+                    </ToggleButton>
+                    <ToggleButton 
+                        sx={{ paddingY: 0.2 }}
+                        value={'o'}
+                    >
+                        <Typography sx={{ color: 'text.primary' }}>
+                            Overview
+                        </Typography>
+                    </ToggleButton>
+                </ToggleButtonGroup>
+            </div>
             { 
                 // shoes sequential or overview
                 view === 's' ? 

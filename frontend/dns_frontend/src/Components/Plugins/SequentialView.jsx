@@ -33,7 +33,7 @@ const SequentialView = ({ togglePlugin, pluginStates, pluginLists, setPluginList
     
     return (
         <>
-            <div>
+            <div style={{ marginTop: 10 }}>
                 <Button
                     variant='contained'
                     sx={{ marginRight: 2, }}

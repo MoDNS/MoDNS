@@ -1,6 +1,6 @@
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import TopBar from './Components/TopBar';
 import About from './Pages/About';
@@ -32,8 +32,6 @@ const App = () => {
               <Route exact path = '/manage/plugins'   element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Plugins /> } /> } />
               <Route exact path = '/manage/settings'  element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Settings setTheme={setTheme} /> } /> } />
               <Route exact path = '/manage/about'     element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <About /> } /> } />
-
-              <Route path='/*' element={ <Navigate to={isLoggedIn ? '/manage/dashboard' : '/manage'} /> } />
               
             </Routes>
           </BrowserRouter>

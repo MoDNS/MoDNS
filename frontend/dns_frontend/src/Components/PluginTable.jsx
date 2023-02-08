@@ -8,15 +8,18 @@ const PluginTable = ({ pluginStates, togglePlugin, dragNDrop, pluginList, setPlu
     const dragItem = useRef();
     const dragOverItem = useRef();
 
-    const dragStart = (position) => {
+    const dragStart = (event, position) => {
+        event.dataTransfer.effectAllowed = 'move';
         dragItem.current = position;
       };
     
-      const dragEnter = (position) => {
+      const dragEnter = (event, position) => {
+        event.preventDefault();
         dragOverItem.current = position;
       };
     
-      const dragDrop = () => {
+      const dragDrop = (event) => {
+        event.preventDefault();
         setPluginLists(listType, dragItem.current, dragOverItem.current);
       };
 
