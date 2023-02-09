@@ -5,20 +5,17 @@ import { Box } from '@mui/system';
 import { useTheme } from '@emotion/react';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useState } from 'react';
-import { enabledisableMod } from '../API/getsetAPI';
 import SettingsDialog from './SettingsDialog';
 
-const PluginOverview = ({ uuid, name, description, home, modules, interceptPosition, enabled }) => {
+import defaultPluginLogo from '../images/default_plugin_logo.svg';
+
+const PluginOverview = ({ uuid, friendlyName, description, home, modules, interceptPosition, numInterceptors, pluginState, togglePlugin, setPluginLists }) => {
 
     const theme = useTheme();
-    const [modEnabled, setModEnabled] = useState(enabled);
+
     const [dialogOpen, setDialogStatus] = useState(false);
 
-    const handleModSwitch = () => {
-        enabledisableMod(uuid, !modEnabled);
-        setModEnabled(!modEnabled);
-    }
-
+    // creates list of modules for plugin to display
     const listModules = () => {
         let output = "";
         const num = modules.length;
@@ -31,7 +28,6 @@ const PluginOverview = ({ uuid, name, description, home, modules, interceptPosit
         }
         return output;
     }
-
 
     return (
         <Box
@@ -47,16 +43,18 @@ const PluginOverview = ({ uuid, name, description, home, modules, interceptPosit
                 marginRight: 2,
             }}
         >
-            <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }} >
+            <img src={defaultPluginLogo} alt="No Logo Found" width={65} height={65} style={{ margin: 10, marginLeft: 0 }}/>         { /* dummy logo */ }
+            
+            <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1}} >
                 <div style={{ display: 'flex', flexDirection: 'row'}} >
                     <Typography
                         sx={{ fontSize: 35, flexShrink: 0, }}
                     >
-                        {name}
+                        {friendlyName}
                     </Typography>
                     <Typography
                         noWrap={false}
-                        sx={{ marginTop: 'auto', marginBottom: 'auto', textAlign: 'right', flexGrow: 1, padding: 1, }}
+                        sx={{ marginTop: 'auto', marginBottom: 'auto', padding: 1, width: '50%', marginLeft: 'auto' }}
                     >
                         {description}
                     </Typography>
@@ -77,7 +75,7 @@ const PluginOverview = ({ uuid, name, description, home, modules, interceptPosit
                 </div>
             </div>
             <IconButton
-                sx={{ marginLeft: 1, }}
+                sx={{ marginLeft: 1, marginY: 'auto' }}
                 onClick={() => setDialogStatus(true)}
             >
                 <SettingsIcon 
@@ -93,8 +91,8 @@ const PluginOverview = ({ uuid, name, description, home, modules, interceptPosit
             <FormControlLabel 
                 control={
                     <Switch 
-                        checked={modEnabled}
-                        onChange={handleModSwitch}
+                        checked={pluginState}
+                        onChange={() => togglePlugin(uuid, modules[0])}         // toggles the plugin with this uuid
                     />
                 } 
                 sx={{ marginRight: 0, marginY: 'auto',marginLeft: 1 }}
@@ -104,15 +102,18 @@ const PluginOverview = ({ uuid, name, description, home, modules, interceptPosit
 
             <SettingsDialog
                 uuid={uuid}
-                name={name}
+                friendlyName={friendlyName}
                 description={description}
                 home={home}
                 modules={modules}
+                interceptPosition={interceptPosition}
+                numInterceptors={numInterceptors}
                 dialogOpen={dialogOpen}
                 setDialogStatus={setDialogStatus}
-                handleModSwitch={handleModSwitch}
-                modEnabled={modEnabled}
-                 />
+                togglePlugin={togglePlugin}                         // pass the toggle plugin function to the settings dialog box
+                pluginState={pluginState}                           // pass the plugin state to the dialog box
+                setPluginLists={setPluginLists}                     // set order of rows
+            />
         </Box>
     );
 };
@@ -120,11 +121,14 @@ const PluginOverview = ({ uuid, name, description, home, modules, interceptPosit
 export default PluginOverview;
 
 PluginOverview.propTypes = {
-    uuid: PropTypes.string.isRequired,
-    name: PropTypes.string.isRequired,
-    description: PropTypes.string.isRequired,
-    home: PropTypes.string.isRequired,
-    modules: PropTypes.array.isRequired,
-    interceptPosition: PropTypes.number,
-    enabled: PropTypes.bool.isRequired,
+    uuid: PropTypes.string.isRequired,                  // plugin attributes
+    friendlyName: PropTypes.string.isRequired,          //
+    description: PropTypes.string.isRequired,           //
+    home: PropTypes.string.isRequired,                  //
+    modules: PropTypes.array.isRequired,                //
+    interceptPosition: PropTypes.number,                //
+    numInterceptors: PropTypes.number.isRequired,       // total number of interceptor plugins installed
+    togglePlugin: PropTypes.func.isRequired,            // function to enable / disable a plugin
+    pluginState: PropTypes.bool.isRequired,             // enabled / disabled state of plugin
+    setPluginLists: PropTypes.func.isRequired,          // reorder plugins that allow drag n drop
 };

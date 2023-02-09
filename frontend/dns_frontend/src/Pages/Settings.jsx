@@ -132,9 +132,5 @@ export default Settings;
 
 
 Settings.propTypes = {
-    setTheme: PropTypes.func.isRequired,
-};
-
-Settings.defaultProps = {
-    setTheme: () => {},
+    setTheme: PropTypes.func.isRequired,        // function to change the theme
 };

@@ -20,7 +20,8 @@ const t1_ts = '#cadada';
 
 const t1_l = '#a9a6c5';
 
-const t1_green = '#8C8B72';
+const t1_on = '#8C8B72';
+const t1_off = '#172121';
 
 const themeOne = createTheme({
   palette: {
@@ -51,6 +52,19 @@ const themeOne = createTheme({
   },
   components: {
     // Name of the component
+    MuiAccordion: {
+      defaultProps: {
+        square: true,
+      },
+      styleOverrides: {
+        root: {
+          backgroundColor: t1_p,
+          '&:before': {
+              display: 'none',
+          },
+        },
+      },
+    },
     MuiAccordionSummary: {
       styleOverrides: {
         root: {
@@ -62,6 +76,28 @@ const themeOne = createTheme({
       styleOverrides: {
         root: {
           backgroundColor: t1_pd,
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          top: 0,
+          height: 50,
+          flexDirection: 'row',
+          alignItems: 'center',
+        },
+      },
+    },
+    MuiDialog: {
+      defaultProps: {
+        PaperProps: {
+          style: {
+              backgroundColor: t1_p,
+              width: '125vh',
+              height: '100vh',
+              maxWidth: 1400,
+          },
         },
       },
     },
@@ -82,7 +118,30 @@ const themeOne = createTheme({
         },
       },
     },
+    MuiInput: {
+      styleOverrides: {
+        root: {
+          "&.Mui-focused": {
+            color: t1_tp,
+          },
+        },
+        underline: {
+          '&:after': {
+            borderBottomColor: t1_tp,
+          },
+          '&:before': {
+            borderBottomColor: t1_tp,
+          },
+        },
+      },
+    },
     MuiTextField: {
+      defaultProps: {
+        variant: 'standard',
+        margin: 'dense',
+        size: 'small',
+        color: 'text',
+      },
       styleOverrides: {
         root: {
           "input::-ms-reveal": {
@@ -91,7 +150,7 @@ const themeOne = createTheme({
           "input::-ms-clear": {
             display: 'none',
           },
-        }
+        },
       }
     },
     MuiTypography: {
@@ -159,7 +218,7 @@ const themeOne = createTheme({
               transform: `translateX(${switch_w - (switch_h)}px)`,
               color: t1_tp,
               '& + .MuiSwitch-track': {
-                backgroundColor: t1_green,
+                backgroundColor: t1_on,
               },
             },
           },
@@ -170,9 +229,17 @@ const themeOne = createTheme({
           },
           '& .MuiSwitch-track': {
             borderRadius: switch_w / 2,
-            backgroundColor: t1_pd,
+            backgroundColor: t1_off,
             opacity: 1,
           },
+        }
+      }
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          padding: 2,
+          paddingBottom: 0,
         }
       }
     },
@@ -204,13 +271,6 @@ const themeOne = createTheme({
       },
     },
   },
-  props: {
-    MuiTextField: {
-      margin: 'dense',
-      size: 'small',
-      color: 'text',
-    },
-  },
   spacing: 8,
 })
 
@@ -231,7 +291,8 @@ const t2_ts = '#E6E6E6';
 
 const t2_l = '#02AA9B';
 
-const t2_green = '#65AB01';
+const t2_on = '#65AB01';
+const t2_off = '#40B0FF';
 
 const themeTwo = createTheme({
   palette: {
@@ -262,6 +323,19 @@ const themeTwo = createTheme({
   },
   components: {
     // Name of the component
+    MuiAccordion: {
+      defaultProps: {
+        square: true,
+      },
+      styleOverrides: {
+        root: {
+          backgroundColor: t2_p,
+          '&:before': {
+              display: 'none',
+          },
+        },
+      },
+    },
     MuiAccordionSummary: {
       styleOverrides: {
         root: {
@@ -280,45 +354,6 @@ const themeTwo = createTheme({
       defaultProps: {
         disableRipple: true,
       },
-    },
-    MuiIconButton: {
-      defaultProps: {
-        disableRipple: true,
-      },
-      styleOverrides: {
-        root: {
-          color: t2_tp,
-        },
-      },
-    },
-    MuiIcon: {
-      styleOverrides: {
-        root: {
-          color: t2_tp,
-        },
-      },
-    },
-    MuiTextField:{
-      styleOverrides: {
-        root: {
-          "input::-ms-reveal": {
-            display: "none",
-          },
-          "input::-ms-clear": {
-            display: 'none',
-          },
-        }
-      }
-    },
-    MuiTypography: {
-      defaultProps: {
-        noWrap: true,
-      },
-      styleOverrides: {
-        root: {
-          color: t2_tp,
-        }
-      }
     },
     MuiButton: {
       defaultProps: {
@@ -347,6 +382,90 @@ const themeTwo = createTheme({
         },
       },
     },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          top: 0,
+          height: 50,
+          flexDirection: 'row',
+          alignItems: 'center',
+        },
+      },
+    },
+    MuiDialog: {
+      defaultProps: {
+        PaperProps: {
+          style: {
+              backgroundColor: t2_p,
+              width: '125vh',
+              height: '100vh',
+              maxWidth: 1400,
+          },
+        },
+      },
+    },
+    MuiIconButton: {
+      defaultProps: {
+        disableRipple: true,
+      },
+      styleOverrides: {
+        root: {
+          color: t2_tp,
+        },
+      },
+    },
+    MuiIcon: {
+      styleOverrides: {
+        root: {
+          color: t2_tp,
+        },
+      },
+    },
+    MuiInput: {
+      styleOverrides: {
+        root: {
+          "&.Mui-focused": {
+            color: t2_tp,
+          },
+        },
+        underline: {
+          '&:after': {
+            borderBottomColor: t2_tp,
+          },
+          '&:before': {
+            borderBottomColor: t2_tp,
+          },
+        },
+      },
+    },
+    MuiTextField:{
+      defaultProps: {
+        variant: 'standard',
+        margin: 'dense',
+        size: 'small',
+        color: 'text',
+      },
+      styleOverrides: {
+        root: {
+          "input::-ms-reveal": {
+            display: "none",
+          },
+          "input::-ms-clear": {
+            display: 'none',
+          },
+        }
+      }
+    },
+    MuiTypography: {
+      defaultProps: {
+        noWrap: true,
+      },
+      styleOverrides: {
+        root: {
+          color: t2_tp,
+        }
+      }
+    },
     MuiRadio: {
       styleOverrides: {
         root: {
@@ -370,7 +489,7 @@ const themeTwo = createTheme({
               transform: `translateX(${switch_w - (switch_h)}px)`,
               color: t2_tp,
               '& + .MuiSwitch-track': {
-                backgroundColor: t2_green,
+                backgroundColor: t2_on,
               },
             },
           },
@@ -381,9 +500,17 @@ const themeTwo = createTheme({
           },
           '& .MuiSwitch-track': {
             borderRadius: switch_w / 2,
-            backgroundColor: t2_pd,
+            backgroundColor: t2_off,
             opacity: 1,
           },
+        }
+      }
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          padding: 2,
+          paddingBottom: 0,
         }
       }
     },
@@ -415,15 +542,13 @@ const themeTwo = createTheme({
       },
     },
   },
-  props: {
-    MuiTextField: {
-      margin: 'dense',
-      size: 'small',
-      color: 'text',
-    },
-  },
   spacing: 8,
 })
+
+
+
+
+
 
 
 const themes = {

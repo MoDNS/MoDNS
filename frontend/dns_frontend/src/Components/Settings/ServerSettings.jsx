@@ -1,20 +1,43 @@
-import { Button, InputAdornment, Typography } from '@mui/material';
+import { Button, Icon, InputAdornment, Switch, TextField, Typography } from '@mui/material';
 import React from 'react';
 import { useState } from 'react';
+import ErrorIcon from '@mui/icons-material/Error';
 
 import { getServerConfig, setServerConfig } from '../../API/getsetAPI';
-import InputField from '../InputField';
 
 const ServerSettings = () => {
 
-    const [webAddress, setWebAddress] = useState('modns');
-    const [staticIP, setStaticIP] = useState( getServerConfig() );
+    const checkStaticIP = (ip) => {
+        return /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/.test(ip)
+    }
 
-    
+    const [webAddress, setWebAddress] = useState('modns');
+    const [staticIP, setStaticIP] = useState( getServerConfig('static_ip') );
+    const [errorStaticIP, setErrorStaticIP] = useState( staticIP ? !checkStaticIP(staticIP) : true );
+    const [useStaticIP, setUseStaticIP] = useState( getServerConfig('use_static_ip') );
+
+    const inputStaticIP = (ip) => {
+        setStaticIP(ip);
+        if (!checkStaticIP(ip)) {
+            setErrorStaticIP(true);
+        }
+        else setErrorStaticIP(false);
+    }
+
+    ///// called when apply changes is pressed /////
+    const handleSetWebAddress = () => {
+        if (webAddress) {
+            setServerConfig('web_address', webAddress + ".local");
+        } else {
+            alert("No Web Address Provided");
+        }
+    }
+    const handleStaticIPSwitch = () => {
+        setServerConfig('use_static_ip', useStaticIP);
+    }
     const handleSetStaticIP = () => {
-        if (/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/.test(staticIP)) {
-            setStaticIP(staticIP);
-            setServerConfig(staticIP);
+        if (checkStaticIP(staticIP)) {
+            setServerConfig('static_ip', staticIP);
         } else {
             alert("Static IP format not correct");
         }
@@ -22,7 +45,12 @@ const ServerSettings = () => {
 
 
     const applyChanges = () => {
-        handleSetStaticIP();
+        handleSetWebAddress();
+        handleStaticIPSwitch();
+        if (useStaticIP) {
+            handleSetStaticIP();
+        }
+
     }
 
     return (
@@ -46,15 +74,16 @@ const ServerSettings = () => {
                             Web Address:
                         </Typography>
 
-                        <InputField
+                        <TextField
                             defaultValue={webAddress}
                             placeholder={'modns'}
                             inputProps={{style: { textAlign: 'right', paddingRight: 0, }}}
+                            onFocus={ (e) => e.target.select() }
                             onInput={ e => setWebAddress(e.target.value) }
                             sx={{ marginLeft: 'auto', width: 195, }}
                             InputProps={{
                                 endAdornment: (
-                                    <InputAdornment sx={{ color: 'text.primary', marginLeft: 0,}} position='end'>
+                                    <InputAdornment sx={{ marginLeft: 0, marginBottom: 0.5,}} position='end'>
                                         <Typography >
                                             .local
                                         </Typography>
@@ -63,7 +92,21 @@ const ServerSettings = () => {
                             }}
                         />
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35, }}>
+                        <Typography
+                            sx={{
+                                fontSize: 25,
+                                marginRight: 'auto',
+                            }}
+                        >
+                            Use Static IP:
+                        </Typography>
+                        <Switch 
+                            checked={useStaticIP}
+                            onChange={ () => setUseStaticIP( !useStaticIP )}
+                        />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', opacity: !useStaticIP ? '50%' : '100%', }}>
                         <Typography
                             sx={{ 
                                 fontSize: 25,
@@ -73,12 +116,24 @@ const ServerSettings = () => {
                             Static IP:
                         </Typography>
 
-                        <InputField
+                        <TextField
                             onFocus={ (e) => e.target.select() }
                             defaultValue={staticIP}
+                            disabled={!useStaticIP}
                             inputProps={{style: { textAlign: 'right', paddingRight: 0, }}}
-                            placeholder={ 'xxx.xxx.xxx.xxx' }
-                            onInput={ e => setStaticIP(e.target.value) }
+                            placeholder={ useStaticIP ? 'xxx.xxx.xxx.xxx' : null }
+                            onInput={ e => inputStaticIP(e.target.value) }
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position='start'>
+                                        { errorStaticIP &&
+                                            <Icon>
+                                                <ErrorIcon />
+                                            </Icon>
+                                        }
+                                    </InputAdornment>
+                                )
+                            }}
                         />
                     </div>
                 </div>
