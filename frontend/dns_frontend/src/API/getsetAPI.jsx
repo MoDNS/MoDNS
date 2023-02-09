@@ -222,7 +222,7 @@ export const installPlugin = (file) => {
 }
 
 export const uninstallPlugin = (uuid) => {
-    console.log("uninstalling...");
+    console.log("uninstalling...", uuid);
 }
 
 export const getPluginLogo = (uuid) => {
