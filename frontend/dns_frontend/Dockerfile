@@ -1,18 +1,14 @@
-# SOURCE: https://milanwittpohl.com/projects/tutorials/Full-Stack-Web-App/dockerizing-our-front-and-backend
 FROM node:19-alpine
 
-RUN mkdir -p /react-app
 WORKDIR /react-app
 COPY package*.json ./
 
-RUN npm install
+
 
 COPY . .
-
-RUN npm run build --production
-
-RUN npm install -g dev-watch
+RUN npm install
 
 EXPOSE 3000
 
-CMD npm start
+CMD [ "npm", "start"]
+# CMD [ "npm", "start", "&&", "npm", "read-scripts", "watch"]

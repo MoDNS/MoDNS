@@ -3,7 +3,9 @@ version: '3.8'
 services:
   dns_frontend:
     container_name: react-app
-    read_only: true
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
     build: 
       context: frontend/dns_frontend
       dockerfile: Dockerfile
