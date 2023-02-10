@@ -1,17 +1,16 @@
-import { Button, IconButton, InputAdornment, useTheme } from '@mui/material';
+import { Button, IconButton, InputAdornment, TextField, useTheme } from '@mui/material';
 import { Box } from '@mui/system';
 import React from 'react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Visibility from '@mui/icons-material/Visibility';
-
+import { PropTypes } from 'prop-types';
 import MainBox from '../Components/MainBox';
-import InputField from '../Components/InputField';
+import { getAuthentication } from '../API/getsetAPI';
 
 
-
-const Login = ({setLoggedIn}) => {
+const Login = ({ setLoggedIn }) => {
     const theme = useTheme();
     const navigate = useNavigate();
 
@@ -21,10 +20,11 @@ const Login = ({setLoggedIn}) => {
     function handleSubmit(e) {
         e.preventDefault();
 
-        if(password){
-            console.log(password);
+        if(getAuthentication(password)){
             setLoggedIn(true);
             navigate('/manage/dashboard');
+        } else {
+            alert("Incorrect Password");
         }
         
     }
@@ -50,7 +50,7 @@ const Login = ({setLoggedIn}) => {
                 type='form'
                 sx={{ marginTop: 20, width: '100%' }}
             >
-                <InputField
+                <TextField
                     fullWidth
                     autoFocus
                     onKeyPress={(e) => handleKeyPress(e)} //this adds enter to submit
@@ -77,7 +77,7 @@ const Login = ({setLoggedIn}) => {
                         )
                     }}
                 >
-                </InputField>
+                </TextField>
                 <Box 
                     display='flex'
                     justifyContent="right"
@@ -111,3 +111,7 @@ const Login = ({setLoggedIn}) => {
 };
 
 export default Login;
+
+Login.propTypes = {
+    setLoggedIn: PropTypes.func.isRequired,     // sets the logged in status to true if login successful
+};
