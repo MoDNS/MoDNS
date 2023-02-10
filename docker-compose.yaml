@@ -1,13 +1,14 @@
+version: '3.8'
 
-version: '3'
 services:
-  dns-server:
-    build: "."
+  dns_frontend:
+    container_name: react-app
+    image: frontend-react:latest
+    build: 
+      context: frontend/dns_frontend
+      dockerfile: Dockerfile-dev
     ports: 
-      - 80:80
-      - 53:53/udp
-    # environment: "RUST_LOG=dns::listener=debug,warn"
+      - 3000:3000
     volumes:
-      - type: bind
-        source: .
-        target: /CABSTone
+      - ./frontend/dns_frontend:/react-app
+    command: npm install && npm run build --production

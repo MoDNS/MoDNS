@@ -1,2 +1,8 @@
-node_modules
-build
+# Ignore everything
+**
+
+# Add files & directories that should be included
+!public/**
+!src/**
+!package.json
+!package-lock.json

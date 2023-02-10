@@ -1,0 +1,18 @@
+# SOURCE: https://milanwittpohl.com/projects/tutorials/Full-Stack-Web-App/dockerizing-our-front-and-backend
+FROM node:19-alpine
+
+RUN mkdir -p /react-app
+WORKDIR /react-app
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+# RUN npm uninstall react-scripts
+# RUN npm install -D react-scripts
+RUN npm run build --production
+
+EXPOSE 3000
+
+CMD [ "npm", "start" ]
