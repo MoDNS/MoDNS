@@ -3,6 +3,7 @@ version: '3.8'
 services:
   dns_frontend:
     container_name: react-app
+    read_only: true
     build: 
       context: frontend/dns_frontend
       dockerfile: Dockerfile
