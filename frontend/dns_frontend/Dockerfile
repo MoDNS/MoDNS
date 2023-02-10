@@ -9,10 +9,10 @@ RUN npm install
 
 COPY . .
 
-# RUN npm uninstall react-scripts
-# RUN npm install -D react-scripts
 RUN npm run build --production
+
+RUN npm install -g dev-watch
 
 EXPOSE 3000
 
-CMD [ "npm", "start" ]
+CMD npm start
