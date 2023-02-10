@@ -3,12 +3,14 @@ use libloading::{Library, Symbol};
 
 type DnsDeserializeFn = unsafe extern "C" fn(*mut u8, usize) -> modns_sdk::DnsHeader;
 
+/// A Plugin which contains symbols for functions that are called during
+/// the DNS resolving process.
 pub struct DnsPlugin<'lib> {
     deserializer: Symbol<'lib, DnsDeserializeFn>
 }
 
 impl DnsPlugin<'_> {
-    pub fn call_deserializer(&self, buf: &'_ mut [u8]) -> modns_sdk::DnsHeader {
+    pub fn deserialize(&self, buf: &'_ mut [u8]) -> modns_sdk::DnsHeader {
 
         let f = &self.deserializer;
 
@@ -16,17 +18,24 @@ impl DnsPlugin<'_> {
     }
 }
 
-pub struct LibraryManager {
-    libraries: Vec<Library>
+/// Stores the dynamic library code that a plugin gets its symbols from
+/// 
+/// Must outlive the plugin, since the library's lifetime is
+/// what actually controls the lifetime of the code referenced by plugins
+struct PluginLibrary {
+    path: PathBuf,
+    lib: Library
 }
 
+pub struct LibraryManager (Vec<PluginLibrary>);
+
 impl<'l> LibraryManager {
-    pub fn get_plugins(&'l mut self) -> Vec<DnsPlugin<'l>>{
+    pub fn load_plugins(&'l self) -> Vec<DnsPlugin<'l>>{
 
-        let mut plugins = Vec::new();
+        let mut plugins = Vec::with_capacity(self.0.len());
 
-        for lib in self.libraries.iter() {
-            let deserializer: Symbol<DnsDeserializeFn> = unsafe { lib.get(b"deserialize_req").unwrap() };
+        for lib in self.0.iter() {
+            let deserializer: Symbol<DnsDeserializeFn> = unsafe { lib.lib.get(b"deserialize_req").unwrap() };
 
             plugins.push(DnsPlugin { deserializer })
         };
@@ -35,23 +44,24 @@ impl<'l> LibraryManager {
 
     }
 
-    pub fn with_lib<P>(self, dir: P) -> Self 
+    pub fn add_lib<P>(self, dir: P) -> Self 
     where PathBuf: From<P>
     {
 
-        let Self { mut libraries } = self;
+        let Self ( mut libraries ) = self;
 
         let path = PathBuf::from(dir).join("plugin.so");
 
-        libraries.push( unsafe {
-            Library::new(path).unwrap()
+        libraries.push( PluginLibrary {
+            path: path.clone(),
+            lib: unsafe { Library::new(path).unwrap() }
         });
 
-        Self { libraries }
+        Self ( libraries )
     }
 
     pub fn new() -> Self {
-        Self { libraries: Vec::new() }
+        Self ( Vec::new() )
     }
 
 }
@@ -65,14 +75,14 @@ mod test {
 
     #[test]
     fn single_plugin() {
-        let mut pm = LibraryManager::new()
-        .with_lib(PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base"));
+        let pm = LibraryManager::new()
+        .add_lib(PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base"));
 
-        let plugins = pm.get_plugins();
+        let plugins = pm.load_plugins();
 
         let mut test_val = vec![0u8; 2];
 
-        let test_response = plugins[0].call_deserializer(test_val.as_mut_slice());
+        let test_response = plugins[0].deserialize(test_val.as_mut_slice());
 
         println!("{:?}", test_response)
     }
