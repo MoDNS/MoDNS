@@ -1,5 +1,5 @@
 
 all: plugin.so
 
-plugin.so: plugin.c
-	$(CC) -fPIC -shared $^ -o $@
+plugin.so: $(wildcard src/*)
+	$(CC) $(CFLAGS) -I$(SDK_HEADER_DIR) -fPIC -shared $^ -o $@
