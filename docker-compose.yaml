@@ -1,10 +1,18 @@
+version: '3.8'
 
-version: '3'
 services:
-  dns-server:
-    build: "."
-    ports: 
-    - 80:80
-    - 53:53/udp
+  dns_frontend:
+    container_name: react-app
     environment:
-      - "RUST_LOG=dns::listener=debug,warn"
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    build: 
+      context: frontend/dns_frontend
+      dockerfile: Dockerfile
+    ports: 
+      - 3000:3000
+    volumes:
+      - ./frontend/dns_frontend/src:/react-app/src
+      - ./frontend/dns_frontend/public:/react-app/public
+      - ./frontend/dns_frontend/package.json:/react-app/package.json
+      - ./frontend/dns_frontend/package-lock.json:/react-app/package-lock.json
