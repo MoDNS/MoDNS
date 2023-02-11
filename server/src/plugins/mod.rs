@@ -10,11 +10,10 @@ mod test {
 
     use super::loaders;
 
-
     #[test]
     fn single_plugin() {
         let pm = loaders::LibraryManager::new()
-        .add_lib(PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base"));
+        .add_lib(PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_listener"));
 
         let plugins = pm.load_plugins();
 
