@@ -2,11 +2,14 @@
 pub mod executors;
 pub mod loaders;
 
-type DnsDeserializeFn = unsafe extern "C" fn(*mut u8, usize) -> modns_sdk::DnsHeader;
+type ListenerDeserializeFn = unsafe extern "C" fn(*const u8, usize, *mut modns_sdk::ffi::DnsMessage);
+
 
 #[cfg(test)]
 mod test {
     use std::{path::PathBuf, env};
+
+    use modns_sdk::{ffi, safe};
 
     use super::loaders;
 
@@ -21,6 +24,8 @@ mod test {
 
         let test_response = plugins[0].deserialize(test_val.as_mut_slice());
 
-        println!("{:?}", test_response)
+        println!("Recieved object: {:?}", test_response);
+
+        println!("Decoded into: {:?}", <ffi::DnsMessage as TryInto<safe::DnsMessage>>::try_into(*test_response))
     }
 }

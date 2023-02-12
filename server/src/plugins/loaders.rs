@@ -1,5 +1,5 @@
 
-use super::DnsDeserializeFn;
+use super::ListenerDeserializeFn;
 use super::executors::DnsPlugin;
 use libloading::{Symbol, Library};
 use std::path::PathBuf;
@@ -9,20 +9,20 @@ use std::path::PathBuf;
 /// Must outlive the plugin, since the library's lifetime is
 /// what actually controls the lifetime of the code referenced by plugins
 pub(crate) struct PluginLibrary {
-    pub(crate) path: PathBuf,
-    pub(crate) lib: Library
+    _path: PathBuf,
+    lib: Library
 }
 
 impl<'l> PluginLibrary {
     pub fn load_plugin(&'l self) -> DnsPlugin {
 
-        let deserializer: Symbol<DnsDeserializeFn> = unsafe { self.lib.get(b"deserialize_req").unwrap() };
+        let deserializer: Symbol<ListenerDeserializeFn> = unsafe { self.lib.get(b"impl_deserialize_req").unwrap() };
 
         DnsPlugin { deserializer }
     }
 
-    pub fn path(&self) -> PathBuf {
-        self.path.clone()
+    pub fn _path(&self) -> PathBuf {
+        self._path.clone()
     }
 }
 
@@ -50,7 +50,7 @@ impl<'l> LibraryManager {
         let path = PathBuf::from(dir).join("plugin.so");
 
         libraries.push( PluginLibrary {
-            path: path.clone(),
+            _path: path.clone(),
             lib: unsafe { Library::new(path).unwrap() }
         });
 
