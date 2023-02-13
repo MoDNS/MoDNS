@@ -47,6 +47,16 @@ pub struct DnsQuestion {
     pub(crate) class_code: u16
 }
 
+impl Default for DnsQuestion {
+    fn default() -> Self {
+        Self {
+            name: std::ptr::null(),
+            type_code: 0,
+            class_code: 0
+        }
+    }
+}
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct DnsResourceRecord {
@@ -58,10 +68,29 @@ pub struct DnsResourceRecord {
     pub(crate) rdata: DnsResourceData
 }
 
+impl Default for DnsResourceRecord {
+    fn default() -> Self {
+        Self {
+            name: std::ptr::null(),
+            type_code: 0,
+            class_code: 0,
+            ttl: 0,
+            rdlength: 0,
+            rdata: Default::default()
+        }
+    }
+}
+
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub enum DnsResourceData {
     A { address: [u8; 4] }
+}
+
+impl Default for DnsResourceData {
+    fn default() -> Self {
+        Self::A { address: [0u8; 4] }
+    }
 }
 
 #[repr(C)]

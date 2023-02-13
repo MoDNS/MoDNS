@@ -1,11 +1,17 @@
 
-all: server-bin plugin-bins
+all: server sdk plugins
 
-server-bin:
+.PHONY: server
+server:
 	cargo build
 
-export SDK_HEADER_DIR = ${CURDIR}/modns-sdk/headers
-plugin-bins:
+.PHONY: sdk
+sdk: $(wildcard $(CURDIR)/modns-sdk/src/*)
+	cargo build -p modns-sdk
+
+.PHONY: plugins
+export SDK_LINK_ARGS = -I${CURDIR}/modns-sdk/headers -L${CURDIR}/target/debug -lmodns_sdk
+plugins: sdk
 	$(MAKE) -C plugins/base_listener/
 	$(MAKE) -C plugins/base_resolver/
 
