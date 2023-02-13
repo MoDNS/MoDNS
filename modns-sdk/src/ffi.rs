@@ -1,24 +1,24 @@
 use std::os::raw::c_char;
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct DnsHeader {
     pub id: u16,
-    pub(crate) is_query: bool,
-    pub(crate) opcode: DnsOpcode,
-    pub(crate) authoritative_answer: bool,
-    pub(crate) truncation: bool,
-    pub(crate) recursion_desired: bool,
-    pub(crate) recursion_available: bool,
-    pub(crate) response_code: DnsResponseCode,
-    pub(crate) qdcount: u16,
-    pub(crate) ancount: u16,
-    pub(crate) nscount: u16,
-    pub(crate) arcount: u16
+    pub is_response: bool,
+    pub opcode: DnsOpcode,
+    pub authoritative_answer: bool,
+    pub truncation: bool,
+    pub recursion_desired: bool,
+    pub recursion_available: bool,
+    pub response_code: DnsResponseCode,
+    pub qdcount: u16,
+    pub ancount: u16,
+    pub nscount: u16,
+    pub arcount: u16
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum DnsOpcode {
     Query,
     InverseQuery,
@@ -29,7 +29,7 @@ pub enum DnsOpcode {
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum DnsResponseCode {
     NoError,
     FormatError,
@@ -42,15 +42,15 @@ pub enum DnsResponseCode {
 #[repr(C)]
 #[derive(Debug)]
 pub struct DnsQuestion {
-    pub(crate) name: *const c_char,
-    pub(crate) type_code: u16,
-    pub(crate) class_code: u16
+    pub name: BytePtrVector,
+    pub type_code: u16,
+    pub class_code: u16
 }
 
 impl Default for DnsQuestion {
     fn default() -> Self {
         Self {
-            name: std::ptr::null(),
+            name: Default::default(),
             type_code: 0,
             class_code: 0
         }
@@ -96,11 +96,11 @@ impl Default for DnsResourceData {
 #[repr(C)]
 #[derive(Debug)]
 pub struct DnsMessage {
-    pub(crate) header: DnsHeader,
-    pub(crate) question: *mut DnsQuestion,
-    pub(crate) answer: *mut DnsResourceRecord,
-    pub(crate) authority: *mut DnsResourceRecord,
-    pub(crate) additional: *mut DnsResourceRecord
+    pub header: DnsHeader,
+    pub question: *mut DnsQuestion,
+    pub answer: *mut DnsResourceRecord,
+    pub authority: *mut DnsResourceRecord,
+    pub additional: *mut DnsResourceRecord
 }
 
 #[repr(C)]
@@ -111,7 +111,7 @@ impl Default for DnsHeader {
     fn default() -> Self {
         Self {
             id: 0,
-            is_query: false,
+            is_response: false,
             opcode: DnsOpcode::Query,
             authoritative_answer: false,
             truncation: false,
@@ -145,4 +145,30 @@ pub enum SectionToAdd {
     Answer,
     Authority,
     Additional
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct ByteVector {
+    pub ptr: *mut c_char,
+    pub size: usize,
+    pub capacity: usize
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct BytePtrVector {
+    pub ptr: *mut ByteVector,
+    pub size: usize,
+    pub capacity: usize
+}
+
+impl Default for BytePtrVector {
+    fn default() -> Self {
+        Self {
+            ptr: std::ptr::null_mut(),
+            size: 0,
+            capacity: 0
+        }
+    }
 }

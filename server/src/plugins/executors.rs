@@ -9,14 +9,18 @@ pub struct DnsPlugin<'lib> {
 }
 
 impl DnsPlugin<'_> {
-    pub fn deserialize(&self, buf: &'_ mut [u8]) -> Box<ffi::DnsMessage> {
+    pub fn deserialize(&self, buf: &'_ [u8]) -> Result<Box<ffi::DnsMessage>, u8> {
 
         let f = &self.deserializer;
 
         let mut message = Box::new(ffi::DnsMessage::default());
 
-        unsafe {f(buf.as_mut_ptr(), buf.len(), message.as_mut())};
+        let rc = unsafe {f(buf.as_ptr(), buf.len(), message.as_mut())};
 
-        message
+        if rc == 0 {
+            Ok(message)
+        } else {
+            Err(rc)
+        }
     }
 }

@@ -1,11 +1,14 @@
-use std::{ffi::{c_char, CStr}, panic::catch_unwind, net::Ipv4Addr};
+use std::{ffi::{c_char, CStr}, mem};
+use std::net::Ipv4Addr;
+use std::panic::catch_unwind;
 
 use super::{ffi, safe};
 
 #[derive(Debug)]
 pub enum FfiConversionError {
     InvalidString(*const c_char),
-    InvalidNullPointer,
+    UnexpectedNullPointer,
+    ExpectedNullPointer,
     InvalidEnum
 }
 
@@ -70,7 +73,7 @@ impl TryFrom<ffi::DnsMessage> for safe::DnsMessage {
 
         let ffi::DnsHeader {
             id,
-            is_query,
+            is_response,
             opcode: unsafe_opcode,
             authoritative_answer,
             truncation,
@@ -93,7 +96,7 @@ impl TryFrom<ffi::DnsMessage> for safe::DnsMessage {
 
         let header = safe::DnsHeader{
             id,
-            is_query,
+            is_response,
             opcode,
             authoritative_answer,
             truncation,
@@ -112,22 +115,28 @@ impl TryFrom<ffi::DnsMessage> for safe::DnsMessage {
 
 unsafe fn question_ptr_to_safe_vec(ptr: *mut ffi::DnsQuestion, len: usize) -> Result<Vec<safe::DnsQuestion>, FfiConversionError> {
 
-    Box::from_raw(
-        std::ptr::slice_from_raw_parts_mut(ptr, len)
-    )
+    if len > 0 && ptr.is_null() { return Err(FfiConversionError::UnexpectedNullPointer);}
+
+    Vec::from_raw_parts(ptr, len, len)
 
     .into_iter().map(|q| {
-        let &ffi::DnsQuestion { name: unsafe_name_ptr, type_code, class_code } = q;
+        let ffi::DnsQuestion { name: unsafe_name_vec, type_code, class_code } = q;
 
-        if unsafe_name_ptr.is_null() { return Err(FfiConversionError::InvalidString(unsafe_name_ptr)) };
-
-        let name = String::from_utf8_lossy(CStr::from_ptr(unsafe_name_ptr).to_bytes()).to_string();
+        let name = Vec::from_raw_parts(
+            unsafe_name_vec.ptr,
+            unsafe_name_vec.size,
+            unsafe_name_vec.capacity
+        ).into_iter().map(|ptr| {
+            String::from_utf8_lossy(CStr::from_ptr(ptr.ptr).to_bytes()).into()
+        }).collect();
 
         Ok(safe::DnsQuestion { name, type_code, class_code })
     }).collect()
 }
 
 unsafe fn rr_ptr_to_safe_vec(ptr: *mut ffi::DnsResourceRecord, len: usize) -> Result<Vec<safe::DnsResourceRecord>, FfiConversionError> {
+
+    if len > 0 && ptr.is_null() { return Err(FfiConversionError::UnexpectedNullPointer);}
 
     Box::from_raw(
         std::ptr::slice_from_raw_parts_mut(ptr, len)
@@ -142,4 +151,20 @@ unsafe fn rr_ptr_to_safe_vec(ptr: *mut ffi::DnsResourceRecord, len: usize) -> Re
 
         Ok(safe::DnsResourceRecord { name, type_code, class_code, ttl, rdlength, rdata: safe::DnsResourceData::try_from(rdata)? })
     }).collect()
+}
+
+impl From<Vec<c_char>> for ffi::ByteVector {
+    fn from(value: Vec<c_char>) -> Self {
+        let mut v = mem::ManuallyDrop::new(value);
+
+        Self { ptr: v.as_mut_ptr(), size: v.len(), capacity: v.capacity() }
+    }
+}
+
+impl From<Vec<ffi::ByteVector>> for ffi::BytePtrVector {
+    fn from(value: Vec<ffi::ByteVector>) -> Self {
+        let mut v = mem::ManuallyDrop::new(value);
+
+        Self { ptr: v.as_mut_ptr(), size: v.len(), capacity: v.capacity() }
+    }
 }

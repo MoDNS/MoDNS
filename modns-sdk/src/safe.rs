@@ -3,7 +3,7 @@ use std::net::Ipv4Addr;
 #[derive(Debug)]
 pub struct DnsHeader {
     pub id: u16,
-    pub is_query: bool,
+    pub is_response: bool,
     pub opcode: DnsOpcode,
     pub authoritative_answer: bool,
     pub truncation: bool,
@@ -36,9 +36,9 @@ pub enum DnsResponseCode {
     Refused
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct DnsQuestion {
-    pub name: String,
+    pub name: Vec<String>,
     pub type_code: u16,
     pub class_code: u16
 }

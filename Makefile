@@ -1,5 +1,5 @@
 
-all: server sdk plugins
+all: sdk server plugins
 
 .PHONY: server
 server:
