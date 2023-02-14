@@ -4,7 +4,7 @@ use std::panic::catch_unwind;
 
 use super::{ffi, safe};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum FfiConversionError {
     InvalidString(*const c_char),
     UnexpectedNullPointer,
@@ -177,5 +177,17 @@ impl From<Vec<ffi::ByteVector>> for ffi::BytePtrVector {
         let mut v = mem::ManuallyDrop::new(value);
 
         Self { ptr: v.as_mut_ptr(), size: v.len(), capacity: v.capacity() }
+    }
+}
+
+impl TryInto<Vec<c_char>> for ffi::ByteVector {
+    type Error = FfiConversionError;
+
+    fn try_into(self) -> Result<Vec<c_char>, Self::Error> {
+        if self.ptr.is_null() && self.size > 0 {
+            return Err(FfiConversionError::UnexpectedNullPointer);
+        }
+
+        unsafe { Ok(Vec::from_raw_parts(self.ptr, self.size, self.capacity)) }
     }
 }

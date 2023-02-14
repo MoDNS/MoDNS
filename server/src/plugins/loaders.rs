@@ -1,5 +1,4 @@
 
-use super::ListenerDeserializeFn;
 use super::executors::DnsPlugin;
 use libloading::{Symbol, Library};
 use std::path::PathBuf;
@@ -13,32 +12,42 @@ pub(crate) struct PluginLibrary {
     lib: Library
 }
 
-impl<'l> PluginLibrary {
-    pub fn load_plugin(&'l self) -> DnsPlugin {
+impl<'l> DnsPlugin<'l> {
+    pub(crate) fn load(lib: &'l PluginLibrary) -> Result<Self, libloading::Error> {
 
-        let deserializer: Symbol<ListenerDeserializeFn> = unsafe { self.lib.get(b"impl_deserialize_req").unwrap() };
+        let deserializer =
+        get_sym(&lib.lib, b"impl_deserialize_req")?;
 
-        DnsPlugin { deserializer }
+        let serializer = 
+        get_sym(&lib.lib, b"impl_serialize_resp")?;
+
+        let resolver = 
+        get_sym(&lib.lib, b"impl_resolve_req")?;
+
+        Ok(Self::new(deserializer, serializer, resolver))
     }
+}
 
-    pub fn _path(&self) -> PathBuf {
-        self._path.clone()
+fn get_sym<'lib, T> (lib: &'lib Library, name: &[u8]) -> Result<Option<Symbol<'lib, T>>, libloading::Error> {
+    let sym = unsafe {
+        lib.get(name)
+    };
+
+    match sym {
+        Ok(s) => Ok(Some(s)),
+        Err(libloading::Error::DlSym{ desc: _ }) => Ok(None),
+        Err(e) => Err(e),
     }
 }
 
 pub struct LibraryManager (Vec<PluginLibrary>);
 
 impl<'l> LibraryManager {
-    pub fn load_plugins(&'l self) -> Vec<DnsPlugin<'l>>{
+    pub fn load_plugins(&'l self) -> Result<Vec<DnsPlugin<'l>>, libloading::Error> {
 
-        let mut plugins = Vec::with_capacity(self.0.len());
-
-        for lib in self.0.iter() {
-            plugins.push(lib.load_plugin())
-        };
-
-        plugins
-
+        self.0.iter().map(|lib| {
+            DnsPlugin::load(lib)
+        }).collect()
     }
 
     pub fn add_lib<P>(self, dir: P) -> Self 

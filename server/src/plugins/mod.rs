@@ -2,8 +2,21 @@
 pub mod executors;
 pub mod loaders;
 
-type ListenerDeserializeFn = unsafe extern "C" fn(*const u8, usize, *mut modns_sdk::ffi::DnsMessage) -> u8;
+type ListenerDeserializeFn = unsafe extern "C" fn(
+    *const u8,
+    usize,
+    *mut modns_sdk::ffi::DnsMessage
+) -> u8;
 
+type ListenerSerializeFn = unsafe extern "C" fn(
+    modns_sdk::ffi::DnsMessage,
+    modns_sdk::ffi::ByteVector
+) -> modns_sdk::ffi::ByteVector;
+
+type ResolverFn = unsafe extern "C" fn(
+    modns_sdk::ffi::DnsMessage,
+    *mut modns_sdk::ffi::DnsMessage
+) -> u8;
 
 #[cfg(test)]
 mod test {
@@ -23,7 +36,7 @@ mod test {
         let pm = loaders::LibraryManager::new()
         .add_lib(PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_listener"));
 
-        let plugins = pm.load_plugins();
+        let plugins = pm.load_plugins().unwrap();
 
         let test_response = plugins[0].deserialize(&SAMPLE_REQUEST[..]).unwrap();
 
@@ -70,10 +83,14 @@ mod test {
         let pm = loaders::LibraryManager::new()
         .add_lib(PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_listener"));
 
-        let plugins = pm.load_plugins();
+        let plugins = pm.load_plugins().unwrap();
 
         let test_response = plugins[0].deserialize(&SAMPLE_REQUEST[..20]);
 
-        assert_eq!(test_response.unwrap_err(), 1, "Deserializer did not error on an invalid request");
+        assert_eq!(
+            test_response.unwrap_err(),
+            super::executors::PluginExecutorError::ErrorCode(1),
+            "Deserializer did not error on an invalid request"
+        );
     }
 }
