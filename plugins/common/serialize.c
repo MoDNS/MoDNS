@@ -1,6 +1,9 @@
 #include "plugin-common.h"
 
+uintptr_t serialize_question(struct DnsQuestion question, struct ByteVector resp_buf, uintptr_t initial_offset);
 uintptr_t get_serialized_size(struct DnsMessage msg);
+uintptr_t get_qd_serialized_size(uint16_t count, struct DnsQuestion *qlist);
+uintptr_t get_rr_serialized_size(uint16_t count, struct DnsResourceRecord *rrlist);
 
 uint8_t serialize_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
     uintptr_t resp_size = get_serialized_size(msg);
@@ -12,6 +15,7 @@ uint8_t serialize_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
         truncation_required = true;
     }
 
+    // Header
     *resp_buf = extend_char_vec(*resp_buf, resp_size - resp_buf->capacity);
     resp_buf->size = resp_size;
 
@@ -37,26 +41,76 @@ uint8_t serialize_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
     resp_buf->ptr[4] = msg.header.qdcount & 0x00ff;
     resp_buf->ptr[5] = (msg.header.qdcount & 0xff00) >> 8;
 
+    resp_buf->ptr[6] = msg.header.ancount & 0x00ff;
+    resp_buf->ptr[7] = (msg.header.ancount & 0xff00) >> 8;
+
+    resp_buf->ptr[8] = msg.header.nscount & 0x00ff;
+    resp_buf->ptr[9] = (msg.header.nscount & 0xff00) >> 8;
+
+    resp_buf->ptr[10] = msg.header.arcount & 0x00ff;
+    resp_buf->ptr[11] = (msg.header.arcount & 0xff00) >> 8;
+
+    uintptr_t cursor = 12;
+
+    // Questions
+    for (uintptr_t i = 0; i < msg.header.qdcount; i++) {
+        cursor = serialize_question(msg.question[i], *resp_buf, cursor);
+    }
+
     return 0;
+}
+
+uintptr_t serialize_question(struct DnsQuestion question, struct ByteVector resp_buf, uintptr_t initial_offset) {
+    uintptr_t cursor = initial_offset;
+
+    // Loop over labels in a question
+    for (uintptr_t j = 0; j < question.name.size; j++) {
+        resp_buf.ptr[cursor++] = question.name.size;
+
+        // Loop over chars in a label
+        for (uintptr_t k = 0; k < question.name.ptr[j].size; k++) {
+            resp_buf.ptr[cursor++] = question.name.ptr[j].ptr[k];
+        }
+    }
+
+    resp_buf.ptr[cursor++] = question.type_code & 0x00ff;
+    resp_buf.ptr[cursor++] = (question.type_code & 0xff00) >> 8;
+
+    resp_buf.ptr[cursor++] = question.class_code & 0x00ff;
+    resp_buf.ptr[cursor++] = (question.class_code & 0xff00) >> 8;
+
+    return cursor;
 }
 
 uintptr_t get_serialized_size(struct DnsMessage msg) {
     uintptr_t total = 12; // Header length
 
-    for (uint16_t i = 0; i < msg.header.qdcount; i++) {
-        total += msg.question[i].name.size;
-    }
+    total += get_qd_serialized_size(msg.header.qdcount, msg.question);
 
-    for (uint16_t i = 0; i < msg.header.ancount; i++) {
-        total += msg.answer[i].name.size;
-    }
+    total += get_rr_serialized_size(msg.header.ancount, msg.answer);
 
-    for (uint16_t i = 0; i < msg.header.nscount; i++) {
-        total += msg.authority[i].name.size;
-    }
+    total += get_rr_serialized_size(msg.header.nscount, msg.authority);
 
-    for (uint16_t i = 0; i < msg.header.arcount; i++) {
-        total += msg.additional[i].name.size;
+    total += get_rr_serialized_size(msg.header.arcount, msg.additional);
+
+    return total;
+}
+
+uintptr_t get_qd_serialized_size(uint16_t count, struct DnsQuestion *qlist) {
+    uintptr_t total = 0;
+    for (uint16_t i = 0; i < count; i++) {
+        total += qlist[i].name.size + 4;
+    }
+    
+    return total;
+}
+
+uintptr_t get_rr_serialized_size(uint16_t count, struct DnsResourceRecord *rrlist) {
+    uintptr_t total = 0;
+
+    for (uint16_t i = 0; i < count; i++) {
+        total += rrlist[i].name.size + 10;
+        total += rrlist[i].rdlength;
     }
 
     return total;
