@@ -20,7 +20,7 @@ pub struct DnsHeader {
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum DnsOpcode {
-    Query,
+    Query = 0,
     InverseQuery,
     Status,
     Notify,
