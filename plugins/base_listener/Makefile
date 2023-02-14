@@ -1,6 +1,7 @@
 CFLAGS=-Wall
+LDFLAGS=$(SDK_LINK_ARGS) -I../common
 
 all: plugin.so
 
-plugin.so: $(wildcard src/*)
-	$(CC) $(CFLAGS) -fPIC -shared $^ -o $@ $(SDK_LINK_ARGS)
+plugin.so: $(wildcard ../common/*.c) $(wildcard src/*.c)
+	$(CC) $(CFLAGS) -fPIC -shared $^ -o $@ $(LDFLAGS)
