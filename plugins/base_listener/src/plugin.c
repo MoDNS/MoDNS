@@ -2,6 +2,8 @@
 #include "modns-sdk.h"
 
 uintptr_t decode_question(const uint8_t *req, uintptr_t req_size, struct DnsQuestion *question);
+uintptr_t decode_rr(const uint8_t *req, uintptr_t req_size, struct DnsResourceRecord *rr);
+uintptr_t decode_label_list(const uint8_t *req, uintptr_t req_size, struct BytePtrVector *vec);
 
 uint8_t impl_deserialize_req(const uint8_t *req, uintptr_t size, struct DnsMessage *message) {
 
@@ -112,6 +114,33 @@ uint8_t impl_deserialize_req(const uint8_t *req, uintptr_t size, struct DnsMessa
 uintptr_t decode_question(const uint8_t *req, uintptr_t req_size, struct DnsQuestion *question) {
     uintptr_t cursor = 0;
 
+    uintptr_t bytes_read = decode_label_list(req, req_size, &(question->name));
+    if (bytes_read == 0) {return 0;}
+    cursor += bytes_read;
+
+    if (req_size > cursor + 4) {return 0;}
+
+    uint16_t qtype = *(req+cursor+1) | (*(req+cursor) << 8);
+    cursor += 2;
+
+    uint16_t qclass = *(req+cursor+1) | (*(req+cursor) << 8);
+    cursor += 2;
+
+    question->class_code = qclass;
+    question->type_code = qtype;
+
+    return cursor;
+}
+
+uintptr_t decode_rr(const uint8_t *req, uintptr_t req_size, struct DnsResourceRecord *rr) {
+    uintptr_t cursor = 0;
+
+    return cursor;
+}
+
+uintptr_t decode_label_list(const uint8_t *req, uintptr_t req_size, struct BytePtrVector *vec) {
+    uintptr_t cursor = 0;
+
     uint8_t label_len = req[cursor++];
     struct BytePtrVector qname = {NULL, 0, 0};
     for (uint8_t label_num = 0; label_len > 0; label_num++) {
@@ -133,17 +162,7 @@ uintptr_t decode_question(const uint8_t *req, uintptr_t req_size, struct DnsQues
         label_len = req[cursor++];
     };
 
-    if (req_size > cursor + 4) {return 0;}
-
-    uint16_t qtype = *(req+cursor+1) | (*(req+cursor) << 8);
-    cursor += 2;
-
-    uint16_t qclass = *(req+cursor+1) | (*(req+cursor) << 8);
-    cursor += 2;
-
-    question->name = qname;
-    question->class_code = qclass;
-    question->type_code = qtype;
+    *vec = qname;
 
     return cursor;
 }
