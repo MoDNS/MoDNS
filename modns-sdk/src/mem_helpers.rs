@@ -123,12 +123,9 @@ pub extern "C" fn resize_field(msg_ptr: *mut ffi::DnsMessage, num: u16, field: D
 /// be the actual size returned from the last call to this function
 #[no_mangle]
 pub extern "C" fn extend_char_vec(buf: ffi::ByteVector, num_to_add: usize) -> ffi::ByteVector {
-    println!("got vector with size {} and capacity {}, {num_to_add} as argument", buf.size, buf.capacity);
     let mut v = unsafe {
         Vec::from_raw_parts(buf.ptr, buf.size, buf.capacity)
     };
-
-    println!("Resized character vector to length {} and capacity {}.", v.len(), v.capacity());
 
     v.reserve_exact(num_to_add);
 
@@ -142,8 +139,6 @@ pub extern "C" fn extend_ptr_vec(buf: ffi::BytePtrVector, num_to_add: usize) -> 
     };
 
     v.reserve_exact(num_to_add);
-
-    println!("Resized pointer vector to length {} and capacity {}.", v.len(), v.capacity());
 
     ffi::BytePtrVector::from(v)
 }

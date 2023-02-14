@@ -16,4 +16,4 @@ plugins: sdk
 	$(MAKE) -C plugins/base_resolver/
 
 test: all
-	cargo test -- --nocapture
+	cargo test
