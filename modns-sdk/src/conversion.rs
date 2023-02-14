@@ -138,18 +138,29 @@ unsafe fn rr_ptr_to_safe_vec(ptr: *mut ffi::DnsResourceRecord, len: usize) -> Re
 
     if len > 0 && ptr.is_null() { return Err(FfiConversionError::UnexpectedNullPointer);}
 
-    Box::from_raw(
-        std::ptr::slice_from_raw_parts_mut(ptr, len)
-    )
+    Vec::from_raw_parts(ptr, len, len)
 
-    .into_iter().map(|r| {
-        let &ffi::DnsResourceRecord{ name: unsafe_name_ptr, type_code, class_code, ttl, rdlength, rdata } = r;
+    .into_iter().map(|q| {
+        let ffi::DnsResourceRecord{
+            name: unsafe_name_vec,
+            type_code,
+            class_code,
+            ttl,
+            rdlength,
+            rdata: unsafe_rdata
+        } = q;
 
-        if unsafe_name_ptr.is_null() { return Err(FfiConversionError::InvalidString(unsafe_name_ptr)) };
+        let name = Vec::from_raw_parts(
+            unsafe_name_vec.ptr,
+            unsafe_name_vec.size,
+            unsafe_name_vec.capacity
+        ).into_iter().map(|ptr| {
+            String::from_utf8_lossy(CStr::from_ptr(ptr.ptr).to_bytes())
+        }).collect();
 
-        let name = String::from_utf8_lossy(CStr::from_ptr(unsafe_name_ptr).to_bytes()).to_string();
+        let rdata = safe::DnsResourceData::try_from(unsafe_rdata)?;
 
-        Ok(safe::DnsResourceRecord { name, type_code, class_code, ttl, rdlength, rdata: safe::DnsResourceData::try_from(rdata)? })
+        Ok(safe::DnsResourceRecord{ name, type_code, class_code, ttl, rdlength, rdata })
     }).collect()
 }
 

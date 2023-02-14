@@ -60,7 +60,7 @@ impl Default for DnsQuestion {
 #[repr(C)]
 #[derive(Debug)]
 pub struct DnsResourceRecord {
-    pub(crate) name: *const c_char,
+    pub(crate) name: BytePtrVector,
     pub(crate) type_code: u16,
     pub(crate) class_code: u16,
     pub(crate) ttl: i32,
@@ -71,7 +71,7 @@ pub struct DnsResourceRecord {
 impl Default for DnsResourceRecord {
     fn default() -> Self {
         Self {
-            name: std::ptr::null(),
+            name: Default::default(),
             type_code: 0,
             class_code: 0,
             ttl: 0,
