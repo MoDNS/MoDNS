@@ -4,7 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/modns-sdk/headers"
+                "${workspaceFolder}/modns-sdk/headers",
+                "${workspaceFolder}/plugins/common"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
