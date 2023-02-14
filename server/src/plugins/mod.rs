@@ -13,18 +13,19 @@ mod test {
 
     use super::loaders;
 
+    const SAMPLE_REQUEST: &[u8; 29] = b"\x33\xfd\x01\x00\x00\x01\x00\x00\
+                                        \x00\x00\x00\x00\x07\x65\x78\x61\
+                                        \x6d\x70\x6c\x65\x03\x63\x6f\x6d\
+                                        \x00\x00\x01\x00\x01";
     #[test]
-    fn listener_plugin_deserializer() {
-
-        let request = b"\x33\xfd\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07\x65\x78\x61\
-                                    \x6d\x70\x6c\x65\x03\x63\x6f\x6d\x00\x00\x01\x00\x01";
+    fn listener_plugin_deserializer_success() {
 
         let pm = loaders::LibraryManager::new()
         .add_lib(PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_listener"));
 
         let plugins = pm.load_plugins();
 
-        let test_response = plugins[0].deserialize(request.as_slice()).unwrap();
+        let test_response = plugins[0].deserialize(&SAMPLE_REQUEST[..]).unwrap();
 
         assert_eq!(
             test_response.header,
@@ -62,5 +63,17 @@ mod test {
             ]
         )
 
+    }
+
+    #[test]
+    fn listener_plugin_deserializer_failure() {
+        let pm = loaders::LibraryManager::new()
+        .add_lib(PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_listener"));
+
+        let plugins = pm.load_plugins();
+
+        let test_response = plugins[0].deserialize(&SAMPLE_REQUEST[..20]);
+
+        assert_eq!(test_response.unwrap_err(), 1, "Deserializer did not error on an invalid request");
     }
 }
