@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "modns-sdk.h"
 
+uintptr_t decode_question(const uint8_t *req, uintptr_t req_size, struct DnsQuestion *question);
+
 uint8_t impl_deserialize_req(const uint8_t *req, uintptr_t size, struct DnsMessage *message) {
 
     if (size < 12) {return 1;} // Message must be at least 12 bytes long to fit header
@@ -98,42 +100,53 @@ uint8_t impl_deserialize_req(const uint8_t *req, uintptr_t size, struct DnsMessa
 
     for (uint16_t question_num = 0; question_num < qdcount; question_num++) {
 
-        // Construct the requested domain name
-        uint8_t label_len = req[cursor++];
-        struct BytePtrVector qname = {NULL, 0, 0};
-        for (uint8_t label_num = 0; label_len > 0; label_num++) {
-            
-            printf("Handling %d-length label\n", label_len);
-            if (size < cursor + label_len) {return 1;}
+        uintptr_t len_decoded = decode_question(req + cursor, size - cursor, message->question + question_num);
+        if (len_decoded == 0) {return 1;}
 
-            qname = extend_ptr_vec(qname, 1);
-
-            struct ByteVector label = {NULL, 0, 0};
-            label = extend_char_vec(label, label_len + 1);
-
-            label.size = snprintf(label.ptr, label_len + 1, "%s", req + cursor);
-
-            cursor += label_len;
-
-            qname.ptr[label_num] = label;
-            qname.size++;
-
-            printf("Added label %s to qname\n", label.ptr);
-            label_len = req[cursor++];
-        };
-
-        if (size > cursor + 4) {return 1;}
-
-        uint16_t qtype = *(req+cursor+1) | (*(req+cursor) << 8);
-        cursor += 2;
-
-        uint16_t qclass = *(req+cursor+1) | (*(req+cursor) << 8);
-        cursor += 2;
-
-        message->question[question_num].name = qname;
-        message->question[question_num].class_code = qclass;
-        message->question[question_num].type_code = qtype;
+        cursor += len_decoded;
     }
 
     return 0;
+}
+
+uintptr_t decode_question(const uint8_t *req, uintptr_t req_size, struct DnsQuestion *question) {
+    uintptr_t cursor = 0;
+
+    uint8_t label_len = req[cursor++];
+    struct BytePtrVector qname = question->name;
+    for (uint8_t label_num = 0; label_len > 0; label_num++) {
+        
+        printf("Handling %d-length label\n", label_len);
+        if (req_size < cursor + label_len) {return 0;}
+
+        qname = extend_ptr_vec(qname, 1);
+
+        struct ByteVector label = qname.ptr[label_num];
+        label = extend_char_vec(label, label_len + 1);
+
+        label.size = snprintf(label.ptr, label_len + 1, "%s", req + cursor);
+        printf("MARK\n");
+
+        cursor += label_len;
+
+        qname.ptr[label_num] = label;
+        qname.size++;
+        printf("Added label %s to qname\n", label.ptr);
+
+        label_len = req[cursor++];
+    };
+
+    if (req_size > cursor + 4) {return 0;}
+
+    uint16_t qtype = *(req+cursor+1) | (*(req+cursor) << 8);
+    cursor += 2;
+
+    uint16_t qclass = *(req+cursor+1) | (*(req+cursor) << 8);
+    cursor += 2;
+
+    question->name = qname;
+    question->class_code = qclass;
+    question->type_code = qtype;
+
+    return cursor;
 }
