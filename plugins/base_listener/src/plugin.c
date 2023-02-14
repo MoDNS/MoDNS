@@ -113,25 +113,22 @@ uintptr_t decode_question(const uint8_t *req, uintptr_t req_size, struct DnsQues
     uintptr_t cursor = 0;
 
     uint8_t label_len = req[cursor++];
-    struct BytePtrVector qname = question->name;
+    struct BytePtrVector qname = {NULL, 0, 0};
     for (uint8_t label_num = 0; label_len > 0; label_num++) {
         
-        printf("Handling %d-length label\n", label_len);
         if (req_size < cursor + label_len) {return 0;}
 
         qname = extend_ptr_vec(qname, 1);
 
-        struct ByteVector label = qname.ptr[label_num];
+        struct ByteVector label = {NULL, 0, 0};
         label = extend_char_vec(label, label_len + 1);
 
         label.size = snprintf(label.ptr, label_len + 1, "%s", req + cursor);
-        printf("MARK\n");
 
         cursor += label_len;
 
         qname.ptr[label_num] = label;
         qname.size++;
-        printf("Added label %s to qname\n", label.ptr);
 
         label_len = req[cursor++];
     };
