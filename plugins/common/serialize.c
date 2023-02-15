@@ -24,7 +24,6 @@ uint8_t serialize_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
     // Header
     *resp_buf = extend_char_vec(*resp_buf, resp_size - resp_buf->capacity);
     resp_buf->size = resp_size;
-    printf("Pre-allocated size/capacity: %ld,%ld\n", resp_size, resp_buf->capacity);
 
     *(uint16_t *)(resp_buf->ptr) = htons(msg.header.id);
 
@@ -70,8 +69,6 @@ uint8_t serialize_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
     for (uint16_t i = 0; i < msg.header.arcount; i++) {
         cursor = serialize_rr(msg.additional[i], *resp_buf, cursor);
     }
-
-    printf("Cursor at %ld, buffer capacity %ld\n", cursor, resp_buf->capacity);
 
     if (cursor > resp_buf->capacity) {
         return 0;
@@ -204,10 +201,8 @@ uintptr_t get_qd_serialized_size(uint16_t count, struct DnsQuestion *qlist) {
     uintptr_t total = 0;
     for (uint16_t i = 0; i < count; i++) {
         total += get_label_list_size(qlist[i].name) + 4;
-        printf("question has size %ld\n", qlist[i].name.size);
     }
     
-    printf("size of question section: %ld\n", total);
     return total;
 }
 
