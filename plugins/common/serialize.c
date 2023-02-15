@@ -1,6 +1,11 @@
+#include <arpa/inet.h>
+#include <stdio.h>
 #include "plugin-common.h"
 
 uintptr_t serialize_question(struct DnsQuestion question, struct ByteVector resp_buf, uintptr_t initial_offset);
+uintptr_t serialize_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, uintptr_t initial_offset);
+uintptr_t serialize_label_list(struct BytePtrVector list, struct ByteVector resp_buf, uintptr_t initial_offset);
+uintptr_t serialize_byte_vec(struct ByteVector vec, struct ByteVector resp_buf, uintptr_t initial_offset);
 uintptr_t get_serialized_size(struct DnsMessage msg);
 uintptr_t get_qd_serialized_size(uint16_t count, struct DnsQuestion *qlist);
 uintptr_t get_rr_serialized_size(uint16_t count, struct DnsResourceRecord *rrlist);
@@ -15,11 +20,12 @@ uint8_t serialize_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
         truncation_required = true;
     }
 
+    printf("encoding header\n");
     // Header
     *resp_buf = extend_char_vec(*resp_buf, resp_size - resp_buf->capacity);
     resp_buf->size = resp_size;
 
-    resp_buf->ptr[0] = msg.header.id & 0x00ff;
+    resp_buf->ptr[0] = msg.header.id & 0x00ff; //TODO: Replace all of these with htonl
     resp_buf->ptr[1] = (msg.header.id & 0xff00) >> 8;
 
     uint8_t bitflags_msb = 0x00;
@@ -52,9 +58,26 @@ uint8_t serialize_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
 
     uintptr_t cursor = 12;
 
+    printf("encoding question\n");
     // Questions
-    for (uintptr_t i = 0; i < msg.header.qdcount; i++) {
+    for (uint16_t i = 0; i < msg.header.qdcount; i++) {
         cursor = serialize_question(msg.question[i], *resp_buf, cursor);
+    }
+
+    printf("encoding answers\n");
+    // Answers
+    for (uint16_t i = 0; i < msg.header.ancount; i++) {
+        cursor = serialize_rr(msg.answer[i], *resp_buf, cursor);
+    }
+
+    // Authorities
+    for (uint16_t i = 0; i < msg.header.nscount; i++) {
+        cursor = serialize_rr(msg.answer[i], *resp_buf, cursor);
+    }
+
+    // Additional
+    for (uint16_t i = 0; i < msg.header.arcount; i++) {
+        cursor = serialize_rr(msg.additional[i], *resp_buf, cursor);
     }
 
     return 0;
@@ -63,21 +86,109 @@ uint8_t serialize_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
 uintptr_t serialize_question(struct DnsQuestion question, struct ByteVector resp_buf, uintptr_t initial_offset) {
     uintptr_t cursor = initial_offset;
 
-    // Loop over labels in a question
-    for (uintptr_t j = 0; j < question.name.size; j++) {
-        resp_buf.ptr[cursor++] = question.name.size;
-
-        // Loop over chars in a label
-        for (uintptr_t k = 0; k < question.name.ptr[j].size; k++) {
-            resp_buf.ptr[cursor++] = question.name.ptr[j].ptr[k];
-        }
-    }
+    cursor = serialize_label_list(question.name, resp_buf, cursor);
 
     resp_buf.ptr[cursor++] = question.type_code & 0x00ff;
     resp_buf.ptr[cursor++] = (question.type_code & 0xff00) >> 8;
 
     resp_buf.ptr[cursor++] = question.class_code & 0x00ff;
     resp_buf.ptr[cursor++] = (question.class_code & 0xff00) >> 8;
+
+    return cursor;
+}
+
+uintptr_t serialize_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, uintptr_t initial_offset) {
+    uintptr_t cursor = initial_offset;
+
+    cursor = serialize_label_list(rr.name, resp_buf, cursor);
+
+    resp_buf.ptr[cursor++] = rr.type_code & 0x00ff;
+    resp_buf.ptr[cursor++] = (rr.type_code & 0xff00) >> 8;
+
+    resp_buf.ptr[cursor++] = rr.class_code & 0x00ff;
+    resp_buf.ptr[cursor++] = (rr.class_code & 0xff00) >> 8;
+
+    resp_buf.ptr[cursor++] = rr.ttl & 0x000000ff;
+    resp_buf.ptr[cursor++] = (rr.ttl & 0x0000ff00) >> 8;
+    resp_buf.ptr[cursor++] = (rr.ttl & 0x00ff0000) >> 16;
+    resp_buf.ptr[cursor++] = (rr.ttl & 0xff000000) >> 24;
+
+    resp_buf.ptr[cursor++] = rr.rdlength & 0x00ff;
+    resp_buf.ptr[cursor++] = (rr.rdlength & 0xff00) >> 8;
+
+    // RDATA encoding
+    switch (rr.rdata.tag) {
+        case A:
+            resp_buf.ptr[cursor++] = rr.rdata.a.address[3];
+            resp_buf.ptr[cursor++] = rr.rdata.a.address[2];
+            resp_buf.ptr[cursor++] = rr.rdata.a.address[1];
+            resp_buf.ptr[cursor++] = rr.rdata.a.address[0];
+            break;
+        case AAAA:
+            for (uint8_t i = 15; i >= 0; i--)
+                resp_buf.ptr[cursor++] = rr.rdata.aaaa.address[i];
+            break;
+        case Ns:
+            cursor = serialize_label_list(rr.rdata.ns.nsdname, resp_buf, cursor);
+            break;
+        case Cname:
+            cursor = serialize_label_list(rr.rdata.cname.cname, resp_buf, cursor);
+            break;
+        case Ptr:
+            cursor = serialize_label_list(rr.rdata.ptr.ptrdname, resp_buf, cursor);
+            break;
+        case Soa:
+            cursor = serialize_label_list(rr.rdata.soa.mname, resp_buf, cursor);
+            cursor = serialize_label_list(rr.rdata.soa.rname, resp_buf, cursor);
+            *(uint32_t *)(resp_buf.ptr + cursor) = htonl(rr.rdata.soa.serial); 
+            cursor += 4;
+            *(uint32_t *)(resp_buf.ptr + cursor) = htonl(rr.rdata.soa.refresh); 
+            cursor += 4;
+            *(uint32_t *)(resp_buf.ptr + cursor) = htonl(rr.rdata.soa.retry); 
+            cursor += 4;
+            *(uint32_t *)(resp_buf.ptr + cursor) = htonl(rr.rdata.soa.expire); 
+            cursor += 4;
+            *(uint32_t *)(resp_buf.ptr + cursor) = htonl(rr.rdata.soa.minimum); 
+            cursor += 4;
+            break;
+        case Txt:
+            cursor = serialize_label_list(rr.rdata.txt.txt_data, resp_buf, cursor);
+            break;
+        case Other:
+            cursor = serialize_byte_vec(rr.rdata.other.rdata, resp_buf, cursor);
+            break;
+        default:
+            return 0;
+
+    }
+
+    if (cursor > resp_buf.capacity) {
+        return 0;
+    }
+
+    return cursor;
+}
+
+uintptr_t serialize_label_list(struct BytePtrVector list, struct ByteVector resp_buf, uintptr_t initial_offset) {
+    uintptr_t cursor = initial_offset;
+    
+    for (uintptr_t i = 0; i < list.size; i++) {
+        resp_buf.ptr[cursor++] = list.ptr[i].size;
+
+        for (uintptr_t j = 0; j < list.ptr[i].size; j++) {
+            resp_buf.ptr[cursor++] = list.ptr[i].ptr[j];
+        }
+    }
+
+    return cursor;
+}
+
+uintptr_t serialize_byte_vec(struct ByteVector vec, struct ByteVector resp_buf, uintptr_t initial_offset) {
+    uintptr_t cursor = initial_offset;
+
+    for (int i = 0; i < vec.size; i++) {
+        resp_buf.ptr[cursor++] = vec.ptr[i];
+    }
 
     return cursor;
 }

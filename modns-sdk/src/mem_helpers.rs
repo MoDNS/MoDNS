@@ -134,6 +134,7 @@ pub extern "C" fn extend_char_vec(buf: ffi::ByteVector, num_to_add: usize) -> ff
 
 #[no_mangle]
 pub extern "C" fn extend_ptr_vec(buf: ffi::BytePtrVector, num_to_add: usize) -> ffi::BytePtrVector {
+
     let mut v = unsafe {
         Vec::from_raw_parts(buf.ptr, buf.size, buf.capacity)
     };
