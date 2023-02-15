@@ -20,7 +20,7 @@ type ResolverFn = unsafe extern "C" fn(
 
 #[cfg(test)]
 mod test {
-    use pretty_assertions::assert_eq;
+    // use pretty_assertions::assert_eq;
     use std::{path::PathBuf, env};
 
     use modns_sdk::{ffi::{self, ByteVector}, safe};

@@ -9,6 +9,7 @@ uintptr_t serialize_byte_vec(struct ByteVector vec, struct ByteVector resp_buf, 
 uintptr_t get_serialized_size(struct DnsMessage msg);
 uintptr_t get_qd_serialized_size(uint16_t count, struct DnsQuestion *qlist);
 uintptr_t get_rr_serialized_size(uint16_t count, struct DnsResourceRecord *rrlist);
+uintptr_t get_label_list_size(struct BytePtrVector list);
 
 uint8_t serialize_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
     uintptr_t resp_size = get_serialized_size(msg);
@@ -20,13 +21,12 @@ uint8_t serialize_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
         truncation_required = true;
     }
 
-    printf("encoding header\n");
     // Header
     *resp_buf = extend_char_vec(*resp_buf, resp_size - resp_buf->capacity);
     resp_buf->size = resp_size;
+    printf("Pre-allocated size/capacity: %ld,%ld\n", resp_size, resp_buf->capacity);
 
-    resp_buf->ptr[0] = msg.header.id & 0x00ff; //TODO: Replace all of these with htonl
-    resp_buf->ptr[1] = (msg.header.id & 0xff00) >> 8;
+    *(uint16_t *)(resp_buf->ptr) = htons(msg.header.id);
 
     uint8_t bitflags_msb = 0x00;
     if (msg.header.is_response)             { bitflags_msb |= 0b10000000; }
@@ -44,27 +44,18 @@ uint8_t serialize_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
 
     resp_buf->ptr[3] = bitflags_lsb;
 
-    resp_buf->ptr[4] = msg.header.qdcount & 0x00ff;
-    resp_buf->ptr[5] = (msg.header.qdcount & 0xff00) >> 8;
-
-    resp_buf->ptr[6] = msg.header.ancount & 0x00ff;
-    resp_buf->ptr[7] = (msg.header.ancount & 0xff00) >> 8;
-
-    resp_buf->ptr[8] = msg.header.nscount & 0x00ff;
-    resp_buf->ptr[9] = (msg.header.nscount & 0xff00) >> 8;
-
-    resp_buf->ptr[10] = msg.header.arcount & 0x00ff;
-    resp_buf->ptr[11] = (msg.header.arcount & 0xff00) >> 8;
+    *(uint16_t *)(resp_buf->ptr + 4) = htons(msg.header.qdcount);
+    *(uint16_t *)(resp_buf->ptr + 6) = htons(msg.header.ancount);
+    *(uint16_t *)(resp_buf->ptr + 8) = htons(msg.header.nscount);
+    *(uint16_t *)(resp_buf->ptr + 10) = htons(msg.header.arcount);
 
     uintptr_t cursor = 12;
 
-    printf("encoding question\n");
     // Questions
     for (uint16_t i = 0; i < msg.header.qdcount; i++) {
         cursor = serialize_question(msg.question[i], *resp_buf, cursor);
     }
 
-    printf("encoding answers\n");
     // Answers
     for (uint16_t i = 0; i < msg.header.ancount; i++) {
         cursor = serialize_rr(msg.answer[i], *resp_buf, cursor);
@@ -80,6 +71,12 @@ uint8_t serialize_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
         cursor = serialize_rr(msg.additional[i], *resp_buf, cursor);
     }
 
+    printf("Cursor at %ld, buffer capacity %ld\n", cursor, resp_buf->capacity);
+
+    if (cursor > resp_buf->capacity) {
+        return 0;
+    }
+
     return 0;
 }
 
@@ -88,11 +85,11 @@ uintptr_t serialize_question(struct DnsQuestion question, struct ByteVector resp
 
     cursor = serialize_label_list(question.name, resp_buf, cursor);
 
-    resp_buf.ptr[cursor++] = question.type_code & 0x00ff;
-    resp_buf.ptr[cursor++] = (question.type_code & 0xff00) >> 8;
+    *(uint16_t *)(resp_buf.ptr + cursor) = htons(question.type_code);
+    cursor += 2;
 
-    resp_buf.ptr[cursor++] = question.class_code & 0x00ff;
-    resp_buf.ptr[cursor++] = (question.class_code & 0xff00) >> 8;
+    *(uint16_t *)(resp_buf.ptr + cursor) = htons(question.class_code);
+    cursor += 2;
 
     return cursor;
 }
@@ -102,19 +99,17 @@ uintptr_t serialize_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, 
 
     cursor = serialize_label_list(rr.name, resp_buf, cursor);
 
-    resp_buf.ptr[cursor++] = rr.type_code & 0x00ff;
-    resp_buf.ptr[cursor++] = (rr.type_code & 0xff00) >> 8;
+    *(uint16_t *)(resp_buf.ptr + cursor) = htons(rr.type_code);
+    cursor += 2;
 
-    resp_buf.ptr[cursor++] = rr.class_code & 0x00ff;
-    resp_buf.ptr[cursor++] = (rr.class_code & 0xff00) >> 8;
+    *(uint16_t *)(resp_buf.ptr + cursor) = htons(rr.class_code);
+    cursor += 2;
 
-    resp_buf.ptr[cursor++] = rr.ttl & 0x000000ff;
-    resp_buf.ptr[cursor++] = (rr.ttl & 0x0000ff00) >> 8;
-    resp_buf.ptr[cursor++] = (rr.ttl & 0x00ff0000) >> 16;
-    resp_buf.ptr[cursor++] = (rr.ttl & 0xff000000) >> 24;
+    *(uint32_t *)(resp_buf.ptr + cursor) = htonl(rr.ttl);
+    cursor += 4;
 
-    resp_buf.ptr[cursor++] = rr.rdlength & 0x00ff;
-    resp_buf.ptr[cursor++] = (rr.rdlength & 0xff00) >> 8;
+    *(uint16_t *)(resp_buf.ptr + cursor) = htons(rr.rdlength);
+    cursor += 2;
 
     // RDATA encoding
     switch (rr.rdata.tag) {
@@ -162,10 +157,6 @@ uintptr_t serialize_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, 
 
     }
 
-    if (cursor > resp_buf.capacity) {
-        return 0;
-    }
-
     return cursor;
 }
 
@@ -179,6 +170,8 @@ uintptr_t serialize_label_list(struct BytePtrVector list, struct ByteVector resp
             resp_buf.ptr[cursor++] = list.ptr[i].ptr[j];
         }
     }
+
+    resp_buf.ptr[cursor++] = 0;
 
     return cursor;
 }
@@ -210,9 +203,11 @@ uintptr_t get_serialized_size(struct DnsMessage msg) {
 uintptr_t get_qd_serialized_size(uint16_t count, struct DnsQuestion *qlist) {
     uintptr_t total = 0;
     for (uint16_t i = 0; i < count; i++) {
-        total += qlist[i].name.size + 4;
+        total += get_label_list_size(qlist[i].name) + 4;
+        printf("question has size %ld\n", qlist[i].name.size);
     }
     
+    printf("size of question section: %ld\n", total);
     return total;
 }
 
@@ -220,9 +215,17 @@ uintptr_t get_rr_serialized_size(uint16_t count, struct DnsResourceRecord *rrlis
     uintptr_t total = 0;
 
     for (uint16_t i = 0; i < count; i++) {
-        total += rrlist[i].name.size + 10;
+        total += get_label_list_size(rrlist->name) + 10;
         total += rrlist[i].rdlength;
     }
 
     return total;
+}
+
+uintptr_t get_label_list_size(struct BytePtrVector list) {
+    uintptr_t total = 0;
+    for (uintptr_t i = 0; i < list.size; i++) {
+        total += list.ptr[i].size + 1; //room for label and length bit
+    }
+    return ++total; // add one for ending null byte
 }
