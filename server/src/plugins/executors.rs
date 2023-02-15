@@ -4,6 +4,8 @@ use std::ffi::c_char;
 use libloading::Symbol;
 use modns_sdk::ffi;
 
+use super::loaders;
+
 /// A Plugin which contains symbols for functions that are called during
 /// the DNS resolving process.
 pub struct DnsPlugin<'lib> {
@@ -19,6 +21,16 @@ impl<'lib> DnsPlugin<'lib> {
         resolver: Option<Symbol<'lib, super::ResolverFn>>
     ) -> Self {
         Self{ decoder, encoder, resolver }
+    }
+}
+
+impl DnsPlugin<'_> {
+    pub fn is_listener(&self) -> bool {
+        self.decoder.is_some() && self.encoder.is_some()
+    }
+
+    pub fn is_resolver(&self) -> bool {
+        self.resolver.is_some()
     }
 }
 
@@ -95,4 +107,53 @@ impl DnsPlugin<'_> {
         }
 
     }
+}
+
+pub struct PluginManager<'l> {
+    listener: Option<&'l DnsPlugin<'l>>,
+    resolver: Option<&'l DnsPlugin<'l>>,
+    _interceptors: Vec<&'l DnsPlugin<'l>>,
+    _validators: Vec<&'l DnsPlugin<'l>>,
+    _inspectors: Vec<&'l DnsPlugin<'l>>
+}
+
+impl<'l> PluginManager<'l> {
+
+    pub const fn empty() -> Self {
+        Self { listener: None, resolver: None, _interceptors: Vec::new(), _validators: Vec::new(), _inspectors: Vec::new() }
+    }
+
+    pub fn new(plugins: &'l [DnsPlugin]) -> Result<Self, loaders::PluginLoaderError> {
+
+        let listener = plugins.iter()
+        .find(|p| p.is_listener());
+
+        let resolver = plugins.iter()
+        .find(|p| p.is_resolver());
+
+        Ok(Self { listener, resolver, _interceptors: Vec::new(), _validators:Vec::new(), _inspectors: Vec::new() })
+    }
+
+    pub fn decode(&self, req: &[u8]) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
+        match self.listener {
+            Some(p) => p.decode(req),
+            None => Err(PluginExecutorError::DoesNotImplement),
+        }
+    }
+
+    pub fn encode(&self, msg: ffi::DnsMessage) -> Result<Vec<i8>, PluginExecutorError> {
+        match self.listener {
+            Some(p) => p.encode(msg),
+            None => Err(PluginExecutorError::DoesNotImplement),
+        }
+    }
+
+    pub fn resolve(&self, req: ffi::DnsMessage) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
+        match self.resolver {
+            Some(p) => p.resolve(req),
+            None => Err(PluginExecutorError::DoesNotImplement),
+        }
+    }
+
+
 }

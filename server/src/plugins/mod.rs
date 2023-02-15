@@ -1,3 +1,9 @@
+use std::path::{PathBuf, Path};
+
+use tokio::sync::RwLock;
+
+use self::{loaders::LibraryManager, executors::{DnsPlugin, PluginManager}};
+
 
 pub mod executors;
 pub mod loaders;
@@ -17,6 +23,22 @@ type ResolverFn = unsafe extern "C" fn(
     modns_sdk::ffi::DnsMessage,
     *mut modns_sdk::ffi::DnsMessage
 ) -> u8;
+
+pub async fn init(search_path: &[PathBuf], lib_lock: &'static RwLock<LibraryManager>, plugin_lock: &'static RwLock<Vec<DnsPlugin<'static>>>, pm_lock: &'static RwLock<PluginManager<'static>>) {
+
+    let mut pm = pm_lock.write().await;
+    let mut plugin_vec = plugin_lock.write().await;
+    let mut lib_manager = lib_lock.write().await;
+
+    lib_manager.clear();
+
+    lib_manager.search(search_path);
+
+    *plugin_vec = lib_manager.init().unwrap();
+
+    *pm = PluginManager::new(&plugin_vec).unwrap();
+
+}
 
 #[cfg(test)]
 mod test {
@@ -51,10 +73,11 @@ mod test {
     #[test]
     fn listener_plugin_decoder_success() {
 
-        let pm = loaders::LibraryManager::new()
-        .add_lib(PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_listener"));
+        let mut pm = loaders::LibraryManager::new();
 
-        let plugins = pm.load_plugins().unwrap();
+        pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]);
+
+        let plugins = pm.init().unwrap();
 
         let test_response = plugins[0].decode(&SAMPLE_REQUEST[..]).unwrap();
 
@@ -82,10 +105,11 @@ mod test {
 
     #[test]
     fn listener_plugin_decoder_failure() {
-        let pm = loaders::LibraryManager::new()
-        .add_lib(PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_listener"));
+        let mut pm = loaders::LibraryManager::new();
 
-        let plugins = pm.load_plugins().unwrap();
+        pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]);
+
+        let plugins = pm.init().unwrap();
 
         let test_response = plugins[0].decode(&SAMPLE_REQUEST[..20]);
 
@@ -98,10 +122,11 @@ mod test {
 
     #[test]
     fn listener_plugin_encoder_success() {
-        let pm = loaders::LibraryManager::new()
-        .add_lib(PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_listener"));
+        let mut pm = loaders::LibraryManager::new();
 
-        let plugins = pm.load_plugins().unwrap();
+        pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]);
+
+        let plugins = pm.init().unwrap();
 
         let message = ffi::DnsMessage {
             header: SAMPLE_REQUEST_HEADER,
