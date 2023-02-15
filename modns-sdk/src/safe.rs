@@ -1,4 +1,4 @@
-use std::net::Ipv4Addr;
+use std::net::{Ipv4Addr, Ipv6Addr};
 
 #[derive(Debug)]
 pub struct DnsHeader {
@@ -55,7 +55,22 @@ pub struct DnsResourceRecord {
 
 #[derive(Debug)]
 pub enum DnsResourceData {
-    A { address: Ipv4Addr }
+    A { address: Ipv4Addr },
+    AAAA { address: Ipv6Addr },
+    Ns { nsdname: Vec<String> },
+    Cname { cname: Vec<String> },
+    Ptr { ptrdname: Vec<String> },
+    Soa {
+        mname: Vec<String>,
+        rname: Vec<String>,
+        serial: u32,
+        refresh: u32,
+        retry: u32,
+        expire: u32,
+        minimum: u32
+    },
+    Txt { txt_data: Vec<String> },
+    Other { rdata: Vec<u8> }
 }
 
 #[derive(Debug)]

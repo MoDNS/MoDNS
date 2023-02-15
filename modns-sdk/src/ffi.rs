@@ -82,9 +82,24 @@ impl Default for DnsResourceRecord {
 }
 
 #[repr(C)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 pub enum DnsResourceData {
-    A { address: [u8; 4] }
+    A { address: [u8; 4] },
+    AAAA { address: [u8; 16] },
+    Ns { nsdname: BytePtrVector },
+    Cname { cname: BytePtrVector },
+    Ptr { ptrdname: BytePtrVector },
+    Soa {
+        mname: BytePtrVector,
+        rname: BytePtrVector,
+        serial: u32,
+        refresh: u32,
+        retry: u32,
+        expire: u32,
+        minimum: u32
+    },
+    Txt { txt_data: BytePtrVector },
+    Other { rdata: ByteVector }
 }
 
 impl Default for DnsResourceData {

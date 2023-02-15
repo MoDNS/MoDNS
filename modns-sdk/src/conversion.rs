@@ -1,4 +1,4 @@
-use std::{ffi::{c_char, CStr}, mem};
+use std::{ffi::{c_char, CStr}, mem, net::Ipv6Addr};
 use std::net::Ipv4Addr;
 use std::panic::catch_unwind;
 
@@ -54,6 +54,29 @@ impl TryFrom<ffi::DnsResourceData> for safe::DnsResourceData {
     fn try_from(value: ffi::DnsResourceData) -> Result<Self, Self::Error> {
         match value {
             ffi::DnsResourceData::A { address } => Ok(safe::DnsResourceData::A { address: Ipv4Addr::from(address) }),
+            ffi::DnsResourceData::AAAA { address } => Ok(safe::DnsResourceData::AAAA { address: Ipv6Addr::from(address) }),
+            ffi::DnsResourceData::Ns { nsdname } => Ok(safe::DnsResourceData::Ns { nsdname: nsdname.try_into()? }),
+            ffi::DnsResourceData::Cname { cname } => Ok(safe::DnsResourceData::Cname { cname: cname.try_into()? }),
+            ffi::DnsResourceData::Ptr { ptrdname } => Ok(safe::DnsResourceData::Ptr { ptrdname: ptrdname.try_into()? }),
+            ffi::DnsResourceData::Soa {
+                mname,
+                rname,
+                serial,
+                refresh,
+                retry,
+                expire,
+                minimum
+            } => Ok(safe::DnsResourceData::Soa {
+                mname: mname.try_into()?,
+                rname: rname.try_into()?,
+                serial: serial,
+                refresh,
+                retry,
+                expire,
+                minimum
+            }),
+            ffi::DnsResourceData::Txt { txt_data } => Ok(safe::DnsResourceData::Txt { txt_data: txt_data.try_into()? }),
+            ffi::DnsResourceData::Other { rdata } => Ok(safe::DnsResourceData::Other { rdata: rdata.try_into()? }),
         }
     }
 }
@@ -188,6 +211,59 @@ impl TryInto<Vec<c_char>> for ffi::ByteVector {
             return Err(FfiConversionError::UnexpectedNullPointer);
         }
 
-        unsafe { Ok(Vec::from_raw_parts(self.ptr, self.size, self.capacity)) }
+        unsafe { Ok(Vec::from_raw_parts(
+            self.ptr,
+            self.size,
+            self.capacity
+        )) }
+    }
+}
+
+impl TryInto<String> for ffi::ByteVector {
+    type Error = FfiConversionError;
+
+    fn try_into(self) -> Result<String, Self::Error> {
+        if self.ptr.is_null() && self.size > 0 {
+            return Err(FfiConversionError::UnexpectedNullPointer);
+        }
+
+        unsafe { Ok(String::from_raw_parts(
+            self.ptr as *mut u8,
+            self.size,
+            self.capacity
+        ))}
+    }
+}
+
+impl TryInto<Vec<u8>> for ffi::ByteVector {
+    type Error = FfiConversionError;
+
+    fn try_into(self) -> Result<Vec<u8>, Self::Error> {
+        if self.ptr.is_null() && self.size > 0 {
+            return Err(FfiConversionError::UnexpectedNullPointer);
+        }
+
+        unsafe { Ok(Vec::from_raw_parts(
+            self.ptr as *mut u8,
+            self.size,
+            self.capacity
+        ))}
+    }
+}
+
+impl TryInto<Vec<String>> for ffi::BytePtrVector {
+    type Error = FfiConversionError;
+
+    fn try_into(self) -> Result<Vec<String>, Self::Error> {
+        if self.ptr.is_null() && self.size > 0 {
+            return Err(FfiConversionError::UnexpectedNullPointer);
+        }
+
+        unsafe{
+            Vec::from_raw_parts(self.ptr, self.size, self.capacity)
+        }
+        .into_iter()
+        .map(TryInto::try_into)
+        .collect()
     }
 }
