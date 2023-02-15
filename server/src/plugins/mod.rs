@@ -2,13 +2,13 @@
 pub mod executors;
 pub mod loaders;
 
-type ListenerDeserializeFn = unsafe extern "C" fn(
+type ListenerDecodeFn = unsafe extern "C" fn(
     *const u8,
     usize,
     *mut modns_sdk::ffi::DnsMessage
 ) -> u8;
 
-type ListenerSerializeFn = unsafe extern "C" fn(
+type ListenerEncodeFn = unsafe extern "C" fn(
     modns_sdk::ffi::DnsMessage,
     modns_sdk::ffi::ByteVector
 ) -> modns_sdk::ffi::ByteVector;
@@ -49,14 +49,14 @@ mod test {
     };
 
     #[test]
-    fn listener_plugin_deserializer_success() {
+    fn listener_plugin_decoder_success() {
 
         let pm = loaders::LibraryManager::new()
         .add_lib(PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_listener"));
 
         let plugins = pm.load_plugins().unwrap();
 
-        let test_response = plugins[0].deserialize(&SAMPLE_REQUEST[..]).unwrap();
+        let test_response = plugins[0].decode(&SAMPLE_REQUEST[..]).unwrap();
 
         assert_eq!(test_response.header, SAMPLE_REQUEST_HEADER);
 
@@ -81,23 +81,23 @@ mod test {
     }
 
     #[test]
-    fn listener_plugin_deserializer_failure() {
+    fn listener_plugin_decoder_failure() {
         let pm = loaders::LibraryManager::new()
         .add_lib(PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_listener"));
 
         let plugins = pm.load_plugins().unwrap();
 
-        let test_response = plugins[0].deserialize(&SAMPLE_REQUEST[..20]);
+        let test_response = plugins[0].decode(&SAMPLE_REQUEST[..20]);
 
         assert_eq!(
             test_response.unwrap_err(),
             super::executors::PluginExecutorError::ErrorCode(1),
-            "Deserializer did not error on an invalid request"
+            "decoder did not error on an invalid request"
         );
     }
 
     #[test]
-    fn listener_plugin_serializer_success() {
+    fn listener_plugin_encoder_success() {
         let pm = loaders::LibraryManager::new()
         .add_lib(PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_listener"));
 
@@ -127,7 +127,7 @@ mod test {
             additional: std::ptr::null_mut(),
         };
 
-        let test_response = plugins[0].serialize(message).unwrap();
+        let test_response = plugins[0].encode(message).unwrap();
 
         assert_eq!(unsafe{std::mem::transmute::<&[i8], &[u8]>(&test_response[..])}, SAMPLE_REQUEST);
 

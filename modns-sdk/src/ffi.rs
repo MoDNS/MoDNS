@@ -118,10 +118,6 @@ pub struct DnsMessage {
     pub additional: *mut DnsResourceRecord
 }
 
-#[repr(C)]
-#[derive(Debug)]
-pub struct SerializerResponse(*const u8, usize);
-
 impl Default for DnsHeader {
     fn default() -> Self {
         Self {

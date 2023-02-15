@@ -81,6 +81,3 @@ pub struct DnsMessage {
     pub authority: Vec<DnsResourceRecord>,
     pub additional: Vec<DnsResourceRecord>
 }
-
-#[derive(Debug)]
-pub struct SerializerResponse(*const u8, usize);

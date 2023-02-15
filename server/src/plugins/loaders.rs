@@ -15,16 +15,16 @@ pub(crate) struct PluginLibrary {
 impl<'l> DnsPlugin<'l> {
     pub(crate) fn load(lib: &'l PluginLibrary) -> Result<Self, libloading::Error> {
 
-        let deserializer =
-        get_sym(&lib.lib, b"impl_deserialize_req")?;
+        let decoder =
+        get_sym(&lib.lib, b"impl_decode_req")?;
 
-        let serializer = 
-        get_sym(&lib.lib, b"impl_serialize_resp")?;
+        let encoder = 
+        get_sym(&lib.lib, b"impl_encode_resp")?;
 
         let resolver = 
         get_sym(&lib.lib, b"impl_resolve_req")?;
 
-        Ok(Self::new(deserializer, serializer, resolver))
+        Ok(Self::new(decoder, encoder, resolver))
     }
 }
 

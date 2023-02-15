@@ -5,7 +5,7 @@ uintptr_t decode_question(const uint8_t *req, uintptr_t req_size, struct DnsQues
 uintptr_t decode_rr(const uint8_t *req, uintptr_t req_size, struct DnsResourceRecord *rr);
 uintptr_t decode_label_list(const uint8_t *req, uintptr_t req_size, struct BytePtrVector *vec);
 
-uint8_t deserialize_bytes(const uint8_t *req, uintptr_t size, struct DnsMessage *message) {
+uint8_t decode_bytes(const uint8_t *req, uintptr_t size, struct DnsMessage *message) {
 
     if (size < 12) {return 1;} // Message must be at least 12 bytes long to fit header
 

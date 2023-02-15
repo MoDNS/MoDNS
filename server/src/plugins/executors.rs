@@ -7,18 +7,18 @@ use modns_sdk::ffi;
 /// A Plugin which contains symbols for functions that are called during
 /// the DNS resolving process.
 pub struct DnsPlugin<'lib> {
-    deserializer: Option<Symbol<'lib, super::ListenerDeserializeFn>>,
-    serializer: Option<Symbol<'lib, super::ListenerSerializeFn>>,
+    decoder: Option<Symbol<'lib, super::ListenerDecodeFn>>,
+    encoder: Option<Symbol<'lib, super::ListenerEncodeFn>>,
     resolver: Option<Symbol<'lib, super::ResolverFn>>
 }
 
 impl<'lib> DnsPlugin<'lib> {
     pub fn new(
-        deserializer: Option<Symbol<'lib, super::ListenerDeserializeFn>>,
-        serializer: Option<Symbol<'lib, super::ListenerSerializeFn>>,
+        decoder: Option<Symbol<'lib, super::ListenerDecodeFn>>,
+        encoder: Option<Symbol<'lib, super::ListenerEncodeFn>>,
         resolver: Option<Symbol<'lib, super::ResolverFn>>
     ) -> Self {
-        Self{ deserializer, serializer, resolver }
+        Self{ decoder, encoder, resolver }
     }
 }
 
@@ -42,9 +42,9 @@ impl From<modns_sdk::FfiConversionError> for PluginExecutorError{
 }
 
 impl DnsPlugin<'_> {
-    pub fn deserialize(&self, buf: &'_ [u8]) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
+    pub fn decode(&self, buf: &'_ [u8]) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
 
-        let f = self.deserializer.as_ref()
+        let f = self.decoder.as_ref()
         .ok_or(PluginExecutorError::DoesNotImplement)?;
 
         let mut message = Box::new(ffi::DnsMessage::default());
@@ -58,9 +58,9 @@ impl DnsPlugin<'_> {
         }
     }
 
-    pub fn serialize(&self, message: ffi::DnsMessage) -> Result<Vec<c_char>, PluginExecutorError> {
+    pub fn encode(&self, message: ffi::DnsMessage) -> Result<Vec<c_char>, PluginExecutorError> {
 
-        let f = self.serializer.as_ref()
+        let f = self.encoder.as_ref()
         .ok_or(PluginExecutorError::DoesNotImplement)?;
 
         let buf = Vec::new();
