@@ -101,10 +101,34 @@ uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
 
     uintptr_t cursor = 12; // Start a cursor at the end of the header
 
-    for (uint16_t question_num = 0; question_num < qdcount; question_num++) {
+    for (uint16_t i = 0; i < qdcount; i++) {
 
-        printf("Decoding question %d, cursor at %ld\n", question_num, cursor);
-        cursor = decode_question(req, cursor, message->question + question_num);
+        printf("Decoding question %d, cursor at %ld\n", i, cursor);
+        cursor = decode_question(req, cursor, message->question + i);
+        printf("Decoded, cursor at %ld\n", cursor);
+        if (cursor == 0) {return 1;}
+    }
+
+    for (uint16_t i = 0; i < ancount; i++) {
+
+        printf("Decoding answer %d, cursor at %ld\n", i, cursor);
+        cursor = decode_rr(req, cursor, message->answer + i);
+        printf("Decoded, cursor at %ld\n", cursor);
+        if (cursor == 0) {return 1;}
+    }
+
+    for (uint16_t i = 0; i < nscount; i++) {
+
+        printf("Decoding answer %d, cursor at %ld\n", i, cursor);
+        cursor = decode_rr(req, cursor, message->authority + i);
+        printf("Decoded, cursor at %ld\n", cursor);
+        if (cursor == 0) {return 1;}
+    }
+
+    for (uint16_t i = 0; i < arcount; i++) {
+
+        printf("Decoding answer %d, cursor at %ld\n", i, cursor);
+        cursor = decode_rr(req, cursor, message->additional + i);
         printf("Decoded, cursor at %ld\n", cursor);
         if (cursor == 0) {return 1;}
     }
@@ -120,7 +144,7 @@ uintptr_t decode_question(struct ByteVector req, uintptr_t initial_offset, struc
     cursor = decode_label_list(req, cursor, &(question->name));
     if (cursor == 0) {return 0;}
 
-    if (req.size > cursor + 4) {return 0;}
+    if (req.size < cursor + 4) {return 0;}
 
     uint16_t qtype = ntohs(*(uint16_t *)(req.ptr + cursor));
     cursor += 2;
@@ -137,6 +161,36 @@ uintptr_t decode_question(struct ByteVector req, uintptr_t initial_offset, struc
 uintptr_t decode_rr(struct ByteVector req, uintptr_t initial_offset, struct DnsResourceRecord *rr) {
     uintptr_t cursor = initial_offset;
 
+    cursor = decode_label_list(req, cursor, &(rr->name));
+    if (cursor == 0) {return 0;}
+
+    if (req.size < cursor + 10) {return 0;}
+
+    rr->type_code = ntohs(*(uint16_t *)(req.ptr + cursor));
+    cursor += 2;
+
+    rr->class_code = ntohs(*(uint16_t *)(req.ptr + cursor));
+    cursor += 2;
+
+    rr->ttl = ntohl(*(uint32_t *)(req.ptr + cursor));
+    cursor += 4;
+
+    rr->rdlength = ntohs(*(uint16_t *)(req.ptr + cursor));
+    cursor += 2;
+
+    if (req.size < cursor + rr->rdlength) {return 0;}
+
+    struct ByteVector rdata = {NULL, 0, 0};
+    rdata = extend_char_vec(rdata, rr->rdlength);
+
+    for(uint16_t i = 0; i < rr->rdlength; i++) {
+        rdata.ptr[i] = req.ptr[cursor++];
+    }
+
+    rdata.size = rr->rdlength;
+    rr->rdata.tag = Other;
+    rr->rdata.other.rdata = rdata;
+
     return cursor;
 }
 
@@ -144,8 +198,16 @@ uintptr_t decode_label_list(struct ByteVector req, uintptr_t initial_offset, str
     uintptr_t cursor = initial_offset;
 
     uint8_t label_len = req.ptr[cursor++];
-    struct BytePtrVector qname = {NULL, 0, 0};
-    for (uint8_t label_num = 0; label_len > 0; label_num++) {
+    struct BytePtrVector qname = *vec;
+    for (uint8_t label_num = qname.size; label_len > 0; label_num++) {
+
+        if (label_len & 0b11000000) {
+            uint16_t label_offset = ((label_len & 0b00111111) << 8) | req.ptr[cursor++];
+
+            uintptr_t rc = decode_label_list(req, label_offset, &qname);
+            if (rc == 0) {return 0;}
+            break;
+        }
         
         if (req.size < cursor + label_len) {return 0;}
 
