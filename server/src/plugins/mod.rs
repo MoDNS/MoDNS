@@ -1,9 +1,3 @@
-use std::path::{PathBuf, Path};
-
-use tokio::sync::RwLock;
-
-use self::{loaders::LibraryManager, executors::{DnsPlugin, PluginManager}};
-
 
 pub mod executors;
 pub mod loaders;
@@ -16,38 +10,22 @@ type ListenerDecodeFn = unsafe extern "C" fn(
 
 type ListenerEncodeFn = unsafe extern "C" fn(
     modns_sdk::ffi::DnsMessage,
-    modns_sdk::ffi::ByteVector
-) -> modns_sdk::ffi::ByteVector;
+    *mut modns_sdk::ffi::ByteVector
+) -> u8;
 
 type ResolverFn = unsafe extern "C" fn(
     modns_sdk::ffi::DnsMessage,
     *mut modns_sdk::ffi::DnsMessage
 ) -> u8;
 
-pub async fn init(search_path: &[PathBuf], lib_lock: &'static RwLock<LibraryManager>, plugin_lock: &'static RwLock<Vec<DnsPlugin<'static>>>, pm_lock: &'static RwLock<PluginManager<'static>>) {
-
-    let mut pm = pm_lock.write().await;
-    let mut plugin_vec = plugin_lock.write().await;
-    let mut lib_manager = lib_lock.write().await;
-
-    lib_manager.clear();
-
-    lib_manager.search(search_path);
-
-    *plugin_vec = lib_manager.init().unwrap();
-
-    *pm = PluginManager::new(&plugin_vec).unwrap();
-
-}
-
 #[cfg(test)]
 mod test {
-    // use pretty_assertions::assert_eq;
+    use pretty_assertions::assert_eq;
     use std::{path::PathBuf, env};
 
     use modns_sdk::{ffi::{self, ByteVector}, safe};
 
-    use super::loaders;
+    use crate::plugins::executors::PluginManager;
 
     const SAMPLE_REQUEST: &[u8; 29] = b"\xc3\xd9\x01\x00\x00\x01\x00\x00\
                                         \x00\x00\x00\x00\x07\x65\x78\x61\
@@ -73,13 +51,11 @@ mod test {
     #[test]
     fn listener_plugin_decoder_success() {
 
-        let mut pm = loaders::LibraryManager::new();
+        let mut pm = PluginManager::new();
 
         pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]);
 
-        let plugins = pm.init().unwrap();
-
-        let test_response = plugins[0].decode(&SAMPLE_REQUEST[..]).unwrap();
+        let test_response = pm.decode(&SAMPLE_REQUEST[..]).unwrap();
 
         assert_eq!(test_response.header, SAMPLE_REQUEST_HEADER);
 
@@ -105,13 +81,11 @@ mod test {
 
     #[test]
     fn listener_plugin_decoder_failure() {
-        let mut pm = loaders::LibraryManager::new();
+        let mut pm = PluginManager::new();
 
         pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]);
 
-        let plugins = pm.init().unwrap();
-
-        let test_response = plugins[0].decode(&SAMPLE_REQUEST[..20]);
+        let test_response = pm.decode(&SAMPLE_REQUEST[..20]);
 
         assert_eq!(
             test_response.unwrap_err(),
@@ -122,11 +96,9 @@ mod test {
 
     #[test]
     fn listener_plugin_encoder_success() {
-        let mut pm = loaders::LibraryManager::new();
+        let mut pm = PluginManager::new();
 
         pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]);
-
-        let plugins = pm.init().unwrap();
 
         let message = ffi::DnsMessage {
             header: SAMPLE_REQUEST_HEADER,
@@ -152,7 +124,7 @@ mod test {
             additional: std::ptr::null_mut(),
         };
 
-        let test_response = plugins[0].encode(message).unwrap();
+        let test_response = pm.encode(message).unwrap();
 
         assert_eq!(unsafe{std::mem::transmute::<&[i8], &[u8]>(&test_response[..])}, SAMPLE_REQUEST);
 

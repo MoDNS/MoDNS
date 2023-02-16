@@ -1,43 +1,17 @@
 
-use std::ffi::c_char;
+use std::{ffi::c_char, collections::BTreeMap, sync::{Arc, Weak}, path::{PathBuf, Path}};
 
-use libloading::Symbol;
+use libloading::{Symbol, Library};
 use modns_sdk::ffi;
+use uuid::Uuid;
 
-use super::loaders;
-
-/// A Plugin which contains symbols for functions that are called during
-/// the DNS resolving process.
-pub struct DnsPlugin<'lib> {
-    decoder: Option<Symbol<'lib, super::ListenerDecodeFn>>,
-    encoder: Option<Symbol<'lib, super::ListenerEncodeFn>>,
-    resolver: Option<Symbol<'lib, super::ResolverFn>>
-}
-
-impl<'lib> DnsPlugin<'lib> {
-    pub fn new(
-        decoder: Option<Symbol<'lib, super::ListenerDecodeFn>>,
-        encoder: Option<Symbol<'lib, super::ListenerEncodeFn>>,
-        resolver: Option<Symbol<'lib, super::ResolverFn>>
-    ) -> Self {
-        Self{ decoder, encoder, resolver }
-    }
-}
-
-impl DnsPlugin<'_> {
-    pub fn is_listener(&self) -> bool {
-        self.decoder.is_some() && self.encoder.is_some()
-    }
-
-    pub fn is_resolver(&self) -> bool {
-        self.resolver.is_some()
-    }
-}
+use super::{ResolverFn, ListenerEncodeFn, ListenerDecodeFn, loaders::PluginLoaderError};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum PluginExecutorError {
     ErrorCode(u8),
     DoesNotImplement,
+    NoneEnabled,
     InvalidReturnValue(modns_sdk::FfiConversionError)
 }
 
@@ -53,11 +27,31 @@ impl From<modns_sdk::FfiConversionError> for PluginExecutorError{
     }
 }
 
-impl DnsPlugin<'_> {
-    pub fn decode(&self, buf: &'_ [u8]) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
+/// A Plugin which contains symbols for functions that are called during
+/// the DNS resolving process.
+pub struct DnsPlugin {
+    lib: Library,
+    is_listener: bool,
+    is_resolver: bool
+}
 
-        let f = self.decoder.as_ref()
-        .ok_or(PluginExecutorError::DoesNotImplement)?;
+impl DnsPlugin {
+    pub(crate) fn new(lib: Library, is_listener: bool, is_resolver: bool) -> Self {
+        Self{ lib, is_listener, is_resolver }
+    }
+    
+    pub fn is_listener(&self) -> bool {
+        self.is_listener
+    }
+
+    pub fn is_resolver(&self) -> bool {
+        self.is_resolver
+    }
+
+    pub fn decode(&self, buf: &[u8]) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
+
+        let f: Symbol<ListenerDecodeFn> = unsafe { self.lib.get(b"impl_decode_req") }
+        .or(Err(PluginExecutorError::DoesNotImplement))?;
 
         let mut message = Box::new(ffi::DnsMessage::default());
 
@@ -72,17 +66,17 @@ impl DnsPlugin<'_> {
 
     pub fn encode(&self, message: ffi::DnsMessage) -> Result<Vec<c_char>, PluginExecutorError> {
 
-        let f = self.encoder.as_ref()
-        .ok_or(PluginExecutorError::DoesNotImplement)?;
+        let f: Symbol<ListenerEncodeFn> = unsafe { self.lib.get(b"impl_encode_resp") }
+        .or(Err(PluginExecutorError::DoesNotImplement))?;
 
-        let buf = Vec::new();
+        let mut buf = Vec::new().into();
 
-        let buf = unsafe {
-            f(message, buf.into())
+        let rc = unsafe {
+            f(message, &mut buf)
         };
 
-        if buf.ptr.is_null() {
-            Err(PluginExecutorError::ErrorCode(2))
+        if rc != 0 {
+            Err(PluginExecutorError::ErrorCode(rc))
         } else {
             Ok(buf.try_into()?)
         }
@@ -91,8 +85,8 @@ impl DnsPlugin<'_> {
 
     pub fn resolve(&self, req: ffi::DnsMessage) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
 
-        let f = self.resolver.as_ref()
-        .ok_or(PluginExecutorError::DoesNotImplement)?;
+        let f: Symbol<ResolverFn> = unsafe { self.lib.get(b"impl_resolve_req") }
+        .or(Err(PluginExecutorError::DoesNotImplement))?;
 
         let mut resp = Box::new(ffi::DnsMessage::default());
 
@@ -109,51 +103,95 @@ impl DnsPlugin<'_> {
     }
 }
 
-pub struct PluginManager<'l> {
-    listener: Option<&'l DnsPlugin<'l>>,
-    resolver: Option<&'l DnsPlugin<'l>>,
-    _interceptors: Vec<&'l DnsPlugin<'l>>,
-    _validators: Vec<&'l DnsPlugin<'l>>,
-    _inspectors: Vec<&'l DnsPlugin<'l>>
+pub struct PluginManager {
+    plugins: BTreeMap<uuid::Uuid, Arc<DnsPlugin>>,
+    listener: Weak<DnsPlugin>,
+    resolver: Weak<DnsPlugin>
 }
 
-impl<'l> PluginManager<'l> {
-
-    pub const fn empty() -> Self {
-        Self { listener: None, resolver: None, _interceptors: Vec::new(), _validators: Vec::new(), _inspectors: Vec::new() }
+impl PluginManager {
+    pub fn new() -> Self {
+        Self {
+            plugins: BTreeMap::new(),
+            listener: Weak::new(),
+            resolver: Weak::new()
+        }
     }
 
-    pub fn new(plugins: &'l [DnsPlugin]) -> Result<Self, loaders::PluginLoaderError> {
+    pub fn load<P: AsRef<Path>>(&mut self, dir_path: P) -> Result<(), PluginLoaderError>{
+        let id = Uuid::new_v4();
 
-        let listener = plugins.iter()
-        .find(|p| p.is_listener());
+        let dir = PathBuf::from(dir_path.as_ref());
 
-        let resolver = plugins.iter()
-        .find(|p| p.is_resolver());
+        self.plugins.insert(
+            id,
+            Arc::new(
+                DnsPlugin::load(dir.join("plugin.so"))?
+            )
+        );
 
-        Ok(Self { listener, resolver, _interceptors: Vec::new(), _validators:Vec::new(), _inspectors: Vec::new() })
+        Ok(())
+    }
+
+    pub fn search(&mut self, search_path: &[PathBuf]) {
+        for parent in search_path {
+
+            match parent.read_dir() {
+                Ok(dir_info) => {
+                    let dirs = dir_info.filter_map(|d| {
+                        match d {
+                            Ok(f) if f.file_type().ok()?.is_dir()=> Some(f.path()),
+                            Ok(_) => None,
+                            Err(_) => None,
+                        }
+                    });
+
+                    for subdir in dirs {
+                        let so_path = subdir.join("plugin.so");
+
+                        if !so_path.is_file() { continue; }
+
+                        if let Err(e) = self.load(subdir) {
+                            log::error!("Failed to load library at {}: {e:?}", so_path.display())
+                        }
+                    }
+                },
+                Err(e) => {
+                    log::info!("Failed to read directory {}: {}", parent.display(), e);
+                },
+            }
+        }
+
+        self.init()
+    }
+
+    pub fn init(&mut self) {
+        self.listener = match self.plugins.values().find(|p| p.is_listener()) {
+            Some(p) => Arc::downgrade(p),
+            None => Weak::new(),
+        };
+
+        self.resolver = match self.plugins.values().find(|p| p.is_resolver()) {
+            Some(p) => Arc::downgrade(p),
+            None => Weak::new(),
+        };
     }
 
     pub fn decode(&self, req: &[u8]) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
-        match self.listener {
-            Some(p) => p.decode(req),
-            None => Err(PluginExecutorError::DoesNotImplement),
-        }
+        self.listener.upgrade()
+        .ok_or(PluginExecutorError::NoneEnabled)?
+        .decode(req)
     }
 
-    pub fn encode(&self, msg: ffi::DnsMessage) -> Result<Vec<i8>, PluginExecutorError> {
-        match self.listener {
-            Some(p) => p.encode(msg),
-            None => Err(PluginExecutorError::DoesNotImplement),
-        }
+    pub fn encode(&self, message: ffi::DnsMessage) -> Result<Vec<i8>, PluginExecutorError> {
+        self.listener.upgrade()
+        .ok_or(PluginExecutorError::NoneEnabled)?
+        .encode(message)
     }
 
-    pub fn resolve(&self, req: ffi::DnsMessage) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
-        match self.resolver {
-            Some(p) => p.resolve(req),
-            None => Err(PluginExecutorError::DoesNotImplement),
-        }
+    pub fn resolve(&self, request: ffi::DnsMessage) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
+        self.resolver.upgrade()
+        .ok_or(PluginExecutorError::NoneEnabled)?
+        .resolve(request)
     }
-
-
 }

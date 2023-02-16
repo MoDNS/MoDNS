@@ -12,7 +12,7 @@ use crate::ErrorBox;
 use crate::plugins::executors::PluginManager;
 
 /// Start API and DNS servers on the provided listeners
-pub async fn listen(apiaddrs: Vec<api::ApiListener>, dnsaddrs: Vec<dns::DnsListener>, pm: &'static RwLock<PluginManager<'_>>) {
+pub async fn listen(apiaddrs: Vec<api::ApiListener>, dnsaddrs: Vec<dns::DnsListener>, pm: &'static RwLock<PluginManager>) {
 
     let (shutdown, _) = broadcast::channel(1);
 

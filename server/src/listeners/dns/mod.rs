@@ -17,7 +17,7 @@ pub enum DnsListener{
 /// 
 /// When listener recieves a request, it spawns a new async task to
 /// handle that request with the `handle_request` function
-pub async fn listen_dns(listeners: Vec<DnsListener>, shutdown_sig: broadcast::Sender<()>, pm: &'static RwLock<PluginManager<'_>>) -> Result<(), Box<dyn Error + Sync + Send>> {
+pub async fn listen_dns(listeners: Vec<DnsListener>, shutdown_sig: broadcast::Sender<()>, pm: &'static RwLock<PluginManager>) -> Result<(), Box<dyn Error + Sync + Send>> {
 
     try_join_all(listeners.into_iter().map(|l| async {
 
@@ -32,7 +32,7 @@ pub async fn listen_dns(listeners: Vec<DnsListener>, shutdown_sig: broadcast::Se
     Ok(())
 }
 
-pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<()>, pm: &'static RwLock<PluginManager<'_>>) -> Result<(), Box<dyn Error + Sync + Send>> {
+pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<()>, pm: &'static RwLock<PluginManager>) -> Result<(), Box<dyn Error + Sync + Send>> {
     
     let sock = Arc::new(sock);
 
@@ -100,7 +100,7 @@ pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<(
 ///   upstream DNS server
 /// 
 /// On success, returns vector of bytes to reply to the request with
-async fn handle_request(_req: &[u8], _pm: RwLockReadGuard<'_, PluginManager<'_>>) -> Result<Vec<u8>, Box<dyn Error + Send + Sync>>{
+async fn handle_request(_req: &[u8], _pm: RwLockReadGuard<'_, PluginManager>) -> Result<Vec<u8>, Box<dyn Error + Send + Sync>>{
 
 
 

@@ -14,7 +14,7 @@ uintptr_t get_label_list_size(struct BytePtrVector list);
 uint8_t encode_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
     uintptr_t resp_size = get_encoded_size(msg);
 
-    bool truncation_required = false;
+    bool truncation_required = msg.header.truncation;
 
     if (resp_size > 512) {
         resp_size = 512;
@@ -22,7 +22,7 @@ uint8_t encode_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
     }
 
     // Header
-    *resp_buf = extend_char_vec(*resp_buf, resp_size - resp_buf->capacity);
+    *resp_buf = extend_char_vec(*resp_buf, resp_size - resp_buf->size);
     resp_buf->size = resp_size;
 
     *(uint16_t *)(resp_buf->ptr) = htons(msg.header.id);

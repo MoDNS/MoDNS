@@ -1,7 +1,7 @@
 
-use super::executors::DnsPlugin;
+use super::{executors::DnsPlugin, ListenerDecodeFn, ListenerEncodeFn, ResolverFn};
 use libloading::{Symbol, Library};
-use std::{path::{PathBuf}, ffi::OsStr};
+use std::ffi::OsStr;
 
 #[derive(Debug)]
 pub enum PluginLoaderError {
@@ -16,28 +16,19 @@ impl From<libloading::Error> for PluginLoaderError {
     }
 }
 
-/// Stores the dynamic library code that a plugin gets its symbols from
-/// 
-/// Must outlive the plugin, since the library's lifetime is
-/// what actually controls the lifetime of the code referenced by plugins
-pub(crate) struct PluginLibrary {
-    _home_dir: PathBuf,
-    lib: Library
-}
+impl DnsPlugin {
+    pub(crate) fn load<P: AsRef<OsStr>>(path: P) -> Result<Self, libloading::Error> {
 
-impl<'l> DnsPlugin<'l> {
-    pub(crate) fn load(lib: &'l PluginLibrary) -> Result<Self, libloading::Error> {
+        let lib = unsafe { Library::new(path) }?;
 
-        let decoder =
-        get_sym(&lib.lib, b"impl_decode_req")?;
+        let is_listener =
+        get_sym::<ListenerDecodeFn>(&lib, b"impl_decode_req")?.is_some() &&
+        get_sym::<ListenerEncodeFn>(&lib, b"impl_encode_resp")?.is_some();
 
-        let encoder = 
-        get_sym(&lib.lib, b"impl_encode_resp")?;
+        let is_resolver =
+        get_sym::<ResolverFn>(&lib, b"impl_resolve_req")?.is_some();
 
-        let resolver = 
-        get_sym(&lib.lib, b"impl_resolve_req")?;
-
-        Ok(Self::new(decoder, encoder, resolver))
+        Ok(Self::new(lib, is_listener, is_resolver))
     }
 
 }
@@ -52,66 +43,4 @@ fn get_sym<'lib, T> (lib: &'lib Library, name: &[u8]) -> Result<Option<Symbol<'l
         Err(libloading::Error::DlSym{ desc: _ }) => Ok(None),
         Err(e) => Err(e),
     }
-}
-
-pub struct LibraryManager (Vec<PluginLibrary>);
-
-impl<'l> LibraryManager {
-    pub fn init(&'l self) -> Result<Vec<DnsPlugin<'l>>, libloading::Error> {
-
-        self.0.iter().map(|lib| {
-            DnsPlugin::load(lib)
-        }).collect()
-    }
-
-    pub fn add_lib<P>(&mut self, path: &P) -> Result<(), PluginLoaderError>
-    where P: Into<PathBuf> + AsRef<OsStr> + Clone
-    {
-
-        self.0.push( PluginLibrary {
-            _home_dir: path.clone().into(),
-            lib: unsafe { Library::new(path).unwrap() },
-        });
-
-        Ok(())
-    }
-
-    pub fn search(&mut self, search_path: &[PathBuf]) {
-        for parent in search_path {
-
-            match parent.read_dir() {
-                Ok(dir_info) => {
-                    let dirs = dir_info.filter_map(|d| {
-                        match d {
-                            Ok(f) if f.file_type().ok()?.is_dir()=> Some(f.path()),
-                            Ok(_) => None,
-                            Err(_) => None,
-                        }
-                    });
-
-                    for subdir in dirs {
-                        let so_path = subdir.join("plugin.so");
-
-                        if !so_path.is_file() { continue; }
-
-                        if let Err(e) = self.add_lib(&so_path) {
-                            log::error!("Failed to load library at {}: {e:?}", so_path.display())
-                        }
-                    }
-                },
-                Err(e) => {
-                    log::info!("Failed to read directory {}: {}", parent.display(), e);
-                },
-            }
-        }
-    }
-
-    pub fn clear(&mut self) {
-        self.0.clear();
-    }
-
-    pub const fn new() -> Self {
-        Self ( Vec::new() )
-    }
-
 }
