@@ -22,6 +22,7 @@ pub enum DnsField {
 pub extern "C" fn resize_field(msg_ptr: *mut ffi::DnsMessage, num: u16, field: DnsField) {
     let Some(msg) = (unsafe { msg_ptr.as_mut() }) else { return };
 
+    // println!("resize_field called to increase {field:?} to {num}");
     match field {
         DnsField::Question => {
             let mut request_vec = if msg.question.is_null() {
@@ -69,7 +70,7 @@ pub extern "C" fn resize_field(msg_ptr: *mut ffi::DnsMessage, num: u16, field: D
             msg.header.ancount = num;
         },
         DnsField::Authority => {
-            let mut auth_vec = if msg.answer.is_null() {
+            let mut auth_vec = if msg.authority.is_null() {
                 Vec::with_capacity(0)
             } else {
                 unsafe {
@@ -85,13 +86,13 @@ pub extern "C" fn resize_field(msg_ptr: *mut ffi::DnsMessage, num: u16, field: D
 
             let mut auth_vec = mem::ManuallyDrop::new(auth_vec);
 
-            msg.answer = auth_vec.as_mut_ptr();
+            msg.authority = auth_vec.as_mut_ptr();
 
-            msg.header.ancount = num;
+            msg.header.nscount = num;
 
         },
         DnsField::Additional => {
-            let mut additional_vec = if msg.answer.is_null() {
+            let mut additional_vec = if msg.additional.is_null() {
                 Vec::with_capacity(0)
             } else {
                 unsafe {
@@ -107,9 +108,9 @@ pub extern "C" fn resize_field(msg_ptr: *mut ffi::DnsMessage, num: u16, field: D
 
             let mut additional_vec = mem::ManuallyDrop::new(additional_vec);
 
-            msg.answer = additional_vec.as_mut_ptr();
+            msg.additional = additional_vec.as_mut_ptr();
 
-            msg.header.ancount = num;
+            msg.header.arcount = num;
 
         },
     }

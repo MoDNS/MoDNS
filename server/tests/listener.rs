@@ -11,6 +11,13 @@ const SAMPLE_REQUEST: &[u8; 29] = b"\xc3\xd9\x01\x00\x00\x01\x00\x00\
                                     \x6d\x70\x6c\x65\x03\x63\x6f\x6d\
                                     \x00\x00\x01\x00\x01";
 
+const SAMPLE_RESPONSE: &[u8; 56] = b"\x1e\x92\x81\xa0\x00\x01\x00\x01\
+                                    \x00\x00\x00\x01\x07\x65\x78\x61\
+                                    \x6d\x70\x6c\x65\x03\x63\x6f\x6d\
+                                    \x00\x00\x01\x00\x01\xc0\x0c\x00\
+                                    \x01\x00\x01\x00\x00\x20\xe8\x00\
+                                    \x04\x5d\xb8\xd8\x22\x00\x00\x29\
+                                    \x02\x00\x00\x00\x00\x00\x00\x00";
 
 const SAMPLE_REQUEST_HEADER: ffi::DnsHeader = ffi::DnsHeader{
     id: 0xc3d9,
@@ -27,6 +34,22 @@ const SAMPLE_REQUEST_HEADER: ffi::DnsHeader = ffi::DnsHeader{
     arcount: 0,
 };
 
+const SAMPLE_RESPONSE_HEADER: ffi::DnsHeader = ffi::DnsHeader {
+    id: 0x1e92,
+    is_response: true,
+    opcode: ffi::DnsOpcode::Query,
+    authoritative_answer: false,
+    truncation: false,
+    recursion_desired: true,
+    recursion_available: true,
+    response_code: ffi::DnsResponseCode::NoError,
+    qdcount: 1,
+    ancount: 1,
+    nscount: 0,
+    arcount: 1,
+};
+
+
 #[test]
 fn listener_plugin_decoder_success() {
 
@@ -42,6 +65,32 @@ fn listener_plugin_decoder_success() {
     assert!(test_response.answer.is_null());
     assert!(test_response.authority.is_null());
     assert!(test_response.additional.is_null());
+
+    let safe_response: safe::DnsMessage = (*test_response).try_into().unwrap();
+
+    assert_eq!(
+        safe_response.question,
+        vec![
+            safe::DnsQuestion {
+                name: vec![String::from("example"), String::from("com")],
+                type_code: 1,
+                class_code: 1
+            }
+        ]
+    );
+
+    let test_response = pm.decode(&SAMPLE_RESPONSE[..]).unwrap();
+
+    assert_eq!(test_response.header, SAMPLE_RESPONSE_HEADER);
+
+    assert!(!test_response.question.is_null());
+    assert!(!test_response.answer.is_null());
+    assert!(test_response.authority.is_null());
+    assert!(!test_response.additional.is_null());
+
+    println!("{test_response:?}");
+    println!("answer: {:?}", unsafe { test_response.answer.as_ref() });
+    println!("additional: {:?}", unsafe { test_response.additional.as_ref() });
 
     let safe_response: safe::DnsMessage = (*test_response).try_into().unwrap();
 

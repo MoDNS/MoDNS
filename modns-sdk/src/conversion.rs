@@ -109,10 +109,15 @@ impl TryFrom<ffi::DnsMessage> for safe::DnsMessage {
             arcount,
         } = unsafe_header;
 
+        println!("Mark");
         let question = unsafe { question_ptr_to_safe_vec(unsafe_question, qdcount.into())}?;
+        println!("Mark");
         let answer = unsafe { rr_ptr_to_safe_vec(unsafe_answer, ancount.into())}?;
+        println!("Mark");
         let authority = unsafe { rr_ptr_to_safe_vec(unsafe_authority, nscount.into())}?;
+        println!("Mark");
         let additional = unsafe { rr_ptr_to_safe_vec(unsafe_additional, arcount.into())}?;
+        println!("Mark");
 
         let opcode = safe::DnsOpcode::try_from(unsafe_opcode)?;
         let response_code = safe::DnsResponseCode::try_from(unsafe_response_code)?;
@@ -159,7 +164,7 @@ unsafe fn question_ptr_to_safe_vec(ptr: *mut ffi::DnsQuestion, len: usize) -> Re
 
 unsafe fn rr_ptr_to_safe_vec(ptr: *mut ffi::DnsResourceRecord, len: usize) -> Result<Vec<safe::DnsResourceRecord>, FfiConversionError> {
 
-    if len > 0 && ptr.is_null() { return Err(FfiConversionError::UnexpectedNullPointer);}
+    if len > 0 && ptr.is_null() { println!("BOOM"); return Err(FfiConversionError::UnexpectedNullPointer);}
 
     Vec::from_raw_parts(ptr, len, len)
 
@@ -181,7 +186,9 @@ unsafe fn rr_ptr_to_safe_vec(ptr: *mut ffi::DnsResourceRecord, len: usize) -> Re
             String::from_utf8_lossy(CStr::from_ptr(ptr.ptr).to_bytes())
         }).collect();
 
+        println!("Hello");
         let rdata = safe::DnsResourceData::try_from(unsafe_rdata)?;
+        println!("Goodbye");
 
         Ok(safe::DnsResourceRecord{ name, type_code, class_code, ttl, rdlength, rdata })
     }).collect()
@@ -249,6 +256,10 @@ impl TryInto<Vec<u8>> for ffi::ByteVector {
             return Err(FfiConversionError::UnexpectedNullPointer);
         }
 
+        if self.ptr.is_null() {
+            return Ok(Vec::new());
+        }
+
         unsafe { Ok(Vec::from_raw_parts(
             self.ptr as *mut u8,
             self.size,
@@ -263,7 +274,7 @@ impl TryInto<Vec<String>> for ffi::BytePtrVector {
     fn try_into(self) -> Result<Vec<String>, Self::Error> {
         if self.ptr.is_null() && self.size > 0 {
             return Err(FfiConversionError::UnexpectedNullPointer);
-        }
+        };
 
         unsafe{
             Vec::from_raw_parts(self.ptr, self.size, self.capacity)
