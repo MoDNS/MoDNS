@@ -11,6 +11,7 @@ use tokio::sync::broadcast;
 use tokio_stream::wrappers::{UnixListenerStream, TcpListenerStream};
 use futures::{future::join_all, FutureExt};
 
+#[derive(Debug)]
 pub enum ApiListener {
     Tcp(TcpListener),
     Unix(UnixListener),
@@ -23,6 +24,7 @@ pub async fn listen_api(listeners: Vec<ApiListener>, shutdown_channel: broadcast
         let server = warp::serve(frontend_routes.clone());
 
         let mut shutdown_rx = shutdown_channel.subscribe();
+        log::info!("Starting API server on {l:?}");
 
         match l {
             ApiListener::Tcp(l) => server.serve_incoming_with_graceful_shutdown(

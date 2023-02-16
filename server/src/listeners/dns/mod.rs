@@ -17,14 +17,14 @@ pub enum DnsListener{
 /// 
 /// When listener recieves a request, it spawns a new async task to
 /// handle that request with the `handle_request` function
-pub async fn listen_dns(listeners: Vec<DnsListener>, shutdown_sig: broadcast::Sender<()>, pm: &'static RwLock<PluginManager>) -> Result<(), Box<dyn Error + Sync + Send>> {
+pub async fn listen_dns(listeners: Vec<DnsListener>, shutdown_sig: broadcast::Sender<()>, pm_arc: Arc<RwLock<PluginManager>>) -> Result<(), Box<dyn Error + Sync + Send>> {
 
     try_join_all(listeners.into_iter().map(|l| async {
 
         let shutdown_rx = shutdown_sig.subscribe();
 
         match l {
-            DnsListener::Udp(s) => listen_dns_udp(s, shutdown_rx, pm).await
+            DnsListener::Udp(s) => listen_dns_udp(s, shutdown_rx, pm_arc.clone()).await
         }
 
     })).await?;
@@ -32,7 +32,7 @@ pub async fn listen_dns(listeners: Vec<DnsListener>, shutdown_sig: broadcast::Se
     Ok(())
 }
 
-pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<()>, pm: &'static RwLock<PluginManager>) -> Result<(), Box<dyn Error + Sync + Send>> {
+pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<()>, pm_arc: Arc<RwLock<PluginManager>>) -> Result<(), Box<dyn Error + Sync + Send>> {
     
     let sock = Arc::new(sock);
 
@@ -58,6 +58,8 @@ pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<(
                 log::debug!(target: "dns::listener","Got {req_size}-byte DNS request from {req_addr}");
 
                 let responder = sock.clone();
+
+                let pm = pm_arc.clone();
 
                 tokio::spawn(async move {
                     match handle_request(&buf[..req_size], pm.read().await).await {
