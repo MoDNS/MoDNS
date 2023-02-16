@@ -22,15 +22,19 @@ const Login = ({ setLoggedIn }) => {
 
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
+  const [loadGif, setLoadGif] = useState(false)
 
   function handleSubmit(e) {
     e.preventDefault();
-
+    setLoadGif(true);
+    console.log("Waited 5s");
     if (getAuthentication(password)) {
       setLoggedIn(true);
       navigate("/manage/dashboard");
+      setLoadGif(false);
     } else {
       alert("Incorrect Password");
+      setLoadGif(false);
     }
   }
 
@@ -64,9 +68,6 @@ const Login = ({ setLoggedIn }) => {
             marginRight: "auto",
             }}
       >
-        <CircularProgress
-            color="inherit"
-        />
       </div>
       <Box type="form" sx={{ marginTop: 20, width: "100%" }}>
         <TextField
@@ -117,7 +118,21 @@ const Login = ({ setLoggedIn }) => {
             marginBottom: 0,
           }}
         >
-          Sign in
+          {loadGif ? 
+            (
+              <CircularProgress
+              color="inherit"
+              sx={{
+                position: "sticky",
+                align: "right",
+              }}
+            />
+            ) : (
+              <div>
+                Sign in
+              </div>
+            )
+          }          
         </Button>
       </Box>
     </MainBox>
