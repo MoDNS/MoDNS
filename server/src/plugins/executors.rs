@@ -55,7 +55,7 @@ impl DnsPlugin {
 
         let mut message = Box::new(ffi::DnsMessage::default());
 
-        let rc = unsafe {f(buf.as_ptr(), buf.len(), message.as_mut())};
+        let rc = unsafe {f(buf.into(), message.as_mut())};
 
         if rc == 0 {
             Ok(message)

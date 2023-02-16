@@ -16,7 +16,7 @@ extern "C" {
     /// 
     /// Decodes request recieved on associated UDP socket into a DNS protocol
     /// message with queries to be resolved
-    pub fn impl_decode_req(req: *const u8, size: usize, message: *mut ffi::DnsMessage) -> u8;
+    pub fn impl_decode_req(req: ffi::ByteVector, message: *mut ffi::DnsMessage) -> u8;
 
     /// Implement this function (and impl_decode_req) to have your plugin
     /// register as having a Listener module

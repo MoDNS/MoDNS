@@ -1,28 +1,29 @@
+#include<arpa/inet.h>
 #include <stdio.h>
 #include "plugin-common.h"
 
-uintptr_t decode_question(const uint8_t *req, uintptr_t req_size, struct DnsQuestion *question);
-uintptr_t decode_rr(const uint8_t *req, uintptr_t req_size, struct DnsResourceRecord *rr);
-uintptr_t decode_label_list(const uint8_t *req, uintptr_t req_size, struct BytePtrVector *vec);
+uintptr_t decode_question(struct ByteVector req, uintptr_t initial_offset, struct DnsQuestion *question);
+uintptr_t decode_rr(struct ByteVector req, uintptr_t initial_offset, struct DnsResourceRecord *rr);
+uintptr_t decode_label_list(struct ByteVector req, uintptr_t initial_offset, struct BytePtrVector *vec);
 
-uint8_t decode_bytes(const uint8_t *req, uintptr_t size, struct DnsMessage *message) {
+uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
 
-    if (size < 12) {return 1;} // Message must be at least 12 bytes long to fit header
+    if (req.size < 12) {return 1;} // Message must be at least 12 bytes long to fit header
 
-    uint16_t req_id = (*req << 8) | *(req+1);
+    uint16_t req_id = ntohs(*(uint16_t *)req.ptr);
 
     // Decode header flags
-    bool qr = req[2] & 0b10000000;
-    bool aa = req[2] & 0b00000100;
-    bool tc = req[2] & 0b00000010;
-    bool rd = req[2] & 0b00000001;
-    bool ra = req[3] & 0b10000000;
+    bool qr = req.ptr[2] & 0b10000000;
+    bool aa = req.ptr[2] & 0b00000100;
+    bool tc = req.ptr[2] & 0b00000010;
+    bool rd = req.ptr[2] & 0b00000001;
+    bool ra = req.ptr[3] & 0b10000000;
 
     // reserved bits must be 0
-    if (req[3] & 0b01110000) {return 1;}
+    if (req.ptr[3] & 0b01110000) {return 1;}
 
     // Decode the opcode
-    uint8_t opcode_char = (req[2] & 0b01111000) >> 3;
+    uint8_t opcode_char = (req.ptr[2] & 0b01111000) >> 3;
 
     enum DnsOpcode opcode;
 
@@ -50,7 +51,7 @@ uint8_t decode_bytes(const uint8_t *req, uintptr_t size, struct DnsMessage *mess
     }
 
     // Decode the response code
-    uint8_t rcode_char = (req[3] & 0b00001111);
+    uint8_t rcode_char = (req.ptr[3] & 0b00001111);
 
     enum DnsResponseCode rcode;
 
@@ -88,10 +89,10 @@ uint8_t decode_bytes(const uint8_t *req, uintptr_t size, struct DnsMessage *mess
     message->header.response_code = rcode;
 
     // Get the number of each field from the header
-    uint16_t qdcount = *(req+5) | (*(req+4) << 8);
-    uint16_t ancount = *(req+7) | (*(req+6) << 8);
-    uint16_t nscount = *(req+9) | (*(req+8) << 8);
-    uint16_t arcount = *(req+11) | (*(req+10) << 8);
+    uint16_t qdcount = ntohs(*(uint16_t *)(req.ptr + 4));
+    uint16_t ancount = ntohs(*(uint16_t *)(req.ptr + 6));
+    uint16_t nscount = ntohs(*(uint16_t *)(req.ptr + 8));
+    uint16_t arcount = ntohs(*(uint16_t *)(req.ptr + 10));
 
     if (qdcount > 0) { resize_field(message, qdcount, Query);}
     if (ancount > 0) { resize_field(message, ancount, Answer);}
@@ -102,28 +103,29 @@ uint8_t decode_bytes(const uint8_t *req, uintptr_t size, struct DnsMessage *mess
 
     for (uint16_t question_num = 0; question_num < qdcount; question_num++) {
 
-        uintptr_t len_decoded = decode_question(req + cursor, size - cursor, message->question + question_num);
-        if (len_decoded == 0) {return 1;}
-
-        cursor += len_decoded;
+        printf("Decoding question %d, cursor at %ld\n", question_num, cursor);
+        cursor = decode_question(req, cursor, message->question + question_num);
+        printf("Decoded, cursor at %ld\n", cursor);
+        if (cursor == 0) {return 1;}
     }
+
+    printf("Cursor position: %ld, vector size: %ld\n", cursor, req.size);
 
     return 0;
 }
 
-uintptr_t decode_question(const uint8_t *req, uintptr_t req_size, struct DnsQuestion *question) {
-    uintptr_t cursor = 0;
+uintptr_t decode_question(struct ByteVector req, uintptr_t initial_offset, struct DnsQuestion *question) {
+    uintptr_t cursor = initial_offset;
 
-    uintptr_t bytes_read = decode_label_list(req, req_size, &(question->name));
-    if (bytes_read == 0) {return 0;}
-    cursor += bytes_read;
+    cursor = decode_label_list(req, cursor, &(question->name));
+    if (cursor == 0) {return 0;}
 
-    if (req_size > cursor + 4) {return 0;}
+    if (req.size > cursor + 4) {return 0;}
 
-    uint16_t qtype = *(req+cursor+1) | (*(req+cursor) << 8);
+    uint16_t qtype = ntohs(*(uint16_t *)(req.ptr + cursor));
     cursor += 2;
 
-    uint16_t qclass = *(req+cursor+1) | (*(req+cursor) << 8);
+    uint16_t qclass = ntohs(*(uint16_t *)(req.ptr + cursor));
     cursor += 2;
 
     question->class_code = qclass;
@@ -132,34 +134,35 @@ uintptr_t decode_question(const uint8_t *req, uintptr_t req_size, struct DnsQues
     return cursor;
 }
 
-uintptr_t decode_rr(const uint8_t *req, uintptr_t req_size, struct DnsResourceRecord *rr) {
-    uintptr_t cursor = 0;
+uintptr_t decode_rr(struct ByteVector req, uintptr_t initial_offset, struct DnsResourceRecord *rr) {
+    uintptr_t cursor = initial_offset;
 
     return cursor;
 }
 
-uintptr_t decode_label_list(const uint8_t *req, uintptr_t req_size, struct BytePtrVector *vec) {
-    uintptr_t cursor = 0;
+uintptr_t decode_label_list(struct ByteVector req, uintptr_t initial_offset, struct BytePtrVector *vec) {
+    uintptr_t cursor = initial_offset;
 
-    uint8_t label_len = req[cursor++];
+    uint8_t label_len = req.ptr[cursor++];
     struct BytePtrVector qname = {NULL, 0, 0};
     for (uint8_t label_num = 0; label_len > 0; label_num++) {
         
-        if (req_size < cursor + label_len) {return 0;}
+        if (req.size < cursor + label_len) {return 0;}
 
         qname = extend_ptr_vec(qname, 1);
 
         struct ByteVector label = {NULL, 0, 0};
         label = extend_char_vec(label, label_len + 1);
 
-        label.size = snprintf(label.ptr, label_len + 1, "%s", req + cursor);
+        label.size = snprintf(label.ptr, label_len + 1, "%s", req.ptr + cursor);
 
         cursor += label_len;
 
         qname.ptr[label_num] = label;
         qname.size++;
 
-        label_len = req[cursor++];
+        label_len = req.ptr[cursor++];
+        printf("Decoded %s, cursor at %ld, next label has length %d\n", label.ptr, cursor, label_len);
     };
 
     *vec = qname;

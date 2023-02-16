@@ -3,8 +3,7 @@ pub mod executors;
 pub mod loaders;
 
 type ListenerDecodeFn = unsafe extern "C" fn(
-    *const u8,
-    usize,
+    modns_sdk::ffi::ByteVector,
     *mut modns_sdk::ffi::DnsMessage
 ) -> u8;
 

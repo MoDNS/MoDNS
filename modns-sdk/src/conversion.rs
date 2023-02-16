@@ -187,6 +187,12 @@ unsafe fn rr_ptr_to_safe_vec(ptr: *mut ffi::DnsResourceRecord, len: usize) -> Re
     }).collect()
 }
 
+impl From<&[u8]> for ffi::ByteVector {
+    fn from(value: &[u8]) -> Self {
+        Self { ptr: value.as_ptr() as *mut c_char, size: value.len(), capacity: value.len() }
+    }
+}
+
 impl From<Vec<c_char>> for ffi::ByteVector {
     fn from(value: Vec<c_char>) -> Self {
         let mut v = mem::ManuallyDrop::new(value);
