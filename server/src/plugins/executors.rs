@@ -64,7 +64,7 @@ impl DnsPlugin {
         }
     }
 
-    pub fn encode(&self, message: ffi::DnsMessage) -> Result<Vec<c_char>, PluginExecutorError> {
+    pub fn encode(&self, message: Box<ffi::DnsMessage>) -> Result<Vec<c_char>, PluginExecutorError> {
 
         let f: Symbol<ListenerEncodeFn> = unsafe { self.lib.get(b"impl_encode_resp") }
         .or(Err(PluginExecutorError::DoesNotImplement))?;
@@ -72,7 +72,7 @@ impl DnsPlugin {
         let mut buf = Vec::new().into();
 
         let rc = unsafe {
-            f(message, &mut buf)
+            f(message.as_ref(), &mut buf)
         };
 
         if rc != 0 {
@@ -83,7 +83,7 @@ impl DnsPlugin {
 
     }
 
-    pub fn resolve(&self, req: ffi::DnsMessage) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
+    pub fn resolve(&self, req: Box<ffi::DnsMessage>) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
 
         let f: Symbol<ResolverFn> = unsafe { self.lib.get(b"impl_resolve_req") }
         .or(Err(PluginExecutorError::DoesNotImplement))?;
@@ -91,7 +91,7 @@ impl DnsPlugin {
         let mut resp = Box::new(ffi::DnsMessage::default());
 
         let rc = unsafe {
-            f(req, resp.as_mut())
+            f(req.as_ref(), resp.as_mut())
         };
 
         if rc == 0 {
@@ -183,13 +183,13 @@ impl PluginManager {
         .decode(req)
     }
 
-    pub fn encode(&self, message: ffi::DnsMessage) -> Result<Vec<i8>, PluginExecutorError> {
+    pub fn encode(&self, message: Box<ffi::DnsMessage>) -> Result<Vec<i8>, PluginExecutorError> {
         self.listener.upgrade()
         .ok_or(PluginExecutorError::NoneEnabled)?
         .encode(message)
     }
 
-    pub fn resolve(&self, request: ffi::DnsMessage) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
+    pub fn resolve(&self, request: Box<ffi::DnsMessage>) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
         self.resolver.upgrade()
         .ok_or(PluginExecutorError::NoneEnabled)?
         .resolve(request)

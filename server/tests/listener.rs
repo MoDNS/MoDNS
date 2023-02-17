@@ -128,29 +128,29 @@ fn listener_plugin_encoder_success() {
 
     pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]);
 
-    let message = ffi::DnsMessage {
-        header: SAMPLE_REQUEST_HEADER,
-        question: &mut ffi::DnsQuestion {
-            name: ffi::BytePtrVector{
-                ptr: [ByteVector {
-                    ptr: b"example".as_ptr() as *mut i8,
-                    size: 7,
-                    capacity: 7,
-                }, ByteVector {
-                    ptr: b"com".as_ptr() as *mut i8,
-                    size: 3,
-                    capacity: 3,
-                }].as_mut_ptr(),
-                size: 2,
-                capacity: 2,
+    let message = Box::new(ffi::DnsMessage {
+            header: SAMPLE_REQUEST_HEADER,
+            question: &mut ffi::DnsQuestion {
+                name: ffi::BytePtrVector{
+                    ptr: [ByteVector {
+                        ptr: b"example".as_ptr() as *mut i8,
+                        size: 7,
+                        capacity: 7,
+                    }, ByteVector {
+                        ptr: b"com".as_ptr() as *mut i8,
+                        size: 3,
+                        capacity: 3,
+                    }].as_mut_ptr(),
+                    size: 2,
+                    capacity: 2,
+                },
+                type_code: 1,
+                class_code: 1,
             },
-            type_code: 1,
-            class_code: 1,
-        },
-        answer: std::ptr::null_mut(),
-        authority: std::ptr::null_mut(),
-        additional: std::ptr::null_mut(),
-    };
+            answer: std::ptr::null_mut(),
+            authority: std::ptr::null_mut(),
+            additional: std::ptr::null_mut(),
+        });
 
     let test_response = pm.encode(message).unwrap();
 
