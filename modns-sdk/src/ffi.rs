@@ -118,6 +118,26 @@ pub struct DnsMessage {
     pub additional: *mut DnsResourceRecord
 }
 
+unsafe impl Send for DnsMessage {}
+
+impl DnsMessage {
+    pub fn with_error_code(code: u8) -> Self {
+        let mut rv = Self::default();
+
+        rv.header.response_code = match code {
+            0 => DnsResponseCode::NoError,
+            1 => DnsResponseCode::FormatError,
+            2 => DnsResponseCode::ServerFailure,
+            3 => DnsResponseCode::NameError,
+            4 => DnsResponseCode::NotImplemented,
+            5 => DnsResponseCode::Refused,
+            _ => DnsResponseCode::ServerFailure
+        };
+
+        rv
+    }
+}
+
 impl Default for DnsHeader {
     fn default() -> Self {
         Self {
@@ -128,7 +148,7 @@ impl Default for DnsHeader {
             truncation: false,
             recursion_desired: false,
             recursion_available: false,
-            response_code: DnsResponseCode::NotImplemented,
+            response_code: DnsResponseCode::ServerFailure,
             qdcount: 0,
             ancount: 0,
             nscount: 0,

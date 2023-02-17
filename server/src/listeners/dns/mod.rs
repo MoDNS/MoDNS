@@ -1,11 +1,14 @@
 
 use futures::future::try_join_all;
+use modns_sdk::ffi;
 use tokio::net::UdpSocket;
-use tokio::sync::{broadcast, RwLock, RwLockReadGuard};
+use tokio::sync::{broadcast, RwLock};
 use std::error::Error;
+use std::ffi::c_char;
+use std::mem::ManuallyDrop;
 use std::sync::Arc;
 
-use crate::plugins::executors::PluginManager;
+use crate::plugins::executors::{PluginManager, PluginExecutorError};
 
 const MAX_DGRAM_SIZE: usize = 65_507;
 
@@ -55,24 +58,24 @@ pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<(
 
                 let (req_size, req_addr) = res?;
 
-                log::debug!(target: "dns::listener","Got {req_size}-byte DNS request from {req_addr}");
+                log::debug!("Got {req_size}-byte DNS request from {req_addr}");
 
                 let responder = sock.clone();
 
                 let pm = pm_arc.clone();
 
                 tokio::spawn(async move {
-                    match handle_request(&buf[..req_size], pm.read().await).await {
+                    match handle_request(buf[..req_size].to_vec(), pm.clone()).await {
                         Err(e) => {
-                            log::warn!(target: "dns::responder", "Got `Err` while fulfilling request from {req_addr}: {e:?}");
+                            log::warn!("Could not respond to request from {req_addr}: {e:?}");
                         },
                         Ok(resp) => {
-                            match responder.send_to(&resp, req_addr).await {
+                            match responder.send_to(&resp[..], req_addr).await {
                                 Err(e) => {
-                                    log::warn!(target: "dns::responder", "Got `Err` while responding to {req_addr}: {e:?}");
+                                    log::warn!("Got `Err` while responding to {req_addr}: {e:?}");
                                 }
                                 Ok(resp_len) => {
-                                    log::trace!(target: "dns::responder", "Sucessfully sent {resp_len}-byte response to {req_addr}")
+                                    log::debug!("Sucessfully sent {resp_len}-byte response to {req_addr}")
                                 }
                             };
                         },
@@ -102,9 +105,58 @@ pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<(
 ///   upstream DNS server
 /// 
 /// On success, returns vector of bytes to reply to the request with
-async fn handle_request(_req: &[u8], _pm: RwLockReadGuard<'_, PluginManager>) -> Result<Vec<u8>, Box<dyn Error + Send + Sync>>{
+async fn handle_request(encoded_req: Vec<u8>, pm_guard: Arc<RwLock<PluginManager>>) -> Result<Vec<u8>, PluginExecutorError>{
 
+    let decoder = pm_guard.clone().read_owned().await;
+    let req = tokio::task::spawn_blocking(move || {
+        decoder.decode(encoded_req.as_ref())
+    }).await;
 
+    let (req_id, req_host) = if let Ok(Ok(req_message)) = &req {
+        req_message.header.id
+    } else {
+        0
+    };
 
-    todo!()
+    let resolver = pm_guard.clone().read_owned().await;
+    let resp = match req {
+        Ok(Ok(req_msg)) => tokio::task::spawn_blocking(move || {
+            log::debug!("Successfully decoded request with id {} for host {}, attempting to resolve...", req_id);
+            resolver.resolve(req_msg)
+        }).await.unwrap_or_else(|e|{
+            log::error!("Failed to join a thread while resolving request {}: {e:?}", req_id);
+            Ok(Box::new(Default::default()))
+        }).and_then(|resp| {
+            log::debug!("Resolver returned successfully");
+            Ok(resp)
+        }).unwrap_or_else(|e| {
+            log::error!("Resolver plugin failed: {e:?}");
+            if let PluginExecutorError::ErrorCode(rc) = e {
+                Box::new(ffi::DnsMessage::with_error_code(rc))
+            } else {
+                Default::default()
+            }
+        }),
+
+        Ok(Err(PluginExecutorError::ErrorCode(rc))) => Box::new(ffi::DnsMessage::with_error_code(rc)),
+        _ => Box::new(Default::default())
+    };
+
+    log::debug!("Attempting to encode response for request {req_id}");
+    let encoder = pm_guard.read_owned().await;
+    tokio::task::spawn_blocking(move || {
+        encoder.encode(resp)
+    }).await
+    .unwrap_or_else(|e| Err(PluginExecutorError::ThreadJoinFailed(e.to_string())))
+    .and_then(|v| Ok(cchar_vec_to_u8(v)))
+}
+
+fn cchar_vec_to_u8(i8vec: Vec<c_char>) -> Vec<u8> {
+    let mut v = ManuallyDrop::new(i8vec);
+
+    let ptr = v.as_mut_ptr() as *mut u8;
+    let length = v.len();
+    let capacity = v.capacity();
+
+    unsafe { Vec::from_raw_parts(ptr, length, capacity) }
 }

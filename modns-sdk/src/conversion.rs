@@ -12,6 +12,10 @@ pub enum FfiConversionError {
     InvalidEnum
 }
 
+unsafe impl Send for FfiConversionError {}
+
+unsafe impl Sync for FfiConversionError {}
+
 impl TryFrom<ffi::DnsOpcode> for safe::DnsOpcode {
     type Error = FfiConversionError;
 

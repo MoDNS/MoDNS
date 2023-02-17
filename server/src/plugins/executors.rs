@@ -1,5 +1,5 @@
 
-use std::{ffi::c_char, collections::BTreeMap, sync::{Arc, Weak}, path::{PathBuf, Path}};
+use std::{ffi::c_char, collections::BTreeMap, sync::{Arc, Weak}, path::{PathBuf, Path}, error::Error, fmt::Display};
 
 use libloading::{Symbol, Library};
 use modns_sdk::ffi;
@@ -12,8 +12,22 @@ pub enum PluginExecutorError {
     ErrorCode(u8),
     DoesNotImplement,
     NoneEnabled,
-    InvalidReturnValue(modns_sdk::FfiConversionError)
+    InvalidReturnValue(modns_sdk::FfiConversionError),
+    ThreadJoinFailed(String)
 }
+
+impl Display for PluginExecutorError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PluginExecutorError::ErrorCode(rc) => write!(f, "plugin returned error code {rc}"),
+            PluginExecutorError::DoesNotImplement => write!(f, "Module implementation was not found for a plugin"),
+            PluginExecutorError::NoneEnabled => write!(f, "No plugins are enabled that implement the reuired module"),
+            PluginExecutorError::InvalidReturnValue(v) => write!(f, "Got an error while converting the plugin's output: {v:#?}"),
+            PluginExecutorError::ThreadJoinFailed(e) => write!(f, "Failed to join thread: {e}"),
+        }
+    }
+}
+impl Error for PluginExecutorError {}
 
 impl From<u8> for PluginExecutorError {
     fn from(value: u8) -> Self {
@@ -129,6 +143,8 @@ impl PluginManager {
                 DnsPlugin::load(dir.join("plugin.so"))?
             )
         );
+
+        log::info!("Loaded plugin {id} from directory {}", dir.display());
 
         Ok(())
     }

@@ -12,7 +12,14 @@ uintptr_t get_rr_encoded_size(uint16_t count, struct DnsResourceRecord *rrlist);
 uintptr_t get_label_list_size(struct BytePtrVector list);
 
 uint8_t encode_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
+
+#ifdef DEBUG
+    printf("Starting encoder...\n");
+#endif
     uintptr_t resp_size = get_encoded_size(msg);
+#ifdef DEBUG
+    printf("Estimated size of response: %ld\n", resp_size);
+#endif
 
     bool truncation_required = msg.header.truncation;
 
@@ -24,6 +31,9 @@ uint8_t encode_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
     // Header
     *resp_buf = extend_char_vec(*resp_buf, resp_size - resp_buf->size);
     resp_buf->size = resp_size;
+#ifdef DEBUG
+    printf("Buffer resized to len %ld and capacity %ld\n", resp_buf->size, resp_buf->capacity);
+#endif
 
     *(uint16_t *)(resp_buf->ptr) = htons(msg.header.id);
 
@@ -49,26 +59,42 @@ uint8_t encode_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
     *(uint16_t *)(resp_buf->ptr + 10) = htons(msg.header.arcount);
 
     uintptr_t cursor = 12;
+#ifdef DEBUG
+    printf("Successfully encoded header\n");
+#endif
 
     // Questions
     for (uint16_t i = 0; i < msg.header.qdcount; i++) {
         cursor = encode_question(msg.question[i], *resp_buf, cursor);
     }
+#ifdef DEBUG
+    printf("Successfully encoded %d questions, cursor at %ld\n", msg.header.qdcount, cursor);
+#endif
+
 
     // Answers
     for (uint16_t i = 0; i < msg.header.ancount; i++) {
         cursor = encode_rr(msg.answer[i], *resp_buf, cursor);
     }
+#ifdef DEBUG
+    printf("Successfully encoded %d answers, cursor at %ld\n", msg.header.ancount, cursor);
+#endif
 
     // Authorities
     for (uint16_t i = 0; i < msg.header.nscount; i++) {
-        cursor = encode_rr(msg.answer[i], *resp_buf, cursor);
+        cursor = encode_rr(msg.authority[i], *resp_buf, cursor);
     }
+#ifdef DEBUG
+    printf("Successfully encoded %d authorities, cursor at %ld\n", msg.header.nscount, cursor);
+#endif
 
     // Additional
     for (uint16_t i = 0; i < msg.header.arcount; i++) {
         cursor = encode_rr(msg.additional[i], *resp_buf, cursor);
     }
+#ifdef DEBUG
+    printf("Successfully encoded %d additional entries, cursor at %ld\n", msg.header.arcount, cursor);
+#endif
 
     if (cursor > resp_buf->capacity) {
         return 0;
@@ -94,6 +120,9 @@ uintptr_t encode_question(struct DnsQuestion question, struct ByteVector resp_bu
 uintptr_t encode_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, uintptr_t initial_offset) {
     uintptr_t cursor = initial_offset;
 
+#ifdef DEBUG
+    printf("Encoding resource record header\n");
+#endif
     cursor = encode_label_list(rr.name, resp_buf, cursor);
 
     *(uint16_t *)(resp_buf.ptr + cursor) = htons(rr.type_code);
@@ -108,6 +137,9 @@ uintptr_t encode_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, uin
     *(uint16_t *)(resp_buf.ptr + cursor) = htons(rr.rdlength);
     cursor += 2;
 
+#ifdef DEBUG
+    printf("Encoding resource record rdata\n");
+#endif
     // RDATA encoding
     switch (rr.rdata.tag) {
         case A:
