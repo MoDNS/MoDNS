@@ -124,6 +124,11 @@ pub extern "C" fn resize_field(msg_ptr: *mut ffi::DnsMessage, num: u16, field: D
 /// be the actual size returned from the last call to this function
 #[no_mangle]
 pub extern "C" fn extend_char_vec(buf: ffi::ByteVector, num_to_add: usize) -> ffi::ByteVector {
+
+    if buf.ptr.is_null() {
+        return ffi::ByteVector::from(Vec::with_capacity(num_to_add));
+    }
+
     let mut v = unsafe {
         Vec::from_raw_parts(buf.ptr, buf.size, buf.capacity)
     };
@@ -136,6 +141,10 @@ pub extern "C" fn extend_char_vec(buf: ffi::ByteVector, num_to_add: usize) -> ff
 #[no_mangle]
 pub extern "C" fn extend_ptr_vec(buf: ffi::BytePtrVector, num_to_add: usize) -> ffi::BytePtrVector {
 
+    if buf.ptr.is_null() {
+        return ffi::BytePtrVector::from(Vec::with_capacity(num_to_add));
+    }
+
     let mut v = unsafe {
         Vec::from_raw_parts(buf.ptr, buf.size, buf.capacity)
     };
@@ -143,4 +152,27 @@ pub extern "C" fn extend_ptr_vec(buf: ffi::BytePtrVector, num_to_add: usize) -> 
     v.reserve_exact(num_to_add);
 
     ffi::BytePtrVector::from(v)
+}
+
+#[no_mangle]
+pub extern "C" fn drop_char_vec(buf: ffi::ByteVector) {
+
+    if buf.ptr.is_null() {return}
+
+    let v = unsafe {
+        Vec::from_raw_parts(buf.ptr, buf.size, buf.capacity)
+    };
+
+    mem::drop(v)
+}
+
+#[no_mangle]
+pub extern "C" fn drop_ptr_vec(buf: ffi::BytePtrVector) {
+    if buf.ptr.is_null() {return}
+
+    let v = unsafe {
+        Vec::from_raw_parts(buf.ptr, buf.size, buf.capacity)
+    };
+
+    mem::drop(v);
 }
