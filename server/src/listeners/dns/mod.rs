@@ -112,7 +112,7 @@ async fn handle_request(encoded_req: Vec<u8>, pm_guard: Arc<RwLock<PluginManager
         decoder.decode(encoded_req.as_ref())
     }).await;
 
-    let (req_id, req_host) = if let Ok(Ok(req_message)) = &req {
+    let req_id = if let Ok(Ok(req_message)) = &req {
         req_message.header.id
     } else {
         0
@@ -121,7 +121,7 @@ async fn handle_request(encoded_req: Vec<u8>, pm_guard: Arc<RwLock<PluginManager
     let resolver = pm_guard.clone().read_owned().await;
     let resp = match req {
         Ok(Ok(req_msg)) => tokio::task::spawn_blocking(move || {
-            log::debug!("Successfully decoded request with id {} for host {}, attempting to resolve...", req_id);
+            log::debug!("Successfully decoded request with id {}, attempting to resolve...", req_id);
             resolver.resolve(req_msg)
         }).await.unwrap_or_else(|e|{
             log::error!("Failed to join a thread while resolving request {}: {e:?}", req_id);

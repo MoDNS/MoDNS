@@ -140,6 +140,7 @@ uintptr_t encode_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, uin
 #ifdef DEBUG
     printf("Encoding resource record rdata\n");
 #endif
+
     // RDATA encoding
     switch (rr.rdata.tag) {
         case A:
@@ -191,13 +192,19 @@ uintptr_t encode_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, uin
 
 uintptr_t encode_label_list(struct BytePtrVector list, struct ByteVector resp_buf, uintptr_t initial_offset) {
     uintptr_t cursor = initial_offset;
+
+#ifdef DEBUG
+    printf("Encoding label list of size %ld, cursor at %ld\n", list.size, cursor);
+#endif
     
     for (uintptr_t i = 0; i < list.size; i++) {
         resp_buf.ptr[cursor++] = list.ptr[i].size;
 
-        for (uintptr_t j = 0; j < list.ptr[i].size; j++) {
-            resp_buf.ptr[cursor++] = list.ptr[i].ptr[j];
-        }
+#ifdef DEBUG
+            printf("Encoding label of size %ld, cursor at %ld\n", list.ptr[i].size, cursor);
+#endif
+
+        cursor = encode_byte_vec(list.ptr[i], resp_buf, cursor);
     }
 
     resp_buf.ptr[cursor++] = 0;

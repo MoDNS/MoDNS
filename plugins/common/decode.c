@@ -156,7 +156,6 @@ uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
 
 #ifdef DEBUG
         printf("Decoding additional %d, cursor at %ld\n", i, cursor);
-        printf("message->additional points to %p\n", message->additional);
 #endif
         cursor = decode_rr(req, cursor, message->additional + i);
 
@@ -247,6 +246,11 @@ uintptr_t decode_label_list(struct ByteVector req, uintptr_t initial_offset, str
 
 
     uint8_t label_len = req.ptr[cursor++];
+
+#ifdef DEBUG
+    printf("Starting to decode label list, first label has length %d\n", label_len);
+#endif
+
     struct BytePtrVector qname = *vec;
     for (uint8_t label_num = qname.size; label_len > 0; label_num++) {
 
@@ -265,7 +269,8 @@ uintptr_t decode_label_list(struct ByteVector req, uintptr_t initial_offset, str
         struct ByteVector label = {NULL, 0, 0};
         label = extend_char_vec(label, label_len + 1);
 
-        label.size = snprintf(label.ptr, label_len + 1, "%s", req.ptr + cursor);
+        snprintf(label.ptr, label_len + 1, "%s", req.ptr + cursor);
+        label.size = label_len;
 
         cursor += label_len;
 

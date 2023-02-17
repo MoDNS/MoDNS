@@ -5,6 +5,9 @@ all: sdk server plugins
 server:
 	cargo build
 
+.PHONY: debug
+debug: export CFLAGS+= -DDEBUG
+
 .PHONY: sdk
 sdk: $(wildcard $(CURDIR)/modns-sdk/src/*)
 	cargo build -p modns-sdk
