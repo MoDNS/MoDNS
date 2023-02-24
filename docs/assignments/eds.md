@@ -43,7 +43,7 @@ All DNS functionality is provided by plugin modules. This way, DNS functionality
  - Should allow the installation and use of modules to alter the DNS resolution process
  - Easily managed from local web server hosted alongside MoDNS daemon
 
-# Opeerating Requirements
+# Operating Requirements
  - Server runs on a Linux server operating system
 
 # Reliability, Robustness
