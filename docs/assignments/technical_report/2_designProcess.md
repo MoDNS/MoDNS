@@ -3,12 +3,6 @@ This report details the design process, decisions, solution, hardware and softwa
 ## Design Process
 The team met up and discussed what parts of the project each would like to work on and responsibilities were delegated. The team began by researching DNS, its issues, and alternative methods to achieve the solution.
 
-### DNS
-
-
-### DNS Issues
-
-
 ### Major Decisions
 
 #### Plugin Loading: Lua vs Dynamic Libraries
