@@ -18,5 +18,16 @@ plugins: sdk
 	$(MAKE) -C plugins/base_listener/
 	$(MAKE) -C plugins/base_resolver/
 
+.PHONY: test
 test: all
 	cargo test
+
+.PHONY: clean
+clean: cargo-clean plugin-clean
+
+cargo-clean:
+	cargo clean
+
+plugin-clean:
+	$(MAKE) -C plugins/base_listener/ clean
+	$(MAKE) -C plugins/base_resolver/ clean
