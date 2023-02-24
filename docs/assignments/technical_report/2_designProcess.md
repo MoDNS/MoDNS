@@ -9,6 +9,8 @@ The team met up and discussed what parts of the project each would like to work 
 
 ### Major Decisions
 
+During the design and research process, our considered the following questions which required weighing two or more alternatives.
+
 #### Plugin Loading: Lua vs Dynamic Libraries
 
 Initially, our group needed to decide how we were going to provide the framework of the modularization for the DNS server. We saw our choices as either an embedded scripting language like Lua or dynamic libraries (aka shared objects or DLLs). We understood the technical complexity needed for Lua as well as the time that would be required to implement an interpreter and learn the language of Lua itself. However, upon doing research on Lua we found that the execution time for Lua would be exponentially longer compared to the shared object alternative. Since one of our requirements was to not substantially impact DNS performance, we decided to first implement plugins as dynamic libraries.
@@ -25,7 +27,6 @@ While debating on whether to make a custom operating system or just an executabl
 #### Front End Framework: Javascript React vs HTML/CSS
 
 Using HTML/CSS forces the developers to create and style components that React‘s libraries already have. This adds much more complexity and time to the development process for each base component, and each new component that is added. React uses Javascript which allows for conditional rendering, making components iteratively, and allows for the easy reuse of components.
-
 
 #### Frontend and Backend Communication: Rest API vs GraphQL
 
