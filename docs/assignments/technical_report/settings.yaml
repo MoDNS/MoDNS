@@ -1,0 +1,46 @@
+---
+
+# Files to read from, will be combined into a single document
+input-files:
+- 1_intro.md
+- 2_designProcess.md
+- 3_hardware_software.md
+- 4_designConsiderations.md
+- appendices.md
+
+output-file: design_report.pdf
+standalone: true
+
+# Only allow pandoc access to this folder and its children
+sandbox: true
+
+# Table of Contents settings
+table-of-contents: true
+toc-depth: 3
+number-sections: true
+
+top-level-division: chapter
+
+# Metadata passed to latex template
+metadata:
+  title: "MoDNS: A Modular DNS Solution"
+  subtitle: Winter Technical Report
+  author:
+  - Tim Huhn
+  - Bronson Jordan
+  - Aankit Pokhrel
+  - Carter Ray
+  - Seth Warren
+
+  abstract: |
+    skibbidobopdeebop
+
+  documentclass: report
+  papersize: letter
+  geometry:
+  - margin=0.5in
+
+  fontfamily: bera
+  mainfont: Bera Sans
+
+...
