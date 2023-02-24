@@ -1,10 +1,14 @@
 
 use futures::future::try_join_all;
+use modns_sdk::ffi;
 use tokio::net::UdpSocket;
-use tokio::sync::broadcast;
+use tokio::sync::{broadcast, RwLock};
 use std::error::Error;
-use std::net::SocketAddr;
+use std::ffi::c_char;
+use std::mem::ManuallyDrop;
 use std::sync::Arc;
+
+use crate::plugins::executors::{PluginManager, PluginExecutorError};
 
 const MAX_DGRAM_SIZE: usize = 65_507;
 
@@ -16,14 +20,14 @@ pub enum DnsListener{
 /// 
 /// When listener recieves a request, it spawns a new async task to
 /// handle that request with the `handle_request` function
-pub async fn listen_dns(listeners: Vec<DnsListener>, shutdown_sig: broadcast::Sender<()>) -> Result<(), Box<dyn Error + Sync + Send>> {
+pub async fn listen_dns(listeners: Vec<DnsListener>, shutdown_sig: broadcast::Sender<()>, pm_arc: Arc<RwLock<PluginManager>>) -> Result<(), Box<dyn Error + Sync + Send>> {
 
     try_join_all(listeners.into_iter().map(|l| async {
 
         let shutdown_rx = shutdown_sig.subscribe();
 
         match l {
-            DnsListener::Udp(s) => listen_dns_udp(s, shutdown_rx).await
+            DnsListener::Udp(s) => listen_dns_udp(s, shutdown_rx, pm_arc.clone()).await
         }
 
     })).await?;
@@ -31,7 +35,7 @@ pub async fn listen_dns(listeners: Vec<DnsListener>, shutdown_sig: broadcast::Se
     Ok(())
 }
 
-pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<()>) -> Result<(), Box<dyn Error + Sync + Send>> {
+pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<()>, pm_arc: Arc<RwLock<PluginManager>>) -> Result<(), Box<dyn Error + Sync + Send>> {
     
     let sock = Arc::new(sock);
 
@@ -54,22 +58,24 @@ pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<(
 
                 let (req_size, req_addr) = res?;
 
-                log::debug!(target: "dns::listener","Got {req_size}-byte DNS request from {req_addr}");
+                log::debug!("Got {req_size}-byte DNS request from {req_addr}");
 
                 let responder = sock.clone();
 
+                let pm = pm_arc.clone();
+
                 tokio::spawn(async move {
-                    match handle_request(&buf[..req_size], req_addr.is_ipv4()).await {
+                    match handle_request(buf[..req_size].to_vec(), pm.clone()).await {
                         Err(e) => {
-                            log::warn!(target: "dns::responder", "Got `Err` while fulfilling request from {req_addr}: {e:?}");
+                            log::warn!("Could not respond to request from {req_addr}: {e:?}");
                         },
                         Ok(resp) => {
-                            match responder.send_to(&resp, req_addr).await {
+                            match responder.send_to(&resp[..], req_addr).await {
                                 Err(e) => {
-                                    log::warn!(target: "dns::responder", "Got `Err` while responding to {req_addr}: {e:?}");
+                                    log::warn!("Got `Err` while responding to {req_addr}: {e:?}");
                                 }
                                 Ok(resp_len) => {
-                                    log::trace!(target: "dns::responder", "Sucessfully sent {resp_len}-byte response to {req_addr}")
+                                    log::debug!("Sucessfully sent {resp_len}-byte response to {req_addr}")
                                 }
                             };
                         },
@@ -99,35 +105,58 @@ pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<(
 ///   upstream DNS server
 /// 
 /// On success, returns vector of bytes to reply to the request with
-async fn handle_request(req: &[u8], ipv4: bool) -> Result<Vec<u8>, Box<dyn Error + Send + Sync>>{
+async fn handle_request(encoded_req: Vec<u8>, pm_guard: Arc<RwLock<PluginManager>>) -> Result<Vec<u8>, PluginExecutorError>{
 
-    // Allow for IPv6 addresses by binding to an IPv6 socket if the request is IPv6
-    let local_addr =
-    if ipv4 { "0.0.0.0:0" }
-    else { "[::]:0" }
-    .parse::<SocketAddr>()?;
+    let decoder = pm_guard.clone().read_owned().await;
+    let req = tokio::task::spawn_blocking(move || {
+        decoder.decode(encoded_req.as_ref())
+    }).await;
 
-    let resolver_addr = 
-    if ipv4 { "8.8.8.8:53" }
-    else { "[2001:4860:4860::8888]:53" }
-    .parse::<SocketAddr>()?;
+    let req_id = if let Ok(Ok(req_message)) = &req {
+        req_message.header.id
+    } else {
+        0
+    };
 
-    let requester = UdpSocket::bind(local_addr).await?;
+    let resolver = pm_guard.clone().read_owned().await;
+    let resp = match req {
+        Ok(Ok(req_msg)) => tokio::task::spawn_blocking(move || {
+            log::debug!("Successfully decoded request with id {}, attempting to resolve...", req_id);
+            resolver.resolve(req_msg)
+        }).await.unwrap_or_else(|e|{
+            log::error!("Failed to join a thread while resolving request {}: {e:?}", req_id);
+            Ok(Box::new(Default::default()))
+        }).and_then(|resp| {
+            log::debug!("Resolver returned successfully");
+            Ok(resp)
+        }).unwrap_or_else(|e| {
+            log::error!("Resolver plugin failed: {e:?}");
+            if let PluginExecutorError::ErrorCode(rc) = e {
+                Box::new(ffi::DnsMessage::with_error_code(rc))
+            } else {
+                Default::default()
+            }
+        }),
 
-    requester.connect(resolver_addr).await?;
+        Ok(Err(PluginExecutorError::ErrorCode(rc))) => Box::new(ffi::DnsMessage::with_error_code(rc)),
+        _ => Box::new(Default::default())
+    };
 
-    // There is probably a better way to do this that doesn't require
-    // allocating literal kilobytes every time we get a request, but eh
-    let mut buf = vec![0; MAX_DGRAM_SIZE];
+    log::debug!("Attempting to encode response for request {req_id}");
+    let encoder = pm_guard.read_owned().await;
+    tokio::task::spawn_blocking(move || {
+        encoder.encode(resp)
+    }).await
+    .unwrap_or_else(|e| Err(PluginExecutorError::ThreadJoinFailed(e.to_string())))
+    .and_then(|v| Ok(cchar_vec_to_u8(v)))
+}
 
-    requester.send(&req).await?;
+fn cchar_vec_to_u8(i8vec: Vec<c_char>) -> Vec<u8> {
+    let mut v = ManuallyDrop::new(i8vec);
 
-    log::trace!(target: "dns::listener", "Sent request to 8.8.8.8");
+    let ptr = v.as_mut_ptr() as *mut u8;
+    let length = v.len();
+    let capacity = v.capacity();
 
-    let resp_size = requester.recv(&mut buf).await?;
-
-    // Shrink buffer down to only the necessary size to save on memory
-    buf.truncate(resp_size);
-
-    Ok(buf)
+    unsafe { Vec::from_raw_parts(ptr, length, capacity) }
 }

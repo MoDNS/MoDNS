@@ -3,6 +3,7 @@
 
 members = [
 	"cli",
+	"modns-sdk",
 	"server"
 ]
 
