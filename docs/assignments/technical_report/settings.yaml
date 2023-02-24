@@ -6,6 +6,7 @@ input-files:
 - 2_designProcess.md
 - 3_hardware_software.md
 - 4_designConsiderations.md
+- 5_works_cited.md
 - appendices.md
 
 output-file: design_report.pdf
@@ -18,8 +19,6 @@ sandbox: true
 table-of-contents: true
 toc-depth: 3
 number-sections: true
-
-top-level-division: chapter
 
 # Metadata passed to latex template
 metadata:
