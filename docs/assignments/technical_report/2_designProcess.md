@@ -23,3 +23,4 @@ Using HTML/CSS forces the developers to create and style components that Reactâ€
 RESTful APIs have been the standard for connecting frontends and backends for web services for years. They involve a predefined list of HTTP endpoints which provide data in a set schema. GraphQL is a relatively new standard for APIs which allows clients (in this case, our frontend) to specify the exact schema for the data they are requesting. This has obvious benefits for frontend developers, however it greatly increases complexity on the backend side. We decided against GraphQL for our project because the relatively small amount of data changing hands between the frontend and backend does not justify the increase in complexity on the backend.
 
 ### Solution Technique
+[To be filled later]
