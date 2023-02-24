@@ -1,0 +1,16 @@
+#Use cargo-chef to build dependencies separately from main binary
+FROM rust:1.67-alpine
+
+RUN apk add --no-cache musl-dev
+
+# create Rust-based backend server working directory
+WORKDIR /rust-server
+
+RUN cargo install cargo-watch
+
+COPY . .
+
+EXPOSE 8080 
+EXPOSE 5300/udp
+
+ENTRYPOINT [ "cargo", "watch", "--poll", "-w", "server", "-x", "run", "--why" ]
