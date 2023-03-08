@@ -1,6 +1,7 @@
 
 pub mod executors;
 pub mod loaders;
+pub mod metadata;
 
 type ListenerDecodeFn = unsafe extern "C" fn(
     modns_sdk::ffi::ByteVector,
