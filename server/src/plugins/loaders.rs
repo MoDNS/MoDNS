@@ -1,7 +1,7 @@
 
 use super::{executors::DnsPlugin, ListenerDecodeFn, ListenerEncodeFn, ResolverFn};
 use libloading::{Symbol, Library};
-use std::ffi::OsStr;
+use std::{ffi::OsStr, path::PathBuf};
 
 #[derive(Debug)]
 pub enum PluginLoaderError {
@@ -17,9 +17,11 @@ impl From<libloading::Error> for PluginLoaderError {
 }
 
 impl DnsPlugin {
-    pub(crate) fn load<P: AsRef<OsStr>>(path: P) -> Result<Self, libloading::Error> {
+    pub(crate) fn load<P: AsRef<OsStr>>(home_dir: P, enable: bool) -> Result<Self, libloading::Error> {
 
-        let lib = unsafe { Library::new(path) }?;
+        let home_dir = PathBuf::from(home_dir.as_ref());
+
+        let lib = unsafe { Library::new(home_dir.join("plugin.so")) }?;
 
         let is_listener =
         get_sym::<ListenerDecodeFn>(&lib, b"impl_decode_req")?.is_some() &&
@@ -28,7 +30,12 @@ impl DnsPlugin {
         let is_resolver =
         get_sym::<ResolverFn>(&lib, b"impl_resolve_req")?.is_some();
 
-        Ok(Self::new(lib, is_listener, is_resolver))
+        Ok(Self::new(
+            lib, 
+            is_listener,
+            is_resolver,
+            home_dir,
+            enable))
     }
 
 }

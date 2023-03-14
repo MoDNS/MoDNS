@@ -45,13 +45,27 @@ impl From<modns_sdk::FfiConversionError> for PluginExecutorError{
 /// the DNS resolving process.
 pub struct DnsPlugin {
     lib: Library,
+    home_dir: PathBuf,
     is_listener: bool,
-    is_resolver: bool
+    is_resolver: bool,
+    enabled: bool
 }
 
 impl DnsPlugin {
-    pub(crate) fn new(lib: Library, is_listener: bool, is_resolver: bool) -> Self {
-        Self{ lib, is_listener, is_resolver }
+    pub(crate) fn new(
+        lib: Library,
+        is_listener: bool,
+        is_resolver: bool,
+        home_dir: PathBuf,
+        enabled: bool
+    ) -> Self {
+        Self{
+            lib,
+            is_listener,
+            is_resolver,
+            home_dir,
+            enabled
+        }
     }
     
     pub fn is_listener(&self) -> bool {
@@ -115,6 +129,14 @@ impl DnsPlugin {
         }
 
     }
+
+    pub fn enabled(&self) -> bool {
+        self.enabled
+    }
+
+    pub fn home_dir(&self) -> &Path {
+        &self.home_dir
+    }
 }
 
 pub struct PluginManager {
@@ -132,7 +154,7 @@ impl PluginManager {
         }
     }
 
-    pub fn load<P: AsRef<Path>>(&mut self, dir_path: P) -> Result<(), PluginLoaderError>{
+    pub fn load<P: AsRef<Path>>(&mut self, dir_path: P, enable: bool) -> Result<(), PluginLoaderError>{
         let id = Uuid::new_v4();
 
         let dir = PathBuf::from(dir_path.as_ref());
@@ -140,7 +162,7 @@ impl PluginManager {
         self.plugins.insert(
             id,
             Arc::new(
-                DnsPlugin::load(dir.join("plugin.so"))?
+                DnsPlugin::load(dir.clone(), enable)?
             )
         );
 
@@ -167,7 +189,7 @@ impl PluginManager {
 
                         if !so_path.is_file() { continue; }
 
-                        if let Err(e) = self.load(subdir) {
+                        if let Err(e) = self.load(subdir, false) {
                             log::error!("Failed to load library at {}: {e:?}", so_path.display())
                         }
                     }
@@ -209,5 +231,9 @@ impl PluginManager {
         self.resolver.upgrade()
         .ok_or(PluginExecutorError::NoneEnabled)?
         .resolve(request)
+    }
+
+    pub fn plugins(&self) -> &BTreeMap<uuid::Uuid, Arc<DnsPlugin>> {
+        &self.plugins
     }
 }

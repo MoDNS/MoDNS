@@ -2,6 +2,8 @@ use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
+use super::executors::PluginManager;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PluginMetadata {
 
@@ -40,4 +42,25 @@ pub struct PluginMetadata {
 
     /// Is the plugin enabled presently
     enabled: bool
+}
+
+impl PluginManager {
+    pub fn list_metadata(&self) -> Vec<PluginMetadata> {
+        self.plugins().iter().map(|(uuid, plugin)| {
+
+            PluginMetadata {
+                uuid: uuid.clone(),
+                friendly_name: "friendly_name is not implemented".into(),
+                description: "description is not implemented".into(),
+                home: plugin.home_dir().into(),
+                is_listener: plugin.is_listener(),
+                is_interceptor: false,
+                is_resolver: plugin.is_resolver(),
+                is_validator: false,
+                is_inspector: false,
+                intercept_position: None,
+                enabled: plugin.enabled(),
+            }
+        }).collect()
+    }
 }
