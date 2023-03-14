@@ -1,16 +1,11 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, collections::BTreeMap};
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
-use super::executors::PluginManager;
+use super::executors::{PluginManager, DnsPlugin};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PluginMetadata {
-
-    /// The plugin's unique ID
-    /// 
-    /// Used to reference the plugin for subsequent calls
-    uuid: Uuid,
 
     /// The plugin's display-friendly name, set in their manifest.yaml
     friendly_name: String,
@@ -44,23 +39,31 @@ pub struct PluginMetadata {
     enabled: bool
 }
 
-impl PluginManager {
-    pub fn list_metadata(&self) -> Vec<PluginMetadata> {
-        self.plugins().iter().map(|(uuid, plugin)| {
+impl DnsPlugin {
+    pub fn metadata(&self) -> PluginMetadata {
+        PluginMetadata {
+            friendly_name: "friendly_name isn't implemented yet".to_owned(),
+            description: "description isn't implemented yet".to_owned(),
+            home: self.home_dir().to_owned(),
+            is_listener: self.is_listener(),
+            is_interceptor: false, // Not implemented
+            is_resolver: self.is_resolver(), // Not implemented
+            is_validator: false, // Not implemented
+            is_inspector: false, // Not implemented
+            intercept_position: None,
+            enabled: self.enabled(),
+        }
+    }
+}
 
-            PluginMetadata {
-                uuid: uuid.clone(),
-                friendly_name: "friendly_name is not implemented".into(),
-                description: "description is not implemented".into(),
-                home: plugin.home_dir().into(),
-                is_listener: plugin.is_listener(),
-                is_interceptor: false,
-                is_resolver: plugin.is_resolver(),
-                is_validator: false,
-                is_inspector: false,
-                intercept_position: None,
-                enabled: plugin.enabled(),
-            }
-        }).collect()
+impl PluginManager {
+    pub fn list_metadata(&self) -> BTreeMap<Uuid, PluginMetadata> {
+        let mut metadata_map = BTreeMap::new();
+
+        for (id, p) in self.plugins().iter() {
+            metadata_map.insert(id.clone(), p.metadata());
+        };
+
+        metadata_map
     }
 }
