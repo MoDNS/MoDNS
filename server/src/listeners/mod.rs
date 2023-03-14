@@ -11,7 +11,7 @@ use tokio::sync::broadcast;
 use tokio::signal::unix::{signal, SignalKind};
 
 use crate::ErrorBox;
-use crate::plugins::executors::PluginManager;
+use crate::plugins::manager::PluginManager;
 
 /// Start API and DNS servers on the provided listeners
 pub async fn listen(apiaddrs: Vec<api::ApiListener>, dnsaddrs: Vec<dns::DnsListener>, pm_arc: Arc<RwLock<PluginManager>>) {

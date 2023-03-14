@@ -2,7 +2,7 @@ use std::error::Error;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use modnsd::plugins::executors::PluginManager;
+use modnsd::plugins::manager::PluginManager;
 use modnsd::listeners::{ApiListener, DnsListener, self};
 use tokio::{net::{TcpListener, UnixListener, UdpSocket}, sync::RwLock};
 

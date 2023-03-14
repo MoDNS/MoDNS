@@ -8,7 +8,8 @@ use std::ffi::c_char;
 use std::mem::ManuallyDrop;
 use std::sync::Arc;
 
-use crate::plugins::executors::{PluginManager, PluginExecutorError};
+use crate::plugins::manager::{PluginManager};
+use crate::plugins::plugin::PluginExecutorError;
 
 const MAX_DGRAM_SIZE: usize = 65_507;
 
