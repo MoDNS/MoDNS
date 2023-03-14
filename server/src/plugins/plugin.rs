@@ -8,6 +8,10 @@ use std::fmt::Display;
 use std::path::{PathBuf, Path};
 use std::ffi::{OsStr, c_char};
 
+const DECODER_FN_NAME: &[u8] = b"impl_decode_req";
+const ENCODER_FN_NAME: &[u8] = b"impl_encode_resp";
+const RESOLVER_FN_NAME: &[u8] = b"impl_resolve_req";
+
 #[derive(Debug)]
 pub enum PluginLoaderError {
     LibraryLoadError(libloading::Error),
@@ -92,7 +96,7 @@ impl DnsPlugin {
 
     pub fn decode(&self, buf: &[u8]) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
 
-        let f: Symbol<ListenerDecodeFn> = unsafe { self.lib.get(b"impl_decode_req") }
+        let f: Symbol<ListenerDecodeFn> = unsafe { self.lib.get(DECODER_FN_NAME) }
         .or(Err(PluginExecutorError::DoesNotImplement))?;
 
         let mut message = Box::new(ffi::DnsMessage::default());
@@ -108,7 +112,7 @@ impl DnsPlugin {
 
     pub fn encode(&self, message: Box<ffi::DnsMessage>) -> Result<Vec<c_char>, PluginExecutorError> {
 
-        let f: Symbol<ListenerEncodeFn> = unsafe { self.lib.get(b"impl_encode_resp") }
+        let f: Symbol<ListenerEncodeFn> = unsafe { self.lib.get(ENCODER_FN_NAME) }
         .or(Err(PluginExecutorError::DoesNotImplement))?;
 
         let mut buf = Vec::new().into();
@@ -127,7 +131,7 @@ impl DnsPlugin {
 
     pub fn resolve(&self, req: Box<ffi::DnsMessage>) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
 
-        let f: Symbol<ResolverFn> = unsafe { self.lib.get(b"impl_resolve_req") }
+        let f: Symbol<ResolverFn> = unsafe { self.lib.get(RESOLVER_FN_NAME) }
         .or(Err(PluginExecutorError::DoesNotImplement))?;
 
         let mut resp = Box::new(ffi::DnsMessage::default());
@@ -159,11 +163,11 @@ impl DnsPlugin {
         let lib = unsafe { Library::new(home_dir.join("plugin.so")) }?;
 
         let is_listener =
-        get_sym::<ListenerDecodeFn>(&lib, b"impl_decode_req")?.is_some() &&
-        get_sym::<ListenerEncodeFn>(&lib, b"impl_encode_resp")?.is_some();
+        get_sym::<ListenerDecodeFn>(&lib, DECODER_FN_NAME)?.is_some() &&
+        get_sym::<ListenerEncodeFn>(&lib, ENCODER_FN_NAME)?.is_some();
 
         let is_resolver =
-        get_sym::<ResolverFn>(&lib, b"impl_resolve_req")?.is_some();
+        get_sym::<ResolverFn>(&lib, RESOLVER_FN_NAME)?.is_some();
 
         Ok(Self::new(
             lib, 
