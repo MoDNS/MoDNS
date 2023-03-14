@@ -1,0 +1,9 @@
+
+friendly_name: Base DNS Listener
+
+description: |
+  Default DNS listener included with the base MoDNS server.
+  This plugin is responsible for converting DNS requests into a format 
+  that can be read by other plugins
+
+  Understands standard DNS queries which conform to [RFC 1035](https://www.rfc-editor.org/rfc/rfc1035).

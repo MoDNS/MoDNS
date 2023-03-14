@@ -2,9 +2,11 @@
 use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn};
 use libloading::{Symbol, Library};
 use modns_sdk::ffi;
+use serde::Deserialize;
 
 use std::error::Error;
 use std::fmt::Display;
+use std::{fs, io};
 use std::path::{PathBuf, Path};
 use std::ffi::{OsStr, c_char};
 
@@ -15,6 +17,8 @@ const RESOLVER_FN_NAME: &[u8] = b"impl_resolve_req";
 #[derive(Debug)]
 pub enum PluginLoaderError {
     LibraryLoadError(libloading::Error),
+    ManifestOpenError(io::Error),
+    ManifestReadError(serde_yaml::Error),
     NoListeners,
     NoResolvers,
 }
@@ -22,6 +26,18 @@ pub enum PluginLoaderError {
 impl From<libloading::Error> for PluginLoaderError {
     fn from(value: libloading::Error) -> Self {
         Self::LibraryLoadError(value)
+    }
+}
+
+impl From<io::Error> for PluginLoaderError {
+    fn from(value: io::Error) -> Self {
+        Self::ManifestOpenError(value)
+    }
+}
+
+impl From<serde_yaml::Error> for PluginLoaderError {
+    fn from(value: serde_yaml::Error) -> Self {
+        Self::ManifestReadError(value)
     }
 }
 
@@ -59,14 +75,40 @@ impl From<modns_sdk::FfiConversionError> for PluginExecutorError{
     }
 }
 
+#[derive(Deserialize)]
+struct PluginManifest {
+    friendly_name: String,
+    description: String
+}
+
 /// A Plugin which contains symbols for functions that are called during
 /// the DNS resolving process.
 pub struct DnsPlugin {
+
+    /// Object containing the actual plugin binary in memory
     lib: Library,
+
+    /// Location of the plugin's home directory
     home_dir: PathBuf,
+
+    /// Whether the function is a listener, i.e. if callers should expect
+    /// that encode() and decode() can be called on this plugin
     is_listener: bool,
+
+    /// Whether this plugin is a resolver, i.e. if callers should expect
+    /// that resolve() can be called on this plugin
     is_resolver: bool,
-    enabled: bool
+
+    /// Whether this plugin should be treated as being enabled
+    enabled: bool,
+
+    /// Human-readable name for this plugin provided by the author in the
+    /// plugin's `manifest.yaml` file
+    friendly_name: String,
+
+    /// Human-readable description for this plugin provided by the author
+    /// in the plugin's `manifest.yaml` file
+    description: String
 }
 
 impl DnsPlugin {
@@ -75,14 +117,18 @@ impl DnsPlugin {
         is_listener: bool,
         is_resolver: bool,
         home_dir: PathBuf,
-        enabled: bool
+        enabled: bool,
+        friendly_name: String,
+        description: String
     ) -> Self {
         Self{
             lib,
             is_listener,
             is_resolver,
             home_dir,
-            enabled
+            enabled,
+            friendly_name,
+            description
         }
     }
     
@@ -156,11 +202,15 @@ impl DnsPlugin {
         &self.home_dir
     }
 
-    pub fn load<P: AsRef<OsStr>>(home_dir: P, enable: bool) -> Result<Self, libloading::Error> {
+    pub fn load<P: AsRef<OsStr>>(home_dir: P, enable: bool) -> Result<Self, PluginLoaderError> {
 
         let home_dir = PathBuf::from(home_dir.as_ref());
 
         let lib = unsafe { Library::new(home_dir.join("plugin.so")) }?;
+
+        let manifest_file = fs::read_to_string(home_dir.join("manifest.yaml"))?;
+
+        let manifest: PluginManifest = serde_yaml::from_str(&manifest_file)?;
 
         let is_listener =
         get_sym::<ListenerDecodeFn>(&lib, DECODER_FN_NAME)?.is_some() &&
@@ -174,9 +224,20 @@ impl DnsPlugin {
             is_listener,
             is_resolver,
             home_dir,
-            enable))
+            enable,
+            manifest.friendly_name,
+            manifest.description
+        ))
     }
 
+
+    pub fn friendly_name(&self) -> &str {
+        self.friendly_name.as_ref()
+    }
+
+    pub fn description(&self) -> &str {
+        self.description.as_ref()
+    }
 }
 
 fn get_sym<'lib, T> (lib: &'lib Library, name: &[u8]) -> Result<Option<Symbol<'lib, T>>, libloading::Error> {

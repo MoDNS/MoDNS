@@ -43,8 +43,8 @@ pub struct PluginMetadata {
 impl DnsPlugin {
     pub fn metadata(&self) -> PluginMetadata {
         PluginMetadata {
-            friendly_name: "friendly_name isn't implemented yet".to_owned(),
-            description: "description isn't implemented yet".to_owned(),
+            friendly_name: self.friendly_name().to_owned(),
+            description: self.description().to_owned(),
             home: self.home_dir().to_owned(),
             is_listener: self.is_listener(),
             is_interceptor: false, // Not implemented

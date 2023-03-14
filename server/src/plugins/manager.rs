@@ -28,14 +28,13 @@ impl PluginManager {
 
         let dir = PathBuf::from(dir_path.as_ref());
 
-        self.plugins.insert(
-            id,
-            Arc::new(
-                DnsPlugin::load(dir.clone(), enable)?
-            )
-        );
+        let plugin = Arc::new(DnsPlugin::load(&dir, enable)?);
 
-        log::info!("Loaded plugin {id} from directory {}", dir.display());
+        log::info!("Loaded plugin `{}` from directory {}", plugin.friendly_name(), dir.display());
+
+        log::debug!("Description for `{}`:\n{}", plugin.friendly_name(), plugin.description());
+
+        self.plugins.insert( id, plugin);
 
         Ok(())
     }
