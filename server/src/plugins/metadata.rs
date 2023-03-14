@@ -66,4 +66,8 @@ impl PluginManager {
 
         metadata_map
     }
+
+    pub fn get_metadata(&self, id: &Uuid) -> Option<PluginMetadata> {
+        self.plugins().get(id).and_then(|p| Some(p.metadata()))
+    }
 }
