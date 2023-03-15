@@ -1,15 +1,20 @@
 use std::error::Error;
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use modnsd::plugins::manager::PluginManager;
+use clap::Parser;
+use modnsd::plugins::executors::PluginManager;
 use modnsd::listeners::{ApiListener, DnsListener, self};
 use tokio::{net::{TcpListener, UnixListener, UdpSocket}, sync::RwLock};
+
+mod config;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
 
     pretty_env_logger::init();
+
+    let config = config::ServerConfig::parse();
 
     let pm_arc = Arc::new(RwLock::new(PluginManager::new()));
 
@@ -17,7 +22,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         log::info!("Initializing plugins...");
         let mut pm = pm_arc.write().await;
 
-        pm.search(&[PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../plugins").canonicalize()?]);
+        pm.search(config.plugin_path());
         log::info!("Plugin initialization successful");
     }
 
@@ -27,7 +32,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     apiaddrs.push(ApiListener::Tcp(TcpListener::bind(("0.0.0.0", 8080)).await?));
 
     log::info!("binding UNIX socket listener...");
-    apiaddrs.push(ApiListener::Unix(UnixListener::bind("./modnsd.sock")?));
+    apiaddrs.push(ApiListener::Unix(UnixListener::bind(config.socket_path())?));
 
 
     log::info!("Success");
