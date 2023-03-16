@@ -1,16 +1,16 @@
-use std::error::Error;
 use std::sync::Arc;
 
+use anyhow::Context;
 use modnsd::plugins::manager::PluginManager;
-use clap::Parser;
-use modnsd::plugins::executors::PluginManager;
 use modnsd::listeners::{ApiListener, DnsListener, self};
+
+use clap::Parser;
 use tokio::{net::{TcpListener, UnixListener, UdpSocket}, sync::RwLock};
 
 mod config;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> anyhow::Result<()> {
 
     pretty_env_logger::init();
 
@@ -29,22 +29,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut apiaddrs = Vec::new();
 
     log::info!("binding http listener...");
-    apiaddrs.push(ApiListener::Tcp(TcpListener::bind(("0.0.0.0", 8080)).await?));
+    apiaddrs.push(ApiListener::Tcp(TcpListener::bind(("0.0.0.0", 8080)).await.context("Failed to bind TCP listener")?));
 
     log::info!("binding UNIX socket listener...");
-    apiaddrs.push(ApiListener::Unix(UnixListener::bind(config.unix_socket())?));
+    apiaddrs.push(ApiListener::Unix(UnixListener::bind(config.unix_socket()).context("Failed to bind Unix listener")?));
 
 
     log::info!("Success");
 
     log::info!("binding DNS listener");
     let dnsaddrs = vec![
-        DnsListener::Udp(UdpSocket::bind(("0.0.0.0", 5300)).await?)
+        DnsListener::Udp(UdpSocket::bind(("0.0.0.0", 5300)).await.context("Failed to bind DNS listener")?)
     ];
 
     listeners::listen(apiaddrs, dnsaddrs, pm_arc).await;
 
-    std::fs::remove_file(config.unix_socket())?;
+    std::fs::remove_file(config.unix_socket()).context("Failed to remove unix socket")?;
 
     Ok(())
 
