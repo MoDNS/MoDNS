@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     apiaddrs.push(ApiListener::Tcp(TcpListener::bind(("0.0.0.0", 8080)).await?));
 
     log::info!("binding UNIX socket listener...");
-    apiaddrs.push(ApiListener::Unix(UnixListener::bind(config.socket_path())?));
+    apiaddrs.push(ApiListener::Unix(UnixListener::bind(config.unix_socket())?));
 
 
     log::info!("Success");
@@ -43,7 +43,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     listeners::listen(apiaddrs, dnsaddrs, pm_arc).await;
 
-    std::fs::remove_file("./modnsd.sock")?;
+    std::fs::remove_file(config.unix_socket())?;
 
     Ok(())
 
