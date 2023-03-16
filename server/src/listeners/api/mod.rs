@@ -2,6 +2,7 @@
 mod routes;
 
 use std::error::Error;
+use std::fmt::Display;
 
 use routes::*;
 
@@ -17,6 +18,34 @@ pub enum ApiListener {
     Unix(UnixListener),
 }
 
+impl Display for ApiListener {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ApiListener::Tcp(l) => {
+                let addr = l.local_addr()
+                .and_then(|a| Ok(a.to_string()))
+                .unwrap_or("unknown addr".to_owned());
+
+                write!(f, "TCP socket ({addr})")
+            },
+            ApiListener::Unix(l) => {
+                let path = match l.local_addr() {
+                    Ok(a) => {
+                        a.as_pathname()
+                        .map_or(
+                            "anonymous".to_owned(),
+                            |p| p.to_string_lossy().to_string()
+                        )
+                    },
+                    Err(e) => format!("failed to get path: {e}"),
+                };
+                
+                write!(f, "Unix socket ({path})")
+            },
+        }
+    }
+}
+
 pub async fn listen_api(listeners: Vec<ApiListener>, shutdown_channel: broadcast::Sender<()>) -> Result<(), Box<dyn Error + Sync + Send>>{
     let frontend_routes = root_redirect().or(frontend_filter()).with(warp::log("http::frontend"));
 
@@ -24,7 +53,7 @@ pub async fn listen_api(listeners: Vec<ApiListener>, shutdown_channel: broadcast
         let server = warp::serve(frontend_routes.clone());
 
         let mut shutdown_rx = shutdown_channel.subscribe();
-        log::info!("Starting API server on {l:?}");
+        log::info!("Starting API server on {l}");
 
         match l {
             ApiListener::Tcp(l) => server.serve_incoming_with_graceful_shutdown(
