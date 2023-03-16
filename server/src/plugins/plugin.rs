@@ -1,10 +1,11 @@
 
 use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn};
-use libloading::{Symbol, Library};
 use modns_sdk::ffi;
-use serde::Deserialize;
 
-use std::error::Error;
+use libloading::{Symbol, Library};
+use serde::Deserialize;
+use thiserror::Error;
+
 use std::fmt::Display;
 use std::{fs, io};
 use std::path::{PathBuf, Path};
@@ -14,13 +15,14 @@ const DECODER_FN_NAME: &[u8] = b"impl_decode_req";
 const ENCODER_FN_NAME: &[u8] = b"impl_encode_resp";
 const RESOLVER_FN_NAME: &[u8] = b"impl_resolve_req";
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum PluginLoaderError {
+    #[error("unable to load library")]
     LibraryLoadError(libloading::Error),
+    #[error("unable to open manifest.yaml")]
     ManifestOpenError(io::Error),
+    #[error("unable tor read manifest.yaml")]
     ManifestReadError(serde_yaml::Error),
-    NoListeners,
-    NoResolvers,
 }
 
 impl From<libloading::Error> for PluginLoaderError {
@@ -61,7 +63,6 @@ impl Display for PluginExecutorError {
         }
     }
 }
-impl Error for PluginExecutorError {}
 
 impl From<u8> for PluginExecutorError {
     fn from(value: u8) -> Self {

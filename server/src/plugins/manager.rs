@@ -3,10 +3,11 @@ use std::path::{PathBuf, Path};
 use std::sync::{Arc, Weak};
 use std::collections::BTreeMap;
 
+use anyhow::{Context, Result};
 use modns_sdk::ffi;
 use uuid::Uuid;
 
-use super::plugin::{DnsPlugin, PluginLoaderError, PluginExecutorError};
+use super::plugin::{DnsPlugin, PluginExecutorError};
 
 pub struct PluginManager {
     plugins: BTreeMap<uuid::Uuid, Arc<DnsPlugin>>,
@@ -23,24 +24,28 @@ impl PluginManager {
         }
     }
 
-    pub fn load<P: AsRef<Path>>(&mut self, dir_path: P, enable: bool) -> Result<(), PluginLoaderError>{
+    pub fn load<P: AsRef<Path>>(&mut self, dir_path: P, enable: bool) -> Result<()> {
         let id = Uuid::new_v4();
 
-        let dir = PathBuf::from(dir_path.as_ref());
+        let dir = PathBuf::from(dir_path.as_ref()).canonicalize().context("Couldn't canonicalize plugin path")?;
 
         let plugin = Arc::new(DnsPlugin::load(&dir, enable)?);
 
         log::info!("Loaded plugin `{}` from directory {}", plugin.friendly_name(), dir.display());
 
-        log::debug!("Description for `{}`:\n{}", plugin.friendly_name(), plugin.description());
+        log::trace!("Description for `{}`:\n{}", plugin.friendly_name(), plugin.description());
 
         self.plugins.insert( id, plugin);
 
         Ok(())
     }
 
-    pub fn search(&mut self, search_path: &[PathBuf]) {
+    pub fn search(&mut self, search_path: &[PathBuf]) -> Result<()>{
         for parent in search_path {
+            let parent = parent.canonicalize()
+            .with_context(|| format!("Couldn't canonicalize search path {}", parent.display()))?;
+
+            log::debug!("Searching {} for plugins", parent.display());
 
             match parent.read_dir() {
                 Ok(dir_info) => {
@@ -48,11 +53,16 @@ impl PluginManager {
                         match d {
                             Ok(f) if f.file_type().ok()?.is_dir()=> Some(f.path()),
                             Ok(_) => None,
-                            Err(_) => None,
+                            Err(e) => {
+                                log::warn!("Failed to read a subdirectory of {}: {e}", parent.display());
+                                None
+                            },
                         }
                     });
 
                     for subdir in dirs {
+                        log::trace!("Checking {}", subdir.display());
+
                         let so_path = subdir.join("plugin.so");
 
                         if !so_path.is_file() { continue; }
@@ -62,6 +72,7 @@ impl PluginManager {
                         }
                     }
                 },
+
                 Err(e) => {
                     log::info!("Failed to read directory {}: {}", parent.display(), e);
                 },
@@ -71,7 +82,7 @@ impl PluginManager {
         self.init()
     }
 
-    pub fn init(&mut self) {
+    pub fn init(&mut self) -> Result<()> {
         self.listener = match self.plugins.values().find(|p| p.is_listener()) {
             Some(p) => Arc::downgrade(p),
             None => Weak::new(),
@@ -81,6 +92,8 @@ impl PluginManager {
             Some(p) => Arc::downgrade(p),
             None => Weak::new(),
         };
+
+        Ok(())
     }
 
     pub fn decode(&self, req: &[u8]) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
