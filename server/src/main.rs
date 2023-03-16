@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::sync::Arc;
 
+use modnsd::plugins::manager::PluginManager;
 use clap::Parser;
 use modnsd::plugins::executors::PluginManager;
 use modnsd::listeners::{ApiListener, DnsListener, self};

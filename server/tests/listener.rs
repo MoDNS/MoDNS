@@ -4,7 +4,7 @@ use std::{path::PathBuf, env};
 
 use modns_sdk::{ffi::{self, ByteVector}, safe};
 
-use modnsd::plugins::executors::PluginManager;
+use modnsd::plugins::manager::PluginManager;
 
 const SAMPLE_REQUEST: &[u8; 29] = b"\xc3\xd9\x01\x00\x00\x01\x00\x00\
                                     \x00\x00\x00\x00\x07\x65\x78\x61\
@@ -117,7 +117,7 @@ fn listener_plugin_decoder_failure() {
 
     assert_eq!(
         test_response.unwrap_err(),
-        modnsd::plugins::executors::PluginExecutorError::ErrorCode(1),
+        modnsd::plugins::plugin::PluginExecutorError::ErrorCode(1),
         "decoder did not error on an invalid request"
     );
 }
