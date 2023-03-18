@@ -22,29 +22,50 @@ async fn main() -> anyhow::Result<()> {
         log::info!("Initializing plugins...");
         let mut pm = pm_arc.write().await;
 
-        pm.search(config.plugin_path());
+        pm.search(config.plugin_path())
+        .or_else(|e| {
+
+            log::error!("Got an error during initial plugin search: {e}");
+            log::debug!("Full error: {e:#?}");
+
+            if config.strict_init() {
+                Err(e)
+                .context("Server refused to start because plugin initialization ran into an error\
+                and the `--ignore-init-errors` flag is set to `never`")
+            } else {
+                Ok(())
+            }
+        })?;
+
+        pm.validate(!config.always_init())
+        .context("Server refused to start because it does not have enough plugins enabled to resolve DNS requests.
+        To ignore this case and start anyway, run with `--ignore-init-errors always`")?;
+
         log::info!("Plugin initialization successful");
     }
 
-    let mut apiaddrs = Vec::new();
+    log::info!("Binding API listeners");
+    let apiaddrs = vec![
+        ApiListener::Tcp(
+            TcpListener::bind(("0.0.0.0", 8080)).await
+            .context("Failed to bind TCP listener on port 8080")?
+        ),
 
-    log::info!("binding http listener...");
-    apiaddrs.push(ApiListener::Tcp(TcpListener::bind(("0.0.0.0", 8080)).await.context("Failed to bind TCP listener")?));
+        ApiListener::Unix(
+            UnixListener::bind(config.unix_socket())
+            .with_context(|| format!("Failed to bind Unix listener on {}", config.unix_socket().display()))?
+        ),
+    ];
 
-    log::info!("binding UNIX socket listener...");
-    apiaddrs.push(ApiListener::Unix(UnixListener::bind(config.unix_socket()).context("Failed to bind Unix listener")?));
-
-
-    log::info!("Success");
-
-    log::info!("binding DNS listener");
+    log::info!("Binding DNS listener");
     let dnsaddrs = vec![
-        DnsListener::Udp(UdpSocket::bind(("0.0.0.0", 5300)).await.context("Failed to bind DNS listener")?)
+        DnsListener::Udp(UdpSocket::bind(("0.0.0.0", 5300)).await.context("Failed to bind DNS listener on port 5300/udp")?)
     ];
 
     listeners::listen(apiaddrs, dnsaddrs, pm_arc).await;
 
-    std::fs::remove_file(config.unix_socket()).context("Failed to remove unix socket")?;
+    std::fs::remove_file(config.unix_socket())
+    .with_context(|| format!("Failed to remove unix socket at {}", config.unix_socket().display()))?;
 
     Ok(())
 

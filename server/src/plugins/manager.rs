@@ -33,7 +33,7 @@ impl PluginManager {
 
         log::info!("Loaded plugin `{}` from directory {}", plugin.friendly_name(), dir.display());
 
-        log::trace!("Description for `{}`:\n{}", plugin.friendly_name(), plugin.description());
+        log::trace!("Metadata for `{}`:\n{:#?}", plugin.friendly_name(), plugin.metadata());
 
         self.plugins.insert( id, plugin);
 
@@ -94,6 +94,29 @@ impl PluginManager {
         };
 
         Ok(())
+    }
+
+    /// Validate the [PluginManager] by checking that it has the
+    /// minimum number of enabled plugins to resolve DNS requests
+    /// (i.e. at least a Listener & Resolver)
+    /// 
+    pub fn validate(&self, return_err: bool) -> Result<()> {
+        let missing_listener = self.listener.strong_count() == 0;
+        let missing_resolver = self.resolver.strong_count() == 0;
+
+        if missing_listener {
+            log::warn!("No listener is enabled, server will be unable to handle DNS requests");
+        };
+
+        if missing_resolver {
+            log::warn!("No resolver is enabled, server will be unable to handle DNS requests");
+        }
+
+        if (missing_listener || missing_resolver) && return_err {
+            anyhow::bail!("Missing a required plugin");
+        };
+
+        anyhow::Ok(())
     }
 
     pub fn decode(&self, req: &[u8]) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {

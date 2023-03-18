@@ -7,7 +7,7 @@ use clap::{Parser, ValueEnum};
 /// MoDNS is a DNS server that uses plugins to provide all functionality
 /// 
 /// This program is the server daemon. If you want to control an already running server, use `modns` instead
-#[derive(Parser)]
+#[derive(Default, Parser, Debug, Clone)]
 #[command(name = "modnsd")]
 pub struct ServerConfig {
 
@@ -27,11 +27,6 @@ pub struct ServerConfig {
     unix_socket: PathBuf,
 
     /// Ignore some, all, or no errors when initially loading plugins
-    /// 
-    /// By default, server will log an error and move on if a plugin fails to
-    /// load, but if all plugins are loaded and the server is unable to handle
-    /// DNS requests (most likely because there isn't a Resolver or Listener
-    /// enabled), server will immediately exit with an error code
     #[arg(short, long, value_enum, default_value_t)]
     ignore_init_errors: IgnoreErrorsConfig,
 
@@ -41,11 +36,21 @@ pub struct ServerConfig {
 
 }
 
-#[derive(Clone, Copy, ValueEnum, Default)]
+#[derive(Debug, Clone, Copy, ValueEnum, Default)]
 pub enum IgnoreErrorsConfig {
+
+    /// Always start the server, even if it will be unable to resolve DNS requests.
+    /// This option is typically useful when attempting to troubleshoot via the CLI
+    /// or web interface.
     Always,
+
+    /// Start the server even if there are errors, but exit if plugin initialization
+    /// doesn't find a listener or resolver (since the server would be unable to
+    /// resolve requests in this state)
     #[default]
-    Default,
+    Sometimes,
+
+    /// Exit immediately upon encountering any error while loading plugins
     Never
 }
 
@@ -56,10 +61,6 @@ impl ServerConfig {
 
     pub fn unix_socket(&self) -> &PathBuf {
         &self.unix_socket
-    }
-
-    pub fn ignore_init_errors(&self) -> IgnoreErrorsConfig {
-        self.ignore_init_errors
     }
 
     pub fn strict_init(&self) -> bool {

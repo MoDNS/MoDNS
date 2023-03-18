@@ -21,7 +21,7 @@ pub enum PluginLoaderError {
     LibraryLoadError(libloading::Error),
     #[error("unable to open manifest.yaml")]
     ManifestOpenError(io::Error),
-    #[error("unable tor read manifest.yaml")]
+    #[error("unable to read manifest.yaml")]
     ManifestReadError(serde_yaml::Error),
 }
 
