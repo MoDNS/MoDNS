@@ -32,7 +32,16 @@ pub struct ServerConfig {
 
     /// Path to the data directory
     #[arg(short, long, default_value="./modns-data")]
-    data_dir: PathBuf
+    data_dir: PathBuf,
+
+    /// Log level to output. Can be `error` (most severe), `warn`, `info`, `debug`, or `trace` (least severe).
+    /// 
+    /// You can also specify filters per module, like `modnsd::listeners=debug,info` which sets the filter to
+    /// `info` for all modules except `modnsd::listeners`. See documentation for the Rust `log` crate for more info.
+    #[arg(short, long, default_value_t)]
+    #[cfg_attr(debug_assertions, arg(default_value="modnsd=trace,info"))]
+    log: String
+
 
 }
 
@@ -81,5 +90,9 @@ impl ServerConfig {
 
     pub fn data_dir(&self) -> &Path {
         &self.data_dir.as_ref()
+    }
+
+    pub fn log(&self) -> &str {
+        self.log.as_ref()
     }
 }

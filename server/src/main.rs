@@ -12,9 +12,15 @@ mod config;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
 
-    pretty_env_logger::init();
-
     let config = config::ServerConfig::parse();
+
+    env_logger::Builder::from_env(
+        env_logger::Env::new()
+        .filter("MODNS_LOG")
+        .write_style("MODNS_LOG_STYLE")
+    )
+    .parse_filters(config.log())
+    .init();
 
     let pm_arc = Arc::new(RwLock::new(PluginManager::new()));
 
