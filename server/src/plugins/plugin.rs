@@ -6,7 +6,6 @@ use libloading::{Symbol, Library};
 use serde::Deserialize;
 use thiserror::Error;
 
-use std::fmt::Display;
 use std::{fs, io};
 use std::path::{PathBuf, Path};
 use std::ffi::{OsStr, c_char};
@@ -17,51 +16,26 @@ const RESOLVER_FN_NAME: &[u8] = b"impl_resolve_req";
 
 #[derive(Debug, Error)]
 pub enum PluginLoaderError {
-    #[error("unable to load library")]
-    LibraryLoadError(libloading::Error),
-    #[error("unable to open manifest.yaml")]
-    ManifestOpenError(io::Error),
-    #[error("unable to read manifest.yaml")]
-    ManifestReadError(serde_yaml::Error),
+    #[error("Unable to load library")]
+    LibraryLoadError(#[from] libloading::Error),
+    #[error("Unable to open manifest.yaml")]
+    ManifestOpenError(#[from] io::Error),
+    #[error("Unable to read manifest.yaml")]
+    ManifestReadError(#[from] serde_yaml::Error),
 }
 
-impl From<libloading::Error> for PluginLoaderError {
-    fn from(value: libloading::Error) -> Self {
-        Self::LibraryLoadError(value)
-    }
-}
-
-impl From<io::Error> for PluginLoaderError {
-    fn from(value: io::Error) -> Self {
-        Self::ManifestOpenError(value)
-    }
-}
-
-impl From<serde_yaml::Error> for PluginLoaderError {
-    fn from(value: serde_yaml::Error) -> Self {
-        Self::ManifestReadError(value)
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum PluginExecutorError {
+    #[error("Plugin returned error code {0}")]
     ErrorCode(u8),
+    #[error("Required module implementation was not found for a plugin")]
     DoesNotImplement,
+    #[error("No plugins are enabled that implement the required module")]
     NoneEnabled,
+    #[error("Got an error while converting the plugin's output: {0:?}")]
     InvalidReturnValue(modns_sdk::FfiConversionError),
+    #[error("Failed to join handler thread: {0}")]
     ThreadJoinFailed(String)
-}
-
-impl Display for PluginExecutorError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            PluginExecutorError::ErrorCode(rc) => write!(f, "plugin returned error code {rc}"),
-            PluginExecutorError::DoesNotImplement => write!(f, "Module implementation was not found for a plugin"),
-            PluginExecutorError::NoneEnabled => write!(f, "No plugins are enabled that implement the reuired module"),
-            PluginExecutorError::InvalidReturnValue(v) => write!(f, "Got an error while converting the plugin's output: {v:#?}"),
-            PluginExecutorError::ThreadJoinFailed(e) => write!(f, "Failed to join thread: {e}"),
-        }
-    }
 }
 
 impl From<u8> for PluginExecutorError {
