@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 
 use clap::{Parser, ValueEnum};
 
@@ -59,8 +59,8 @@ impl ServerConfig {
         self.plugin_path.as_ref()
     }
 
-    pub fn unix_socket(&self) -> &PathBuf {
-        &self.unix_socket
+    pub fn unix_socket(&self) -> &Path {
+        &self.unix_socket.as_ref()
     }
 
     pub fn strict_init(&self) -> bool {
@@ -79,7 +79,7 @@ impl ServerConfig {
         } 
     }
 
-    pub fn data_dir(&self) -> &PathBuf {
-        &self.data_dir
+    pub fn data_dir(&self) -> &Path {
+        &self.data_dir.as_ref()
     }
 }
