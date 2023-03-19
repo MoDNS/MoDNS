@@ -1,7 +1,6 @@
 use std::error::Error;
 use std::sync::Arc;
 
-use anyhow::Context;
 use modnsd::plugins::manager::PluginManager;
 use modnsd::listeners::{ApiListener, DnsListener, self};
 use tokio::{net::{TcpListener, UnixListener, UdpSocket}, sync::RwLock};
@@ -13,7 +12,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     pretty_env_logger::init();
 
-    let config = config::init().context("Failed to load configuration")?;
+    let config = config::init()?;
 
     let pm_arc = Arc::new(RwLock::new(PluginManager::new()));
 

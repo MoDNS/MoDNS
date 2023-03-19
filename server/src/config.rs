@@ -1,4 +1,6 @@
-use std::{path::{PathBuf, Path}, fs, env::{self, VarError}};
+use std::fs;
+use std::path::{PathBuf, Path};
+use std::env;
 
 use anyhow::Context;
 use clap::{Parser, ValueEnum};
@@ -9,12 +11,14 @@ const UNIX_SOCKET_ENV: &str = "MODNS_UNIX_SOCKET";
 const IGNORE_ERRS_ENV: &str = "MODNS_IGNORE_INIT_ERRORS";
 const DATA_DIR_ENV: &str = "MODNS_DATA_DIR";
 
+const DEFAULT_PLUGIN_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../plugins");
+
 /// A modular DNS resolver
 /// 
 /// MoDNS is a DNS server that uses plugins to provide all functionality
 /// 
 /// This program is the server daemon. If you want to control an already running server, use `modns` instead
-#[derive(Parser, Deserialize)]
+#[derive(Debug, Parser, Deserialize)]
 #[command(name = "modnsd")]
 pub struct ServerConfigBuilder {
 
@@ -26,11 +30,10 @@ pub struct ServerConfigBuilder {
     /// 
     /// Multiple directories can be specified by using -p multiple times
     #[arg(short, long, action=clap::ArgAction::Append)]
-    #[arg(default_value=concat!(env!("CARGO_MANIFEST_DIR"), "/../plugins"))]
     plugin_path: Vec<PathBuf>,
 
     /// Path for the Unix Domain socket that is used by the CLI
-    #[arg(short, long, default_value="/tmp/modnsd.sock")]
+    #[arg(short, long)]
     unix_socket: Option<PathBuf>,
 
     /// Ignore some, all, or no errors when initially loading plugins
@@ -43,7 +46,7 @@ pub struct ServerConfigBuilder {
     ignore_init_errors: Option<IgnoreErrorsConfig>,
 
     /// Path to the data directory
-    #[arg(short, long, default_value="./modns-data")]
+    #[arg(short, long)]
     data_dir: Option<PathBuf>
 
 }
@@ -127,22 +130,38 @@ impl ServerConfigBuilder {
 
     fn build(self) -> anyhow::Result<ServerConfig> {
         let Self {
-            plugin_path,
+            mut plugin_path,
             unix_socket,
             ignore_init_errors,
             data_dir,
         } = self;
 
+        plugin_path.sort_unstable();
+        plugin_path.dedup();
+
+        if plugin_path.len() == 0 {
+            plugin_path.push(
+                PathBuf::from(DEFAULT_PLUGIN_PATH).canonicalize()
+                .context("The plugin path was empty and the default plugin path was not found on this system")?
+            )
+        }
+
         Ok(ServerConfig {
+
             plugin_path,
+
             unix_socket: unix_socket.unwrap_or(PathBuf::from("/tmp/modnsd.sock")),
+
             ignore_init_errors: ignore_init_errors.unwrap_or_default(),
-            data_dir: data_dir.unwrap_or(PathBuf::from("./modns-data").canonicalize()?),
+
+            data_dir: data_dir.unwrap_or_else(
+                || env::current_dir().unwrap_or(PathBuf::from("/tmp")).join("modns-data")
+            ),
         })
     }
 }
 
-#[derive(Clone, Copy, ValueEnum, Default, Deserialize)]
+#[derive(Debug, Clone, Copy, ValueEnum, Default, Deserialize)]
 pub enum IgnoreErrorsConfig {
     Always,
     #[default]
@@ -150,6 +169,7 @@ pub enum IgnoreErrorsConfig {
     Never
 }
 
+#[derive(Debug)]
 pub struct ServerConfig {
 
     /// Directories to search for plugin directories
@@ -201,8 +221,19 @@ impl ServerConfig {
 
 pub fn init() -> anyhow::Result<ServerConfig> {
 
-    ServerConfigBuilder::from_env()
-    .merge(ServerConfigBuilder::from_args()?)
-    .build()
+    let mut cfg = ServerConfigBuilder::from_env()
+    .merge(ServerConfigBuilder::from_args()?);
 
+    if let Some(dir) = &cfg.data_dir {
+        let lockfile = dir.join("config-lock.yaml");
+
+        if lockfile.exists() {
+            cfg = cfg.reverse_merge(
+                ServerConfigBuilder::from_yaml_file(lockfile)
+                .context("Failed to parse configuration lockfile")?
+            );
+        }
+    }
+
+    cfg.build()
 }
