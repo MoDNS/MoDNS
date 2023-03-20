@@ -21,6 +21,8 @@ async fn main() -> anyhow::Result<()> {
     .parse_filters(config.log())
     .init();
 
+    log::trace!("Starting server with configuration: {:#?}", config);
+
     let pm_arc = Arc::new(RwLock::new(PluginManager::new()));
 
     {
