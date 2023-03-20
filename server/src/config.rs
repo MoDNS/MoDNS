@@ -1,10 +1,11 @@
-use std::fs;
-use std::path::{PathBuf, Path};
 use std::env;
+use std::fmt::Debug;
+use std::fs;
+use std::path::{Path, PathBuf};
 
-use anyhow::Context;
+use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 const PLUGIN_PATH_ENV: &str = "MODNS_PATH";
 const UNIX_SOCKET_ENV: &str = "MODNS_UNIX_SOCKET";
@@ -15,20 +16,19 @@ const LOG_ENV: &str = "MODNS_LOG";
 const DEFAULT_PLUGIN_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../plugins");
 
 /// A modular DNS resolver
-/// 
+///
 /// MoDNS is a DNS server that uses plugins to provide all functionality
-/// 
+///
 /// This program is the server daemon. If you want to control an already running server, use `modns` instead
 #[derive(Default, Debug, Parser, Clone, Deserialize)]
 #[command(name = "modnsd")]
 pub struct ServerConfigBuilder {
-
     /// Directory to search for plugins.
-    /// 
+    ///
     /// On initialization, server will search this directory for
     /// subdirectories containing a `plugin.so` file and load them
     /// as plugins
-    /// 
+    ///
     /// Multiple directories can be specified by using -p multiple times
     #[arg(short, long, action=clap::ArgAction::Append)]
     plugin_path: Vec<PathBuf>,
@@ -38,7 +38,7 @@ pub struct ServerConfigBuilder {
     unix_socket: Option<PathBuf>,
 
     /// Ignore some, all, or no errors when initially loading plugins
-    /// 
+    ///
     /// By default, server will log an error and move on if a plugin fails to
     /// load, but if all plugins are loaded and the server is unable to handle
     /// DNS requests (most likely because there isn't a Resolver or Listener
@@ -51,12 +51,11 @@ pub struct ServerConfigBuilder {
     data_dir: Option<PathBuf>,
 
     /// Log level to output. Can be `error` (most severe), `warn`, `info`, `debug`, or `trace` (least severe).
-    /// 
+    ///
     /// You can also specify filters per module, like `modnsd::listeners=debug,info` which sets the filter to
     /// `info` for all modules except `modnsd::listeners`. See documentation for the Rust `log` crate for more info.
     #[arg(short, long)]
-    log: Option<String>
-
+    log: Option<String>,
 }
 
 impl ServerConfigBuilder {
@@ -65,26 +64,30 @@ impl ServerConfigBuilder {
     }
 
     pub fn from_yaml_file<P: AsRef<Path>>(config_file_path: P) -> anyhow::Result<Self> {
-        let f = fs::read_to_string(config_file_path).context("Failed to read configuration file")?;
+        let f =
+            fs::read_to_string(config_file_path).context("Failed to read configuration file")?;
         serde_yaml::from_str(&f).context("Failed to parse configuration file")
-
     }
 
     pub fn from_env() -> Self {
+        let plugin_path = env::var(PLUGIN_PATH_ENV)
+            .ok()
+            .unwrap_or_default()
+            .split_terminator(":")
+            .filter_map(|s| Some(PathBuf::from(s)))
+            .collect();
 
-        let plugin_path = env::var(PLUGIN_PATH_ENV).ok()
-        .unwrap_or_default()
-        .split(":")
-        .filter_map(|s| PathBuf::from(s).canonicalize().ok()).collect();
+        let unix_socket = env::var(UNIX_SOCKET_ENV)
+            .ok()
+            .and_then(|s| Some(PathBuf::from(s)));
 
-        let unix_socket = env::var(UNIX_SOCKET_ENV).ok()
-        .and_then(|s| PathBuf::from(s).canonicalize().ok());
+        let ignore_init_errors = env::var(IGNORE_ERRS_ENV)
+            .ok()
+            .and_then(|s| IgnoreErrorsConfig::from_str(&s, true).ok());
 
-        let ignore_init_errors = env::var(IGNORE_ERRS_ENV).ok()
-        .and_then(|s| IgnoreErrorsConfig::from_str(&s, true).ok());
-
-        let data_dir = env::var(DATA_DIR_ENV).ok()
-        .and_then(|s| PathBuf::from(s).canonicalize().ok());
+        let data_dir = env::var(DATA_DIR_ENV)
+            .ok()
+            .and_then(|s| Some(PathBuf::from(s)));
 
         let log = env::var(LOG_ENV).ok();
 
@@ -98,7 +101,6 @@ impl ServerConfigBuilder {
     }
 
     pub fn merge(self, other: Self) -> Self {
-
         let Self {
             mut plugin_path,
             unix_socket,
@@ -132,7 +134,7 @@ impl ServerConfigBuilder {
             (None, Some(p)) => Some(p),
             (None, None) => None,
         };
-        
+
         Self {
             plugin_path,
             unix_socket,
@@ -140,7 +142,6 @@ impl ServerConfigBuilder {
             data_dir,
             log,
         }
-
     }
 
     fn reverse_merge(self, other: Self) -> Self {
@@ -166,26 +167,28 @@ impl ServerConfigBuilder {
             )
         }
 
-        Ok(ServerConfig {
+        let unix_socket = unix_socket.unwrap_or(PathBuf::from("/tmp/modnsd.sock"));
 
-            plugin_path,
+        let ignore_init_errors = ignore_init_errors.unwrap_or_default();
 
-            unix_socket: unix_socket.unwrap_or(PathBuf::from("/tmp/modnsd.sock")),
+        let data_dir = data_dir.unwrap_or_else(|| {
+            env::current_dir()
+                .unwrap_or(PathBuf::from("/tmp"))
+                .join("modns-data")
+        });
 
-            ignore_init_errors: ignore_init_errors.unwrap_or_default(),
+        let log = log.unwrap_or(String::from("info"));
 
-            data_dir: data_dir.unwrap_or_else(
-                || env::current_dir().unwrap_or(PathBuf::from("/tmp")).join("modns-data")
-            ),
+        let conf = ServerConfig::new(plugin_path, unix_socket, ignore_init_errors, data_dir, log)?;
 
-            log: log.unwrap_or("info".to_owned()),
-        })
+        conf.dump_to_file(conf.data_dir().join("config-lock.yaml"))?;
+
+        Ok(conf)
     }
 }
 
-#[derive(Debug, Clone, Copy, ValueEnum, Default, Deserialize)]
+#[derive(Debug, Clone, Copy, ValueEnum, Default, Serialize, Deserialize)]
 pub enum IgnoreErrorsConfig {
-
     /// Always start the server, even if it will be unable to resolve DNS requests.
     /// This option is typically useful when attempting to troubleshoot via the CLI
     /// or web interface.
@@ -198,12 +201,11 @@ pub enum IgnoreErrorsConfig {
     Sometimes,
 
     /// Exit immediately upon encountering any error while loading plugins
-    Never
+    Never,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct ServerConfig {
-
     /// Directories to search for plugin directories
     plugin_path: Vec<PathBuf>,
 
@@ -221,6 +223,79 @@ pub struct ServerConfig {
 }
 
 impl ServerConfig {
+    pub fn new<P, U, D>(
+        plugin_path: Vec<P>,
+        unix_socket: U,
+        ignore_init_errors: IgnoreErrorsConfig,
+        data_dir: D,
+        log: String,
+    ) -> Result<Self> where
+    P: AsRef<Path> + Debug,
+    U: AsRef<Path> + Debug,
+    D: AsRef<Path> + Debug,
+    {
+
+        // Get canonical paths for all plugin directories, creating any directories that don't exist
+        let plugin_path = plugin_path.into_iter().map(|p| {
+
+            if !p.as_ref().is_dir() {
+                fs::create_dir_all(p.as_ref())
+                .with_context(|| format!("Failed to create plugin directory at {}", p.as_ref().display()))?;
+            };
+
+            p.as_ref().canonicalize().with_context(|| format!("Plugin directory {} was not found", p.as_ref().display()))
+
+        }).collect::<Result<Vec<PathBuf>>>()?;
+
+        // Server will attempt to create unix socket, so we should make sure it doesn't exist, but the directory it's in does
+        if unix_socket.as_ref().try_exists()
+        .with_context(|| format!("Unable to check if unix socket {} exists", unix_socket.as_ref().display()))?
+        {
+            anyhow::bail!("Can't create a Unix socket at {} because an object already exists there", unix_socket.as_ref().display())
+        }
+
+        let unix_socket_dir = unix_socket.as_ref().parent().unwrap_or(Path::new("."));
+        let unix_socket_file = unix_socket.as_ref().file_name().with_context(|| format!("Unix socket path {} does not appear to be a name for a file", unix_socket.as_ref().display()))?;
+
+        if !unix_socket_dir.is_dir() {
+            fs::create_dir_all(unix_socket_dir).with_context(|| format!("Couldn't create directory for unix socket {}", unix_socket.as_ref().display()))?;
+        };
+
+        let unix_socket = unix_socket_dir.canonicalize()
+        .with_context(|| format!("Unix socket directory {} was not found", unix_socket_dir.display()))?
+        .join(unix_socket_file);
+
+        // Get canonical path for data directory, creating it if it doesn't exist
+        if !data_dir.as_ref().is_dir() {
+            fs::create_dir_all(&data_dir)
+            .with_context(|| format!("Failed to create data directory at {}", data_dir.as_ref().display()))?;
+        };
+
+        let data_dir = data_dir.as_ref().canonicalize()
+        .with_context(|| format!("Data directory {} was not found", data_dir.as_ref().display()))?;
+
+        let new_conf = Self {
+            plugin_path,
+            unix_socket,
+            ignore_init_errors,
+            data_dir,
+            log,
+        };
+
+        let lockfile = new_conf.data_dir.join("config-lock.yaml");
+        new_conf.dump_to_file(&lockfile)
+        .with_context(|| format!("Failed to write configuration to lockfile {}", lockfile.display()))?;
+
+        Ok(new_conf)
+    }
+
+    pub fn dump_to_file<P: AsRef<Path>>(&self, file_path: P) -> anyhow::Result<()> {
+        let yaml_str = serde_yaml::to_string(self).context("Failed to serialize configuration")?;
+
+        fs::write(file_path.as_ref(), yaml_str)
+            .with_context(|| format!("Failed to write to {}", file_path.as_ref().display()))
+    }
+
     pub fn plugin_path(&self) -> &[PathBuf] {
         self.plugin_path.as_ref()
     }
@@ -230,19 +305,11 @@ impl ServerConfig {
     }
 
     pub fn strict_init(&self) -> bool {
-        if let IgnoreErrorsConfig::Never = self.ignore_init_errors {
-            true
-        } else {
-            false
-        } 
+        matches!(self.ignore_init_errors, IgnoreErrorsConfig::Never)
     }
 
     pub fn always_init(&self) -> bool {
-        if let IgnoreErrorsConfig::Always = self.ignore_init_errors {
-            true
-        } else {
-            false
-        } 
+        matches!(self.ignore_init_errors, IgnoreErrorsConfig::Always)
     }
 
     pub fn data_dir(&self) -> &Path {
@@ -255,9 +322,7 @@ impl ServerConfig {
 }
 
 pub fn init() -> anyhow::Result<ServerConfig> {
-
-    let mut cfg = ServerConfigBuilder::from_env()
-    .merge(ServerConfigBuilder::from_args()?);
+    let mut cfg = ServerConfigBuilder::from_env().merge(ServerConfigBuilder::from_args()?);
 
     if let Some(dir) = &cfg.data_dir {
         let lockfile = dir.join("config-lock.yaml");
@@ -265,7 +330,7 @@ pub fn init() -> anyhow::Result<ServerConfig> {
         if lockfile.exists() {
             cfg = cfg.reverse_merge(
                 ServerConfigBuilder::from_yaml_file(lockfile)
-                .context("Failed to parse configuration lockfile")?
+                    .context("Failed to parse configuration lockfile")?,
             );
         }
     }
