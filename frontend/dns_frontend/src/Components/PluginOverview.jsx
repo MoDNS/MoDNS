@@ -9,7 +9,7 @@ import SettingsDialog from './SettingsDialog';
 
 import defaultPluginLogo from '../images/default_plugin_logo.svg';
 
-const PluginOverview = ({ uuid, friendlyName, description, home, modules, interceptPosition, numInterceptors, pluginState, togglePlugin, setPluginLists }) => {
+const PluginOverview = ({ uuid, friendlyName, description, home, modules, interceptPosition, setInterceptOrder, numInterceptors, pluginState, togglePlugin }) => {
 
     const theme = useTheme();
 
@@ -108,11 +108,11 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
                 modules={modules}
                 interceptPosition={interceptPosition}
                 numInterceptors={numInterceptors}
+                setInterceptOrder={setInterceptOrder}               // set order of rows
                 dialogOpen={dialogOpen}
+                pluginState={pluginState}                           // pass the plugin state to the dialog box
                 setDialogStatus={setDialogStatus}
                 togglePlugin={togglePlugin}                         // pass the toggle plugin function to the settings dialog box
-                pluginState={pluginState}                           // pass the plugin state to the dialog box
-                setPluginLists={setPluginLists}                     // set order of rows
             />
         </Box>
     );
@@ -121,14 +121,16 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
 export default PluginOverview;
 
 PluginOverview.propTypes = {
-    uuid: PropTypes.string.isRequired,                  // plugin attributes
+    uuid: PropTypes.string.isRequired,                  // Plugin info
     friendlyName: PropTypes.string.isRequired,          //
     description: PropTypes.string.isRequired,           //
     home: PropTypes.string.isRequired,                  //
     modules: PropTypes.array.isRequired,                //
-    interceptPosition: PropTypes.number,                //
-    numInterceptors: PropTypes.number.isRequired,       // total number of interceptor plugins installed
-    togglePlugin: PropTypes.func.isRequired,            // function to enable / disable a plugin
-    pluginState: PropTypes.bool.isRequired,             // enabled / disabled state of plugin
-    setPluginLists: PropTypes.func.isRequired,          // reorder plugins that allow drag n drop
+    interceptPosition: PropTypes.number,                // Intercept module position
+    setInterceptOrder: PropTypes.func.isRequired,       // Change interceptor plugin order
+    numInterceptors: PropTypes.number.isRequired,       // Total number of interceptors implemented
+    pluginState: PropTypes.bool.isRequired,             // Plugin enabled or disabled
+    togglePlugin: PropTypes.func.isRequired,            // Function to toggle a plugin
 };
+
+

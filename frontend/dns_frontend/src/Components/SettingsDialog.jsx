@@ -4,7 +4,7 @@ import { PropTypes } from 'prop-types';
 import CloseIcon from '@mui/icons-material/Close';
 import { uninstallPlugin } from '../API/getsetAPI';
 
-const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interceptPosition, numInterceptors, dialogOpen, setDialogStatus, togglePlugin, pluginState, setPluginLists }) => {
+const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interceptPosition, setInterceptOrder, numInterceptors, pluginState, togglePlugin, dialogOpen, setDialogStatus, }) => {
     const theme = useTheme();
 
     const [interceptPosState, setInterceptPositionState] = useState(interceptPosition);
@@ -21,7 +21,7 @@ const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interc
 
     const applyInterceptPosition = (e) => {
         if (interceptPosState) {
-            setPluginLists('interceptor', interceptPosition - 1, interceptPosState - 1);
+            setInterceptOrder(interceptPosition - 1, interceptPosState - 1);
             setDialogStatus(false);
         }
     }
@@ -74,7 +74,7 @@ const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interc
                                     <Switch 
                                         sx={{ marginLeft: 3, }}
                                         checked={pluginState}
-                                        onChange={() => togglePlugin(uuid, modules[0])}
+                                        onChange={() => togglePlugin(uuid)}
                                     />
                                 } 
                             />
@@ -213,16 +213,16 @@ export default SettingsDialog;
 
 
 SettingsDialog.propTypes = {
-    uuid: PropTypes.string.isRequired,                  // plugin attributes
+    uuid: PropTypes.string.isRequired,                  // Plugin info
     friendlyName: PropTypes.string.isRequired,          //
     description: PropTypes.string.isRequired,           //
     home: PropTypes.string.isRequired,                  //
     modules: PropTypes.array.isRequired,                //
-    interceptPosition: PropTypes.number,                //
-    numInterceptors: PropTypes.number,                  // total number of interceptor plugins installed
-    dialogOpen: PropTypes.bool.isRequired,              // dialog open/close status
-    setDialogStatus: PropTypes.func.isRequired,         // open/close dialog
-    togglePlugin: PropTypes.func.isRequired,            // function to enable / disable a plugin
-    pluginState: PropTypes.bool.isRequired,             // enabled / disabled state of plugin
-    setPluginLists: PropTypes.func.isRequired,          // reorder plugins that allow drag n drop
+    interceptPosition: PropTypes.number,                // Intercept module position
+    setInterceptOrder: PropTypes.func.isRequired,       // Change interceptor plugin order
+    numInterceptors: PropTypes.number.isRequired,       // Total number of interceptors implemented
+    pluginState: PropTypes.bool.isRequired,             // Plugin enabled or disabled
+    togglePlugin: PropTypes.func.isRequired,            // Function to toggle a plugin
+    dialogOpen: PropTypes.bool.isRequired,              // Dialog open close status
+    setDialogStatus: PropTypes.func.isRequired,         // Function to open and close dialog
 };

@@ -1,14 +1,13 @@
 import { Button } from '@mui/material';
-import React from 'react';
 import DropDown from '../DropDown';
 import PluginTable from '../PluginTable';
+import { useState } from 'react';
+import { PropTypes } from 'prop-types';
 
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
-import { useState } from 'react';
 
-const SequentialView = ({ togglePlugin, pluginStates, pluginLists, setPluginLists, numInterceptors, interceptorOrderDict }) => {
-
+const SequentialView = ({ pluginDicts, numInterceptors, pluginsEnabledDict, togglePlugin, interceptorUuidOrder, setInterceptOrder }) => {
 
     //////////////// Accordion Expansion ////////////////
     const [expanded, setExpanded] = useState([false, false, false, false, false]);
@@ -29,7 +28,6 @@ const SequentialView = ({ togglePlugin, pluginStates, pluginLists, setPluginList
     const collapseAll = () => {
         setExpanded([false, false, false, false, false]);
     }
-    
     
     return (
         <>
@@ -59,13 +57,14 @@ const SequentialView = ({ togglePlugin, pluginStates, pluginLists, setPluginList
                     description={"Receives DNS Queries"} 
                 >
                     <PluginTable 
-                        togglePlugin={togglePlugin}         // toggle plugin function passed down
-                        pluginStates={pluginStates}         // plugin state dict passed down
-                        pluginList={pluginLists['listener']}
-                        setPluginLists={setPluginLists}
-                        listType={'listener'}
+                        pluginDict={pluginDicts['listener']}
                         numInterceptors={numInterceptors}
-                        interceptorOrderDict={interceptorOrderDict}
+                        pluginsEnabledDict={pluginsEnabledDict}
+                        togglePlugin={togglePlugin}
+                        interceptorUuidOrder={interceptorUuidOrder}
+                        setInterceptOrder={setInterceptOrder}
+                        module={'listener'}
+                        
                     />
                 </DropDown>
 
@@ -77,14 +76,14 @@ const SequentialView = ({ togglePlugin, pluginStates, pluginLists, setPluginList
                     description={"Immediately Respond to or Drop Queries"} 
                 >
                     <PluginTable 
-                        pluginStates={pluginStates}         // plugin state dict passed down
-                        togglePlugin={togglePlugin}         // toggle plugin function passed down
                         dragNDrop                           // enables drag and drop rows
-                        pluginList={pluginLists['interceptor']}
-                        setPluginLists={setPluginLists}
-                        listType={'interceptor'}
+                        pluginDict={pluginDicts['interceptor']}
                         numInterceptors={numInterceptors}
-                        interceptorOrderDict={interceptorOrderDict}
+                        pluginsEnabledDict={pluginsEnabledDict}
+                        togglePlugin={togglePlugin}
+                        interceptorUuidOrder={interceptorUuidOrder}
+                        setInterceptOrder={setInterceptOrder}
+                        module={'interceptor'}
 
                     />
                 </DropDown>
@@ -96,13 +95,13 @@ const SequentialView = ({ togglePlugin, pluginStates, pluginLists, setPluginList
                     description={"Resolves a Request by Querying external DNS Server"} 
                 >
                     <PluginTable 
-                        togglePlugin={togglePlugin}         // toggle plugin function passed down
-                        pluginStates={pluginStates}         // plugin states dict passed down
-                        pluginList={pluginLists['resolver']}
-                        setPluginLists={setPluginLists}
-                        listType={'resolver'}
+                        pluginDict={pluginDicts['resolver']}
                         numInterceptors={numInterceptors}
-                        interceptorOrderDict={interceptorOrderDict}
+                        pluginsEnabledDict={pluginsEnabledDict}
+                        togglePlugin={togglePlugin}
+                        interceptorUuidOrder={interceptorUuidOrder}
+                        setInterceptOrder={setInterceptOrder}
+                        module={'resolver'}
 
                     />
                 </DropDown>
@@ -115,13 +114,13 @@ const SequentialView = ({ togglePlugin, pluginStates, pluginLists, setPluginList
                     description={"Validates the External DNS Responce"} 
                 >
                     <PluginTable 
-                        pluginStates={pluginStates}         // plugin states dict passed down
-                        togglePlugin={togglePlugin}         // toggle plugin function passed down
-                        pluginList={pluginLists['validator']}
-                        setPluginLists={setPluginLists}
-                        listType={'validator'}
+                        pluginDict={pluginDicts['validator']}
                         numInterceptors={numInterceptors}
-                        interceptorOrderDict={interceptorOrderDict}
+                        pluginsEnabledDict={pluginsEnabledDict}
+                        togglePlugin={togglePlugin}
+                        interceptorUuidOrder={interceptorUuidOrder}
+                        setInterceptOrder={setInterceptOrder}
+                        module={'validator'}
 
                     />
                 </DropDown>
@@ -134,13 +133,13 @@ const SequentialView = ({ togglePlugin, pluginStates, pluginLists, setPluginList
                     description={"Views the Outbound Query and Response"} 
                 >
                     <PluginTable 
-                        pluginStates={pluginStates}         // plugin states dict passed down
-                        togglePlugin={togglePlugin}         // toggle plugin function passed down
-                        pluginList={pluginLists['inspector']}
-                        setPluginLists={setPluginLists}
-                        listType={'inspector'}
+                        pluginDict={pluginDicts['inspector']}
                         numInterceptors={numInterceptors}
-                        interceptorOrderDict={interceptorOrderDict}
+                        pluginsEnabledDict={pluginsEnabledDict}
+                        togglePlugin={togglePlugin}
+                        interceptorUuidOrder={interceptorUuidOrder}
+                        setInterceptOrder={setInterceptOrder}
+                        module={'inspector'}    
 
                     />
                 </DropDown>
@@ -151,3 +150,13 @@ const SequentialView = ({ togglePlugin, pluginStates, pluginLists, setPluginList
 };
 
 export default SequentialView;
+
+
+SequentialView.propTypes = {
+    pluginDicts: PropTypes.object.isRequired,               // Dictionary of Dictionaries. contains plugins under they key name of their module filters
+    numInterceptors: PropTypes.number.isRequired,           // Total number of interceptors implemented
+    pluginsEnabledDict: PropTypes.object.isRequired,        // Dictionary of what plugins are enabled
+    togglePlugin: PropTypes.func.isRequired,                // Function to toggle a plugin
+    interceptorUuidOrder: PropTypes.array.isRequired,       // Array for ordering interceptor plugins by uuid
+    setInterceptOrder: PropTypes.func.isRequired,           // Change interceptor plugin order
+};
