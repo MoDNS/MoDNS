@@ -55,7 +55,7 @@ fn listener_plugin_decoder_success() {
 
     let mut pm = PluginManager::new();
 
-    pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]);
+    pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]).unwrap();
 
     let test_response = pm.decode(&SAMPLE_REQUEST[..]).unwrap();
 
@@ -111,7 +111,7 @@ fn listener_plugin_decoder_success() {
 fn listener_plugin_decoder_failure() {
     let mut pm = PluginManager::new();
 
-    pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]);
+    pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]).unwrap();
 
     let test_response = pm.decode(&SAMPLE_REQUEST[..20]);
 
@@ -126,7 +126,7 @@ fn listener_plugin_decoder_failure() {
 fn listener_plugin_encoder_success() {
     let mut pm = PluginManager::new();
 
-    pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]);
+    pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]).unwrap();
 
     let message = Box::new(ffi::DnsMessage {
             header: SAMPLE_REQUEST_HEADER,

@@ -10,6 +10,7 @@ const PLUGIN_PATH_ENV: &str = "MODNS_PATH";
 const UNIX_SOCKET_ENV: &str = "MODNS_UNIX_SOCKET";
 const IGNORE_ERRS_ENV: &str = "MODNS_IGNORE_INIT_ERRORS";
 const DATA_DIR_ENV: &str = "MODNS_DATA_DIR";
+const LOG_ENV: &str = "MODNS_LOG";
 
 const DEFAULT_PLUGIN_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../plugins");
 
@@ -18,7 +19,7 @@ const DEFAULT_PLUGIN_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../plugi
 /// MoDNS is a DNS server that uses plugins to provide all functionality
 /// 
 /// This program is the server daemon. If you want to control an already running server, use `modns` instead
-#[derive(Debug, Parser, Deserialize)]
+#[derive(Default, Debug, Parser, Clone, Deserialize)]
 #[command(name = "modnsd")]
 pub struct ServerConfigBuilder {
 
@@ -47,7 +48,14 @@ pub struct ServerConfigBuilder {
 
     /// Path to the data directory
     #[arg(short, long)]
-    data_dir: Option<PathBuf>
+    data_dir: Option<PathBuf>,
+
+    /// Log level to output. Can be `error` (most severe), `warn`, `info`, `debug`, or `trace` (least severe).
+    /// 
+    /// You can also specify filters per module, like `modnsd::listeners=debug,info` which sets the filter to
+    /// `info` for all modules except `modnsd::listeners`. See documentation for the Rust `log` crate for more info.
+    #[arg(short, long)]
+    log: Option<String>
 
 }
 
@@ -78,11 +86,14 @@ impl ServerConfigBuilder {
         let data_dir = env::var(DATA_DIR_ENV).ok()
         .and_then(|s| PathBuf::from(s).canonicalize().ok());
 
+        let log = env::var(LOG_ENV).ok();
+
         Self {
             plugin_path,
             unix_socket,
             ignore_init_errors,
             data_dir,
+            log,
         }
     }
 
@@ -93,6 +104,7 @@ impl ServerConfigBuilder {
             unix_socket,
             ignore_init_errors,
             data_dir,
+            log,
         } = self;
 
         plugin_path.extend(other.plugin_path);
@@ -115,11 +127,18 @@ impl ServerConfigBuilder {
             (None, None) => None,
         };
 
+        let log = match (log, other.log) {
+            (Some(p), _) => Some(p),
+            (None, Some(p)) => Some(p),
+            (None, None) => None,
+        };
+        
         Self {
             plugin_path,
             unix_socket,
             ignore_init_errors,
             data_dir,
+            log,
         }
 
     }
@@ -134,6 +153,7 @@ impl ServerConfigBuilder {
             unix_socket,
             ignore_init_errors,
             data_dir,
+            log,
         } = self;
 
         plugin_path.sort_unstable();
@@ -157,15 +177,27 @@ impl ServerConfigBuilder {
             data_dir: data_dir.unwrap_or_else(
                 || env::current_dir().unwrap_or(PathBuf::from("/tmp")).join("modns-data")
             ),
+
+            log: log.unwrap_or("info".to_owned()),
         })
     }
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum, Default, Deserialize)]
 pub enum IgnoreErrorsConfig {
+
+    /// Always start the server, even if it will be unable to resolve DNS requests.
+    /// This option is typically useful when attempting to troubleshoot via the CLI
+    /// or web interface.
     Always,
+
+    /// Start the server even if there are errors, but exit if plugin initialization
+    /// doesn't find a listener or resolver (since the server would be unable to
+    /// resolve requests in this state)
     #[default]
-    Default,
+    Sometimes,
+
+    /// Exit immediately upon encountering any error while loading plugins
     Never
 }
 
@@ -183,6 +215,9 @@ pub struct ServerConfig {
 
     /// Directory to store persistent data files in
     data_dir: PathBuf,
+
+    /// Filter to pass to logging crate
+    log: String,
 }
 
 impl ServerConfig {
@@ -190,12 +225,8 @@ impl ServerConfig {
         self.plugin_path.as_ref()
     }
 
-    pub fn unix_socket(&self) -> &PathBuf {
-        &self.unix_socket
-    }
-
-    pub fn ignore_init_errors(&self) -> IgnoreErrorsConfig {
-        self.ignore_init_errors
+    pub fn unix_socket(&self) -> &Path {
+        &self.unix_socket.as_ref()
     }
 
     pub fn strict_init(&self) -> bool {
@@ -214,8 +245,12 @@ impl ServerConfig {
         } 
     }
 
-    pub fn data_dir(&self) -> &PathBuf {
-        &self.data_dir
+    pub fn data_dir(&self) -> &Path {
+        &self.data_dir.as_ref()
+    }
+
+    pub fn log(&self) -> &str {
+        self.log.as_ref()
     }
 }
 
