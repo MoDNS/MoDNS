@@ -16,7 +16,12 @@ const LOG_ENV: &str = "MODNS_LOG";
 const DEFAULT_PLUGIN_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../plugins");
 const DEFAULT_UNIX_SOCKET: &str = "/tmp/modnsd.sock";
 const DEFAULT_DATA_DIR: &str = "modns-data";
+
+#[cfg(debug_assertions)]
 const DEFAULT_LOG_FILTER: &str = "modnsd=trace,info";
+
+#[cfg(not(debug_assertions))]
+const DEFAULT_LOG_FILTER: &str = "info";
 
 const DATA_DIR_FALLBACK_PARENT: &str = "/tmp";
 
