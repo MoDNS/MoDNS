@@ -14,6 +14,13 @@ const DATA_DIR_ENV: &str = "MODNS_DATA_DIR";
 const LOG_ENV: &str = "MODNS_LOG";
 
 const DEFAULT_PLUGIN_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../plugins");
+const DEFAULT_UNIX_SOCKET: &str = "/tmp/modnsd.sock";
+const DEFAULT_DATA_DIR: &str = "modns-data";
+const DEFAULT_LOG_FILTER: &str = "modnsd=trace,info";
+
+const DATA_DIR_FALLBACK_PARENT: &str = "/tmp";
+
+const CONFIG_LOCKFILE_NAME: &str = "config-lock.yaml";
 
 /// A modular DNS resolver
 ///
@@ -167,21 +174,21 @@ impl ServerConfigBuilder {
             )
         }
 
-        let unix_socket = unix_socket.unwrap_or(PathBuf::from("/tmp/modnsd.sock"));
+        let unix_socket = unix_socket.unwrap_or(PathBuf::from(DEFAULT_UNIX_SOCKET));
 
         let ignore_init_errors = ignore_init_errors.unwrap_or_default();
 
         let data_dir = data_dir.unwrap_or_else(|| {
             env::current_dir()
-                .unwrap_or(PathBuf::from("/tmp"))
-                .join("modns-data")
+                .unwrap_or(PathBuf::from(DATA_DIR_FALLBACK_PARENT))
+                .join(DEFAULT_DATA_DIR)
         });
 
-        let log = log.unwrap_or(String::from("info"));
+        let log = log.unwrap_or(String::from(DEFAULT_LOG_FILTER));
 
         let conf = ServerConfig::new(plugin_path, unix_socket, ignore_init_errors, data_dir, log)?;
 
-        conf.dump_to_file(conf.data_dir().join("config-lock.yaml"))?;
+        conf.dump_to_file(conf.data_dir().join(CONFIG_LOCKFILE_NAME))?;
 
         Ok(conf)
     }
@@ -282,7 +289,7 @@ impl ServerConfig {
             log,
         };
 
-        let lockfile = new_conf.data_dir.join("config-lock.yaml");
+        let lockfile = new_conf.data_dir.join(CONFIG_LOCKFILE_NAME);
         new_conf.dump_to_file(&lockfile)
         .with_context(|| format!("Failed to write configuration to lockfile {}", lockfile.display()))?;
 
@@ -325,7 +332,7 @@ pub fn init() -> anyhow::Result<ServerConfig> {
     let mut cfg = ServerConfigBuilder::from_env().merge(ServerConfigBuilder::from_args()?);
 
     if let Some(dir) = &cfg.data_dir {
-        let lockfile = dir.join("config-lock.yaml");
+        let lockfile = dir.join(CONFIG_LOCKFILE_NAME);
 
         if lockfile.exists() {
             cfg = cfg.reverse_merge(
