@@ -160,7 +160,20 @@ impl ServerConfigBuilder {
         Self::merge(other, self)
     }
 
-    fn build(self) -> anyhow::Result<ServerConfig> {
+    fn build(mut self) -> anyhow::Result<ServerConfig> {
+
+        // Get any unset configuration options from the lockfile
+        if let Some(dir) = &self.data_dir {
+            let lockfile = dir.join(CONFIG_LOCKFILE_NAME);
+
+            if lockfile.exists() {
+                self = self.reverse_merge(
+                    ServerConfigBuilder::from_yaml_file(lockfile)
+                        .context("Failed to parse configuration lockfile")?,
+                );
+            }
+        }
+
         let Self {
             mut plugin_path,
             unix_socket,
@@ -169,6 +182,7 @@ impl ServerConfigBuilder {
             log,
         } = self;
 
+        // Clean up the plugin path and ensure that there is at least one entry
         plugin_path.sort_unstable();
         plugin_path.dedup();
 
@@ -179,6 +193,7 @@ impl ServerConfigBuilder {
             )
         }
 
+        // Get default values for any empty config values
         let unix_socket = unix_socket.unwrap_or(PathBuf::from(DEFAULT_UNIX_SOCKET));
 
         let ignore_init_errors = ignore_init_errors.unwrap_or_default();
@@ -191,8 +206,10 @@ impl ServerConfigBuilder {
 
         let log = log.unwrap_or(String::from(DEFAULT_LOG_FILTER));
 
+        // Build the configuration
         let conf = ServerConfig::new(plugin_path, unix_socket, ignore_init_errors, data_dir, log)?;
 
+        // Create a lockfile
         conf.dump_to_file(conf.data_dir().join(CONFIG_LOCKFILE_NAME))?;
 
         Ok(conf)
@@ -334,18 +351,7 @@ impl ServerConfig {
 }
 
 pub fn init() -> anyhow::Result<ServerConfig> {
-    let mut cfg = ServerConfigBuilder::from_env().merge(ServerConfigBuilder::from_args()?);
-
-    if let Some(dir) = &cfg.data_dir {
-        let lockfile = dir.join(CONFIG_LOCKFILE_NAME);
-
-        if lockfile.exists() {
-            cfg = cfg.reverse_merge(
-                ServerConfigBuilder::from_yaml_file(lockfile)
-                    .context("Failed to parse configuration lockfile")?,
-            );
-        }
-    }
-
-    cfg.build()
+    ServerConfigBuilder::from_env()
+    .merge(ServerConfigBuilder::from_args()?)
+    .build()
 }
