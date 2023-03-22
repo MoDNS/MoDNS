@@ -167,7 +167,7 @@ API distinguishes between archives and links using the MIME type listed in the `
 
 Endpoint `POST /api/plugins/uninstall?uuid=<plugin uuid>`
 
-CLI: `modns plugin uninstall <name|id>`
+CLI: `modns plugin uninstall <name|uuid>`
 
 Uninstalls a plugin by removing it from the file system.
 
@@ -192,7 +192,7 @@ Example request body:
 
 Endpoint: `POST /api/plugins/enable?uuid=<plugin uuid>&enabled=<bool>`
 
-CLI: `modns plugin (enable|disable) <name|id>`
+CLI: `modns plugin (enable|disable) <name|uuid>`
 
 Enable or disable the plugin with `uuid`.
 
@@ -200,24 +200,24 @@ If the plugin implements an interceptor, the plugin is added
 
 #### Configure a plugin
 
-Endpoint: `POST /api/plugins/configure?id=<plugin uuid>&<key>=<value>...`
+Endpoint: `POST /api/plugins/configure?uuid=<plugin uuid>&<key>=<value>...`
 
-CLI: `modns plugin set-config <name|id> <key> <value>`
+CLI: `modns plugin set-config <name|uuid> <key> <value>`
 
 Set plugin-specific configuration parameters handled by the plugin itself. Plugin must implement a handler function
 for this endpoint to do anything
 
 #### Get a plugin's configuration
 
-Endpoint: `GET /api/plugins/configure?id=<plugin uuid>&<key>...`
+Endpoint: `GET /api/plugins/configure?uuid=<plugin uuid>&<key>...`
 
-CLI: `modns plugin get-config <name|id> <key> [<key>]...`
+CLI: `modns plugin get-config <name|uuid> <key> [<key>]...`
 
 #### Send a command to a plugin
 
 Endpoint: `POST /api/plugins/command?uuid=<plugin uuid>&command=<string>`
 
-CLI: `modns command <name|id> <command>`
+CLI: `modns command <name|uuid> <command>`
 
 Pass a command to a plugin. Plugin must implement a handler function
 
