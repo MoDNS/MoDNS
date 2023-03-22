@@ -16,13 +16,23 @@ Route: `/api`
 
 Entry point for REST API
 
+Possible return codes for all endpoints are listed under the documentation for that endpoint.
+Unless otherwise stated, each endpoint can also return `400 Bad Request` when the request is
+improperly formatted, `401 Unauthorized` if the user is unauthenticated, or a `500 Internal Server Error`
+in the case of an unexpected server error. In all cases, no additional information will be returned,
+but the server will log the error when possible
+
 ### Authentication
 
 Endpoint: `POST /api/auth`
 
 Authenticates a user & generates a session token for authenticating all other API calls
 
-Session token is a JWT which is added to the `modns-auth` cookie.
+Session token is a JWT which is added to the `modns-auth` cookie as a `Bearer` token.
+
+Returns:
+- `200 OK` on a successful login
+- `401 Unauthorized` otherwise
 
 ### Plugin Management
 
@@ -44,6 +54,8 @@ Acceptable filter parameters:
 - `enabled` (bool): Show plugins which are or are not enabled
 - `module` (string): Show plugins which implement the given module
 - `uuid` (string): List only the plugin with the matching UUID
+
+Always returns `200 OK` assuming no error condition
 
 Example json response:
 
@@ -163,6 +175,9 @@ API distinguishes between archives and links using the MIME type listed in the `
 - `application/gzip` for gzipped tarballs (`.tar.gz` files)
 - `text/plain` for a URL pointing to a file to download which uses one of the above encodings
 
+Returns:
+- `201 Created` when succesfuly installed, with the new plugin's `uuid` as the body
+
 #### Uninstall a plugin
 
 Endpoint `POST /api/plugins/uninstall?uuid=<plugin uuid>`
@@ -188,6 +203,8 @@ Example request body:
 ]
 ```
 
+Returns `200 OK` on success
+
 #### Enable or disable a plugin
 
 Endpoint: `POST /api/plugins/enable?uuid=<plugin uuid>&enabled=<bool>`
@@ -198,6 +215,8 @@ Enable or disable the plugin with `uuid`.
 
 If the plugin implements an interceptor, the plugin is added 
 
+Returns `200 OK` on success
+
 #### Configure a plugin
 
 Endpoint: `POST /api/plugins/configure?uuid=<plugin uuid>&<key>=<value>...`
@@ -207,11 +226,17 @@ CLI: `modns plugin set-config <name|uuid> <key> <value>`
 Set plugin-specific configuration parameters handled by the plugin itself. Plugin must implement a handler function
 for this endpoint to do anything
 
+Return code determined by plugin
+
 #### Get a plugin's configuration
 
 Endpoint: `GET /api/plugins/configure?uuid=<plugin uuid>&<key>...`
 
 CLI: `modns plugin get-config <name|uuid> <key> [<key>]...`
+
+Returns `200 OK` on success with the configuration value in the body
+
+Error codes can be determined by plugin, or `404 Not Found` by default
 
 #### Send a command to a plugin
 
@@ -221,11 +246,17 @@ CLI: `modns command <name|uuid> <command>`
 
 Pass a command to a plugin. Plugin must implement a handler function
 
+Return code determined by plugin
+
 #### Get a plugin's icon
 
 Endpoint: `GET /api/plugins/favicon?uuid=<plugin uuid>`
 
 Get the logo icon specified in a plugin's `manifest.yaml` file
+
+Returns:
+- `200 OK` with the icon file as the body
+- `404 Not Found` if the plugin does not have an icon
 
 ### Server Configuration
 
@@ -241,17 +272,25 @@ CLI: `modns restart`
 
 Force the server to restart and reload all plugins
 
+Returns `200 OK` before server attempts to shut down
+
 #### Shut down the server
 
 Endpoint `POST /api/server/shutdown`
 
 CLI: `modns shutdown`
 
+Returns `200 OK` before server attempts to shut down
+
 #### Set a server configuration parameter
 
-Endpoint: POST `/api/server/configure?uuid=<plugin uuid>&<key>=<value>...`
+Endpoint: POST `/api/server/configure?<key>=<value>`
 
 CLI: `modns config set <key> <value>`
+
+Returns:
+- `200 OK` when value is successfuly set
+- `404 Not Found` if provided `key` is not a configuration option
 
 #### Get one or more server configuration parameters
 
@@ -260,6 +299,12 @@ Endpoint: `GET /api/server/config?<key>[&<key>]...`
 CLI: `modns config get <key>`
 
 Get a server configuration parameter
+
+if `key` is `"all"`, server will return entire configuration
+
+Returns:
+- `200 OK` with JSON object representing requested key-value pairs
+- `404 Not Found` if one or more requested keys do not exist
 
 ### Send a test DNS request and resolve the IP
 
