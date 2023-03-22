@@ -9,7 +9,7 @@ import defaultPluginLogo from '../images/default_plugin_logo.svg';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 
-const PluginTableRow = ({ uuid, friendlyName, description, home, modules, pluginState, togglePlugin, interceptPosition, numInterceptors, setInterceptOrder, index, dragNDrop, dragStart, dragEnter, dragDrop, }) => {
+const PluginTableRow = ({ uuid, friendlyName, description, home, is_listener, is_interceptor, is_resolver, is_validator, is_inspector, pluginState, togglePlugin, interceptPosition, numInterceptors, setInterceptOrder, index, dragNDrop, dragStart, dragEnter, dragDrop, }) => {
     const [dialogOpen, setDialogStatus] = useState(false);
 
     const [drag, startDrag] = useState(false);
@@ -89,7 +89,11 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, modules, plugin
                 friendlyName={friendlyName}
                 description={description}
                 home={home}
-                modules={modules}
+                is_listener={is_listener}
+                is_interceptor={is_interceptor}
+                is_resolver={is_resolver}
+                is_validator={is_validator}
+                is_inspector={is_inspector}
                 interceptPosition={interceptPosition}
                 numInterceptors={numInterceptors}
                 // pass dialog open controls and status to dialog
@@ -112,7 +116,11 @@ PluginTableRow.propTypes = {
     friendlyName: PropTypes.string.isRequired,          //
     description: PropTypes.string.isRequired,           //
     home: PropTypes.string.isRequired,                  //
-    modules: PropTypes.array.isRequired,                //
+    is_listener: PropTypes.bool.isRequired,             //
+    is_interceptor: PropTypes.bool.isRequired,          //
+    is_resolver: PropTypes.bool.isRequired,             //
+    is_validator: PropTypes.bool.isRequired,            //
+    is_inspector: PropTypes.bool.isRequired,            //
     interceptPosition: PropTypes.number,                // Intercept module position
     setInterceptOrder: PropTypes.func.isRequired,       // Change interceptor plugin order
     numInterceptors: PropTypes.number.isRequired,       // Total number of interceptors implemented

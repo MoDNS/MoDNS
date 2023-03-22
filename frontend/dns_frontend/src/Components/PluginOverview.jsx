@@ -9,7 +9,7 @@ import SettingsDialog from './SettingsDialog';
 
 import defaultPluginLogo from '../images/default_plugin_logo.svg';
 
-const PluginOverview = ({ uuid, friendlyName, description, home, modules, interceptPosition, setInterceptOrder, numInterceptors, pluginState, togglePlugin }) => {
+const PluginOverview = ({ uuid, friendlyName, description, home, is_listener, is_interceptor, is_resolver, is_validator, is_inspector, interceptPosition, setInterceptOrder, numInterceptors, pluginState, togglePlugin }) => {
 
     const theme = useTheme();
 
@@ -17,16 +17,24 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
 
     // creates list of modules for plugin to display
     const listModules = () => {
-        let output = "";
-        const num = modules.length;
-
-        for(var i = 0; i < num; i++) {
-            output += modules[i].charAt(0).toUpperCase() + modules[i].slice(1);
-            if (i !== num - 1) {
-                output += ", ";
-            }
+        let output = [];
+        if (is_listener) {
+            output.push("Listener");
         }
-        return output;
+        if (is_interceptor) {
+            output.push("Interceptor");
+        }
+        if (is_resolver) {
+            output.push("Resolver");
+        }
+        if (is_validator) {
+            output.push("Validator");
+        }
+        if (is_inspector) {
+            output.push("Inspector");
+        }
+        
+        return output.join(", ");
     }
 
     return (
@@ -92,7 +100,7 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
                 control={
                     <Switch 
                         checked={pluginState}
-                        onChange={() => togglePlugin(uuid, modules[0])}         // toggles the plugin with this uuid
+                        onChange={() => togglePlugin(uuid)}         // toggles the plugin with this uuid
                     />
                 } 
                 sx={{ marginRight: 0, marginY: 'auto',marginLeft: 1 }}
@@ -105,7 +113,11 @@ const PluginOverview = ({ uuid, friendlyName, description, home, modules, interc
                 friendlyName={friendlyName}
                 description={description}
                 home={home}
-                modules={modules}
+                is_listener={is_listener}
+                is_interceptor={is_interceptor}
+                is_resolver={is_resolver}
+                is_validator={is_validator}
+                is_inspector={is_inspector}
                 interceptPosition={interceptPosition}
                 numInterceptors={numInterceptors}
                 setInterceptOrder={setInterceptOrder}               // set order of rows
@@ -125,7 +137,11 @@ PluginOverview.propTypes = {
     friendlyName: PropTypes.string.isRequired,          //
     description: PropTypes.string.isRequired,           //
     home: PropTypes.string.isRequired,                  //
-    modules: PropTypes.array.isRequired,                //
+    is_listener: PropTypes.bool.isRequired,
+    is_interceptor: PropTypes.bool.isRequired,
+    is_resolver: PropTypes.bool.isRequired,
+    is_validator: PropTypes.bool.isRequired,
+    is_inspector: PropTypes.bool.isRequired,
     interceptPosition: PropTypes.number,                // Intercept module position
     setInterceptOrder: PropTypes.func.isRequired,       // Change interceptor plugin order
     numInterceptors: PropTypes.number.isRequired,       // Total number of interceptors implemented

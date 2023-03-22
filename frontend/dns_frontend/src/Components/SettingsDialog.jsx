@@ -4,7 +4,7 @@ import { PropTypes } from 'prop-types';
 import CloseIcon from '@mui/icons-material/Close';
 import { uninstallPlugin } from '../API/getsetAPI';
 
-const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interceptPosition, setInterceptOrder, numInterceptors, pluginState, togglePlugin, dialogOpen, setDialogStatus, }) => {
+const SettingsDialog = ({ uuid, friendlyName, description, home, is_listener, is_interceptor, is_resolver, is_validator, is_inspector, interceptPosition, setInterceptOrder, numInterceptors, pluginState, togglePlugin, dialogOpen, setDialogStatus, }) => {
     const theme = useTheme();
 
     const [interceptPosState, setInterceptPositionState] = useState(interceptPosition);
@@ -114,16 +114,39 @@ const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interc
                                 Modules
                             </Typography>
                             {
-                                modules && modules.map((implementation, index) => {
-                                    return (
-                                        <ListItem
-                                            key={index}
-                                            sx={{ display: 'list-item', paddingY: 0}}
-                                        >
-                                            {implementation.charAt(0).toUpperCase() + implementation.slice(1)}
-                                        </ListItem>
-                                    )
-                                })
+                                is_listener && <ListItem
+                                    sx={{ display: 'list-item', paddingY: 0}}
+                                >
+                                    Listener
+                                </ListItem>
+                            }
+                            {
+                                is_interceptor && <ListItem
+                                    sx={{ display: 'list-item', paddingY: 0}}
+                                >
+                                    Interceptor
+                                </ListItem>
+                            }
+                            {
+                                is_resolver && <ListItem
+                                    sx={{ display: 'list-item', paddingY: 0}}
+                                >
+                                    Resolver
+                                </ListItem>
+                            }
+                            {
+                                is_validator && <ListItem
+                                    sx={{ display: 'list-item', paddingY: 0}}
+                                >
+                                    Validator
+                                </ListItem>
+                            }
+                            {
+                                is_inspector && <ListItem
+                                    sx={{ display: 'list-item', paddingY: 0}}
+                                >
+                                    Inspector
+                                </ListItem>
                             }
                         </div>
                     </div>
@@ -217,7 +240,11 @@ SettingsDialog.propTypes = {
     friendlyName: PropTypes.string.isRequired,          //
     description: PropTypes.string.isRequired,           //
     home: PropTypes.string.isRequired,                  //
-    modules: PropTypes.array.isRequired,                //
+    is_listener: PropTypes.bool.isRequired,             //
+    is_interceptor: PropTypes.bool.isRequired,          //
+    is_resolver: PropTypes.bool.isRequired,             //
+    is_validator: PropTypes.bool.isRequired,            //
+    is_inspector: PropTypes.bool.isRequired,            //
     interceptPosition: PropTypes.number,                // Intercept module position
     setInterceptOrder: PropTypes.func.isRequired,       // Change interceptor plugin order
     numInterceptors: PropTypes.number.isRequired,       // Total number of interceptors implemented

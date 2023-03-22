@@ -37,7 +37,11 @@ const PluginTable = ({ dragNDrop, pluginDict, numInterceptors, pluginsEnabledDic
                                     friendlyName={pluginDict[key].friendly_name} 
                                     description={pluginDict[key].description} 
                                     home={pluginDict[key].home} 
-                                    modules={pluginDict[key].modules} 
+                                    is_listener={pluginDict[key].is_listener}
+                                    is_interceptor={pluginDict[key].is_interceptor}
+                                    is_resolver={pluginDict[key].is_resolver}
+                                    is_validator={pluginDict[key].is_validator}
+                                    is_inspector={pluginDict[key].is_inspector}
                                     
                                     
                                     pluginState={pluginsEnabledDict[key]}
