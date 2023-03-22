@@ -1,15 +1,16 @@
 
 use std::convert::Infallible;
 use std::sync::Arc;
-use serde_derive::{Deserialize, Serialize};
-use metadata::*;
+use serde::Deserialize;
 use tokio::sync::RwLock;
+use warp::reply::json;
 use warp::sse::Event;
-use warp::{Filter, filters::BoxedFilter, Reply, Rejection, Method, reject};
+use warp::{Filter, filters::BoxedFilter, Reply, Rejection, reject};
 use warp::http::Uri;
 
 use crate::plugins::manager::PluginManager;
 
+#[derive(Deserialize)]
 struct PluginQuery
 {
     uuid: Option<String>,
@@ -25,21 +26,46 @@ pub fn frontend_filter() -> BoxedFilter<(impl Reply,)> {
     warp::path("manage").and(warp::fs::dir("./web")).boxed()
 }
 
-pub fn route(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<impl Reply,>
-{
+pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> impl Filter {
+    let metadata_pm = pm.clone();
+    warp::path("api")
+    .and(warp::path!("plugins")
+    .then(move || {
+        let pm = metadata_pm.clone();
+        get_metadata_list(pm)
+    })
 
+)
 }
 
-pub fn uninstall_plugin() -> BoxedFilter<impl Reply,>
+pub fn route(pm: Arc<RwLock<PluginManager>>) -> String
 {
-    warp::path!("api" / "plugins" / "uninstall")
+    todo!()
 }
 
-pub fn api_plugins(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)>
+pub fn uninstall_plugin() -> String
 {
-    warp::path!("api" / "plugins").end().and(warp::query::<PluginQuery>()).map(|q: PluginQuery| {
-        let metadata = pm.clone().read().await.list_metadata().into_iter().filter(|p| { p.0 == uuid }).collect();
-    }).boxed()
+    warp::path!("api" / "plugins" / "uninstall");
+    todo!()
+}
+
+pub async fn api_plugins(pm: Arc<RwLock<PluginManager>>) -> impl Filter
+{
+    let pm = pm.clone();
+    warp::path!("api" / "plugins").and(warp::query::<PluginQuery>()).then(move |q| {
+        let pm = pm.clone();
+        
+        async move {
+        pm.read().await.list_metadata().iter()
+        .map(|(_, p)| json(p)).collect::<Vec<_>>()
+    }})
+}
+
+pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>) -> impl Reply {
+    let metadata = pm.read().await.list_metadata().into_iter()
+    .map(|(_, p)| p).collect::<Vec<_>>();
+
+    json(&metadata)
 }
 
 
