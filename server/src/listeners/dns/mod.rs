@@ -1,9 +1,10 @@
 
-use futures::future::try_join_all;
 use modns_sdk::ffi;
+
+use anyhow::Result;
+use futures::future::try_join_all;
 use tokio::net::UdpSocket;
 use tokio::sync::{broadcast, RwLock};
-use std::error::Error;
 use std::ffi::c_char;
 use std::mem::ManuallyDrop;
 use std::sync::Arc;
@@ -21,7 +22,7 @@ pub enum DnsListener{
 /// 
 /// When listener recieves a request, it spawns a new async task to
 /// handle that request with the `handle_request` function
-pub async fn listen_dns(listeners: Vec<DnsListener>, shutdown_sig: broadcast::Sender<()>, pm_arc: Arc<RwLock<PluginManager>>) -> Result<(), Box<dyn Error + Sync + Send>> {
+pub async fn listen_dns(listeners: Vec<DnsListener>, shutdown_sig: broadcast::Sender<()>, pm_arc: Arc<RwLock<PluginManager>>) -> Result<()> {
 
     try_join_all(listeners.into_iter().map(|l| async {
 
@@ -36,11 +37,11 @@ pub async fn listen_dns(listeners: Vec<DnsListener>, shutdown_sig: broadcast::Se
     Ok(())
 }
 
-pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<()>, pm_arc: Arc<RwLock<PluginManager>>) -> Result<(), Box<dyn Error + Sync + Send>> {
+pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<()>, pm_arc: Arc<RwLock<PluginManager>>) -> Result<()> {
     
     let sock = Arc::new(sock);
 
-    log::info!(target: "dns::listener", "Started DNS listener on {}", sock.local_addr()?);
+    log::info!("Started DNS listener on {}", sock.local_addr()?);
 
     let mut buf = [0; MAX_DGRAM_SIZE];
 
@@ -50,7 +51,7 @@ pub async fn listen_dns_udp(sock: UdpSocket, mut shutdown: broadcast::Receiver<(
 
             _ = shutdown.recv() => {
 
-                log::info!(target: "dns::listener", "Shutting down DNS listener on {}", sock.local_addr()?);
+                log::info!("Shutting down DNS listener on {}", sock.local_addr()?);
 
                 return Ok(())
             },

@@ -1,11 +1,11 @@
 
 use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn};
-use libloading::{Symbol, Library};
 use modns_sdk::ffi;
-use serde::Deserialize;
 
-use std::error::Error;
-use std::fmt::Display;
+use libloading::{Symbol, Library};
+use serde::Deserialize;
+use thiserror::Error;
+
 use std::{fs, io};
 use std::path::{PathBuf, Path};
 use std::ffi::{OsStr, c_char};
@@ -14,54 +14,29 @@ const DECODER_FN_NAME: &[u8] = b"impl_decode_req";
 const ENCODER_FN_NAME: &[u8] = b"impl_encode_resp";
 const RESOLVER_FN_NAME: &[u8] = b"impl_resolve_req";
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum PluginLoaderError {
-    LibraryLoadError(libloading::Error),
-    ManifestOpenError(io::Error),
-    ManifestReadError(serde_yaml::Error),
-    NoListeners,
-    NoResolvers,
+    #[error("Unable to load library")]
+    LibraryLoadError(#[from] libloading::Error),
+    #[error("Unable to open manifest.yaml")]
+    ManifestOpenError(#[from] io::Error),
+    #[error("Unable to read manifest.yaml")]
+    ManifestReadError(#[from] serde_yaml::Error),
 }
 
-impl From<libloading::Error> for PluginLoaderError {
-    fn from(value: libloading::Error) -> Self {
-        Self::LibraryLoadError(value)
-    }
-}
-
-impl From<io::Error> for PluginLoaderError {
-    fn from(value: io::Error) -> Self {
-        Self::ManifestOpenError(value)
-    }
-}
-
-impl From<serde_yaml::Error> for PluginLoaderError {
-    fn from(value: serde_yaml::Error) -> Self {
-        Self::ManifestReadError(value)
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum PluginExecutorError {
+    #[error("Plugin returned error code {0}")]
     ErrorCode(u8),
+    #[error("Required module implementation was not found for a plugin")]
     DoesNotImplement,
+    #[error("No plugins are enabled that implement the required module")]
     NoneEnabled,
+    #[error("Got an error while converting the plugin's output: {0:?}")]
     InvalidReturnValue(modns_sdk::FfiConversionError),
+    #[error("Failed to join handler thread: {0}")]
     ThreadJoinFailed(String)
 }
-
-impl Display for PluginExecutorError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            PluginExecutorError::ErrorCode(rc) => write!(f, "plugin returned error code {rc}"),
-            PluginExecutorError::DoesNotImplement => write!(f, "Module implementation was not found for a plugin"),
-            PluginExecutorError::NoneEnabled => write!(f, "No plugins are enabled that implement the reuired module"),
-            PluginExecutorError::InvalidReturnValue(v) => write!(f, "Got an error while converting the plugin's output: {v:#?}"),
-            PluginExecutorError::ThreadJoinFailed(e) => write!(f, "Failed to join thread: {e}"),
-        }
-    }
-}
-impl Error for PluginExecutorError {}
 
 impl From<u8> for PluginExecutorError {
     fn from(value: u8) -> Self {
