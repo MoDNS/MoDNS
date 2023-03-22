@@ -108,16 +108,3 @@ export const setNewPassword = (oldPass, newPass) => {
     return true;
 }
 
-
-
-
-
-
-
-
-
-
-export const getPluginConfig = (uuid, key, value) => {
-    return null;
-}
-
