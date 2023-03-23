@@ -71,96 +71,81 @@ pub struct ServerConfigBuilder {
 }
 
 impl ServerConfigBuilder {
+    pub fn new() -> Self {
+        Self {
+            plugin_path: Vec::new(),
+            unix_socket: None,
+            ignore_init_errors: None,
+            data_dir: None,
+            log: None,
+        }
+    }
     pub fn from_args() -> anyhow::Result<Self> {
         Self::try_parse().context("Failed to parse configuration from arguments")
     }
 
     pub fn from_yaml_file<P: AsRef<Path>>(config_file_path: P) -> anyhow::Result<Self> {
-        let f =
-            fs::read_to_string(config_file_path).context("Failed to read configuration file")?;
-        serde_yaml::from_str(&f).context("Failed to parse configuration file")
+        let f = fs::read_to_string(config_file_path)
+            .context("Failed to read configuration file")?;
+        serde_yaml::from_str(&f)
+            .context("Failed to parse configuration file")
     }
 
     pub fn from_env() -> Self {
-        let plugin_path = env::var(PLUGIN_PATH_ENV)
-            .ok()
-            .unwrap_or_default()
-            .split_terminator(":")
-            .filter_map(|s| Some(PathBuf::from(s)))
-            .collect();
+        let mut cfg = Self::new();
 
-        let unix_socket = env::var(UNIX_SOCKET_ENV)
+        cfg.plugin_path.extend(
+            env::var(PLUGIN_PATH_ENV)
+                .ok()
+                .unwrap_or_default()
+                .split_terminator(":")
+                .filter_map(|s| Some(PathBuf::from(s)))
+        );
+
+        cfg.unix_socket = env::var(UNIX_SOCKET_ENV)
             .ok()
             .and_then(|s| Some(PathBuf::from(s)));
 
-        let ignore_init_errors = env::var(IGNORE_ERRS_ENV)
+        cfg.ignore_init_errors = env::var(IGNORE_ERRS_ENV)
             .ok()
             .and_then(|s| IgnoreErrorsConfig::from_str(&s, true).ok());
 
-        let data_dir = env::var(DATA_DIR_ENV)
+        cfg.data_dir = env::var(DATA_DIR_ENV)
             .ok()
             .and_then(|s| Some(PathBuf::from(s)));
 
-        let log = env::var(LOG_ENV).ok();
+        cfg.log = env::var(LOG_ENV).ok();
 
-        Self {
-            plugin_path,
-            unix_socket,
-            ignore_init_errors,
-            data_dir,
-            log,
-        }
+        cfg
     }
 
-    pub fn merge(self, other: Self) -> Self {
-        let Self {
-            mut plugin_path,
-            unix_socket,
-            ignore_init_errors,
-            data_dir,
-            log,
-        } = self;
+    pub fn merge(mut self, other: Self) -> Self {
+        self.plugin_path.extend(other.plugin_path);
 
-        plugin_path.extend(other.plugin_path);
-
-        let unix_socket = match (unix_socket, other.unix_socket) {
-            (Some(p), _) => Some(p),
-            (None, Some(p)) => Some(p),
-            (None, None) => None,
-        };
-
-        let ignore_init_errors = match (ignore_init_errors, other.ignore_init_errors) {
-            (Some(p), _) => Some(p),
-            (None, Some(p)) => Some(p),
-            (None, None) => None,
-        };
-
-        let data_dir = match (data_dir, other.data_dir) {
-            (Some(p), _) => Some(p),
-            (None, Some(p)) => Some(p),
-            (None, None) => None,
-        };
-
-        let log = match (log, other.log) {
-            (Some(p), _) => Some(p),
-            (None, Some(p)) => Some(p),
-            (None, None) => None,
-        };
-
-        Self {
-            plugin_path,
-            unix_socket,
-            ignore_init_errors,
-            data_dir,
-            log,
+        if let (None, Some(p)) = (&self.unix_socket, other.unix_socket) {
+            self.unix_socket = Some(p)
         }
+
+        if let (None, Some(p)) = (&self.ignore_init_errors, other.ignore_init_errors) {
+            self.ignore_init_errors = Some(p)
+        }
+
+        if let (None, Some(p)) = (&self.data_dir, other.data_dir) {
+            self.data_dir = Some(p)
+        }
+
+        if let (None, Some(p)) = (&self.log, other.log) {
+            self.log = Some(p)
+        }
+
+        self
     }
 
     fn reverse_merge(self, other: Self) -> Self {
         Self::merge(other, self)
     }
 
-    fn build(mut self) -> anyhow::Result<ServerConfig> {
+    fn build(mut self) -> Result<ServerConfig> {
 
         // Get any unset configuration options from the lockfile
         if let Some(dir) = &self.data_dir {
@@ -259,9 +244,9 @@ impl ServerConfig {
         data_dir: D,
         log: String,
     ) -> Result<Self> where
-    P: AsRef<Path> + Debug,
-    U: AsRef<Path> + Debug,
-    D: AsRef<Path> + Debug,
+        P: AsRef<Path> + Debug,
+        U: AsRef<Path> + Debug,
+        D: AsRef<Path> + Debug,
     {
 
         // Get canonical paths for all plugin directories, creating any directories that don't exist
@@ -269,7 +254,7 @@ impl ServerConfig {
 
             if !p.as_ref().is_dir() {
                 fs::create_dir_all(p.as_ref())
-                .with_context(|| format!("Failed to create plugin directory at {}", p.as_ref().display()))?;
+                    .with_context(|| format!("Failed to create plugin directory at {}", p.as_ref().display()))?;
             };
 
             p.as_ref().canonicalize().with_context(|| format!("Plugin directory {} was not found", p.as_ref().display()))
@@ -278,7 +263,7 @@ impl ServerConfig {
 
         // Server will attempt to create unix socket, so we should make sure it doesn't exist, but the directory it's in does
         if unix_socket.as_ref().try_exists()
-        .with_context(|| format!("Unable to check if unix socket {} exists", unix_socket.as_ref().display()))?
+            .with_context(|| format!("Unable to check if unix socket {} exists", unix_socket.as_ref().display()))?
         {
             anyhow::bail!("Can't create a Unix socket at {} because an object already exists there", unix_socket.as_ref().display())
         }
@@ -291,17 +276,17 @@ impl ServerConfig {
         };
 
         let unix_socket = unix_socket_dir.canonicalize()
-        .with_context(|| format!("Unix socket directory {} was not found", unix_socket_dir.display()))?
-        .join(unix_socket_file);
+            .with_context(|| format!("Unix socket directory {} was not found", unix_socket_dir.display()))?
+            .join(unix_socket_file);
 
         // Get canonical path for data directory, creating it if it doesn't exist
         if !data_dir.as_ref().is_dir() {
             fs::create_dir_all(&data_dir)
-            .with_context(|| format!("Failed to create data directory at {}", data_dir.as_ref().display()))?;
+                .with_context(|| format!("Failed to create data directory at {}", data_dir.as_ref().display()))?;
         };
 
         let data_dir = data_dir.as_ref().canonicalize()
-        .with_context(|| format!("Data directory {} was not found", data_dir.as_ref().display()))?;
+            .with_context(|| format!("Data directory {} was not found", data_dir.as_ref().display()))?;
 
         let new_conf = Self {
             plugin_path,
@@ -313,12 +298,12 @@ impl ServerConfig {
 
         let lockfile = new_conf.data_dir.join(CONFIG_LOCKFILE_NAME);
         new_conf.dump_to_file(&lockfile)
-        .with_context(|| format!("Failed to write configuration to lockfile {}", lockfile.display()))?;
+            .with_context(|| format!("Failed to write configuration to lockfile {}", lockfile.display()))?;
 
         Ok(new_conf)
     }
 
-    pub fn dump_to_file<P: AsRef<Path>>(&self, file_path: P) -> anyhow::Result<()> {
+    pub fn dump_to_file<P: AsRef<Path>>(&self, file_path: P) -> Result<()> {
         let yaml_str = serde_yaml::to_string(self).context("Failed to serialize configuration")?;
 
         fs::write(file_path.as_ref(), yaml_str)
@@ -350,8 +335,8 @@ impl ServerConfig {
     }
 }
 
-pub fn init() -> anyhow::Result<ServerConfig> {
+pub fn init() -> Result<ServerConfig> {
     ServerConfigBuilder::from_env()
-    .merge(ServerConfigBuilder::from_args()?)
-    .build()
+        .merge(ServerConfigBuilder::from_args()?)
+        .build()
 }
