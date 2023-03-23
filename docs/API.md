@@ -1,34 +1,61 @@
 # REST API Endpoints
 
-## `/`
+## Root
+
+Route: `/`
 
 Always returns `301` redirect to `/manage`
 
-## `/manage/...`
+## Frontend
 
-Frontend
+Route: `/manage/...`
 
-## `/api`
+## API
+
+Route: `/api`
 
 Entry point for REST API
 
-## POST `/api/auth`
+Possible return codes for all endpoints are listed under the documentation for that endpoint.
+Unless otherwise stated, each endpoint can also return `400 Bad Request` when the request is
+improperly formatted, `401 Unauthorized` if the user is unauthenticated, or a `500 Internal Server Error`
+in the case of an unexpected server error. In all cases, no additional information will be returned,
+but the server will log the error when possible
+
+### Authentication
+
+Endpoint: `POST /api/auth`
 
 Authenticates a user & generates a session token for authenticating all other API calls
 
-Session token is a JWT which is added to the `modns-auth` cookie.
+Session token is a JWT which is added to the `modns-auth` cookie as a `Bearer` token.
 
-### `/api/plugins`
+Returns:
+- `200 OK` on a successful login
+- `401 Unauthorized` otherwise
+
+### Plugin Management
+
+Route: `/api/plugins`
 
 Root directory for management of plugins
 
-#### GET `/api/plugins`
+#### List Plugin Metadata
+
+Endpoint: GET `/api/plugins`
 
 CLI: `modns plugin list`
 
 Lists plugins and their attributes in json
 
-Accepts optional query parameters to filter based on certain attributes (ex: `/api/plugins?enabled=true&modules=interceptor`)
+Accepts optional query parameters to filter based on certain attributes (ex: `/api/plugins?enabled=true&module=interceptor`)
+
+Acceptable filter parameters:
+- `enabled` (bool): Show plugins which are or are not enabled
+- `module` (string): Show plugins which implement the given module
+- `uuid` (string): List only the plugin with the matching UUID
+
+Always returns `200 OK` assuming no error condition
 
 Example json response:
 
@@ -38,7 +65,11 @@ Example json response:
         "friendly_name": "Ad Blocker",                      // set in manifest
         "description": "Default plugin that blocks ads",    // set in manifest
         "home": "/opt/modns/plugins/adblock/",              // position in fs
-        "modules": ["interceptor"],                         // list of modules this plugin implements
+        "listener": false,                                  // if plugin implements various modules
+        "interceptor": true,
+        "resolver": false,
+        "validator": false,
+        "inspector": false,
         "intercept_position": 1,                            // if this plugin implements an interceptor, the position of that interceptor in the execution order
         "enabled": true                                     // allow plugins to be globally disabled even though they remain installed
     }
@@ -48,7 +79,11 @@ Example json response:
         "friendly_name": "DNS Cache",
         "description": "Default plugin that caches results of previous requests",
         "home": "/opt/modns/plugins/dnscache",
-        "modules": ["interceptor", "inspector"],
+        "listener": false,
+        "interceptor": true,
+        "resolver": false,
+        "validator": false,
+        "inspector": false,
         "intercept_position": 2,
         "enabled": true
     }
@@ -58,7 +93,11 @@ Example json response:
         "friendly_name": "Lan Cache",
         "description": "Redirects common download URLs to a local caching server",
         "home": "/opt/modns/plugins/lancache/",
-        "modules": ["interceptor"],
+        "listener": false,
+        "interceptor": true,
+        "resolver": false,
+        "validator": false,
+        "inspector": false,
         "intercept_position": null,
         "enabled": false
     }
@@ -68,7 +107,12 @@ Example json response:
         "friendly_name": "DNSSEC Validator",
         "description": "Validates DNS responses using public key cryptography",
         "home": "/opt/modns/plugins/dnssec/",
-        "modules": ["validator"],
+        "listener": false,
+        "interceptor": false,
+        "resolver": false,
+        "validator": true,
+        "inspector": false,
+        "intercept_position": null,
         "enabled": true
     }
 },
@@ -77,7 +121,11 @@ Example json response:
         "friendly_name": "Secure DNS resolver",
         "description": "Sends DNS request over TLS encrypted channel",
         "home": "/opt/modns/plugins/dot/",
-        "modules": ["resolver"],
+        "listener": false,
+        "interceptor": false,
+        "resolver": true,
+        "validator": false,
+        "inspector": false,
         "enabled": true
     }
 },
@@ -86,26 +134,40 @@ Example json response:
         "friendly_name": "Default Listener",
         "description": "Default listener plugin",
         "home": "/opt/modns/plugins/default-listener",
-        "modules": ["listener"],
+        "listener": true,
+        "interceptor": false,
+        "resolver": false,
+        "validator": false,
+        "inspector": false,
         "enabled": true
     }
 },
 {
     "600a45c3-0543-4e85-92ba-7c8727142d49dot": {
         "friendly_name": "Secure DNS listener",
-        "description": "Sends DNS request over TLS encrypted channel",
+        "description": "Listens for requests over TLS encrypted channel",
         "home": "/opt/modns/plugins/dot/",
-        "modules": ["listener"],
+        "listener": true,
+        "interceptor": false,
+        "resolver": false,
+        "validator": false,
+        "inspector": false,
         "enabled": false
     }
 }]
 ```
 
-#### POST `/api/plugins/install`
+#### Install a new plugin
+
+Endpoint: `POST /api/plugins/install`
 
 CLI: `modns plugin install <archive|url>`
 
-Installs a new plugin by decompressing an archive file included in the request or downloaded from the URL in the request
+Installs a new plugin by decompressing an archive file included in the request body or downloaded from the URL in the request
+
+New plugin is added to a directory on the server and then loaded
+
+Plugin will be disabled by default. to enable, add the `?enable` query parameter
 
 API distinguishes between archives and links using the MIME type listed in the `content-type` http header. Accepted formats are:
 
@@ -113,77 +175,142 @@ API distinguishes between archives and links using the MIME type listed in the `
 - `application/gzip` for gzipped tarballs (`.tar.gz` files)
 - `text/plain` for a URL pointing to a file to download which uses one of the above encodings
 
-#### POST `/api/plugins/uninstall?uuid=<plugin uuid>`
+Returns:
+- `201 Created` when succesfuly installed, with the new plugin's `uuid` as the body
 
-CLI: `modns plugin uninstall <name|id>`
+#### Uninstall a plugin
+
+Endpoint `POST /api/plugins/uninstall?uuid=<plugin uuid>`
+
+CLI: `modns plugin uninstall <name|uuid>`
 
 Uninstalls a plugin by removing it from the file system.
 
-Must restart server to reload plugins
+#### Set the interception queue order
 
-#### POST `/api/plugins/interceptorder`
+Endpoint: `POST /api/plugins/interceptorder`
 
 CLI: `modns plugin set-priority <something>`
 
-Sets the order for querying interceptor plugins. Request body should be a json list of plugin `id`s in desired order
+Sets the order for querying interceptor plugins. Request body should be a json list of plugin `uuid`s in desired order
 
-#### POST `/api/plugins/enable?uuid=<plugin uuid>&enabled=<bool>`
+Example request body:
 
-CLI: `modns plugin (enable|disable) <name|id>`
+```json
+[
+    "6c396d8e-9a93-11ed-a8fc-0242ac120002",
+    "cd9735cb-5c12-491a-b032-6ccd8cfd6855",
+]
+```
 
-Enable a plugin or a module that plugin implements
+Returns `200 OK` on success
 
-### POST `/api/plugins/configure?id=<plugin uuid>&<key>=<value>...`
+#### Enable or disable a plugin
 
-CLI: `modns plugin set-config <name|id> <key> <value>`
+Endpoint: `POST /api/plugins/enable?uuid=<plugin uuid>&enabled=<bool>`
+
+CLI: `modns plugin (enable|disable) <name|uuid>`
+
+Enable or disable the plugin with `uuid`.
+
+If the plugin implements an interceptor, the plugin is added 
+
+Returns `200 OK` on success
+
+#### Configure a plugin
+
+Endpoint: `POST /api/plugins/configure?uuid=<plugin uuid>&<key>=<value>...`
+
+CLI: `modns plugin set-config <name|uuid> <key> <value>`
 
 Set plugin-specific configuration parameters handled by the plugin itself. Plugin must implement a handler function
-to work with this endpoint
+for this endpoint to do anything
 
-### GET `/api/plugins/configure?id=<plugin uuid>&<key>...`
+Return code determined by plugin
 
-CLI: `modns plugin get-config <name|id> <key> [<key>]...`
+#### Get a plugin's configuration
 
-#### POST `/api/plugins/command?uuid=<plugin uuid>&command=<string>`
+Endpoint: `GET /api/plugins/configure?uuid=<plugin uuid>&<key>...`
 
-CLI: `modns command <name|id> <command>`
+CLI: `modns plugin get-config <name|uuid> <key> [<key>]...`
+
+Returns `200 OK` on success with the configuration value in the body
+
+Error codes can be determined by plugin, or `404 Not Found` by default
+
+#### Send a command to a plugin
+
+Endpoint: `POST /api/plugins/command?uuid=<plugin uuid>&command=<string>`
+
+CLI: `modns command <name|uuid> <command>`
 
 Pass a command to a plugin. Plugin must implement a handler function
 
-#### GET `/api/plugins/favicon?uuid=<plugin uuid>`
+Return code determined by plugin
+
+#### Get a plugin's icon
+
+Endpoint: `GET /api/plugins/favicon?uuid=<plugin uuid>`
 
 Get the logo icon specified in a plugin's `manifest.yaml` file
 
-### `/api/server`
+Returns:
+- `200 OK` with the icon file as the body
+- `404 Not Found` if the plugin does not have an icon
+
+### Server Configuration
+
+Root: `/api/server`
 
 Root directory for server commands & configuration
 
-#### POST `/api/server/restart`
+#### Restart the server
+
+Endpoint: `POST /api/server/restart`
 
 CLI: `modns restart`
 
-Force the server to reload all plugins
+Force the server to restart and reload all plugins
 
-#### POST `/api/server/shutdown`
+Returns `200 OK` before server attempts to shut down
+
+#### Shut down the server
+
+Endpoint `POST /api/server/shutdown`
 
 CLI: `modns shutdown`
 
-Shut down the server
+Returns `200 OK` before server attempts to shut down
 
-### POST `/api/server/configure?uuid=<plugin uuid>&<key>=<value>...`
+#### Set a server configuration parameter
+
+Endpoint: POST `/api/server/configure?<key>=<value>`
 
 CLI: `modns config set <key> <value>`
 
-Set a server configuration parameter
+Returns:
+- `200 OK` when value is successfuly set
+- `404 Not Found` if provided `key` is not a configuration option
 
-#### GET `/api/server/config?<key>[&<key>]...`
+#### Get one or more server configuration parameters
+
+Endpoint: `GET /api/server/config?<key>[&<key>]...`
 
 CLI: `modns config get <key>`
 
 Get a server configuration parameter
 
-### GET `/api/resolve?host=<hostname>[&record=<record type>]`
+if `key` is `"all"`, server will return entire configuration
+
+Returns:
+- `200 OK` with JSON object representing requested key-value pairs
+- `404 Not Found` if one or more requested keys do not exist
+
+### Send a test DNS request and resolve the IP
+
+Endpoint: `GET /api/resolve?host=<hostname>[&record=<record type>]`
 
 CLI: `modns resolve <hostname> [--record=<record type>]`
 
-Resolve an ip address using the API
+Might also become reserved for DNS over HTTPS down the line
+
