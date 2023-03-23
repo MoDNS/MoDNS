@@ -250,7 +250,7 @@ impl ServerConfig {
     {
 
         // Get canonical paths for all plugin directories, creating any directories that don't exist
-        let plugin_path = plugin_path.into_iter().map(|p| {
+        let mut plugin_path = plugin_path.into_iter().map(|p| {
 
             if !p.as_ref().is_dir() {
                 fs::create_dir_all(p.as_ref())
@@ -260,6 +260,10 @@ impl ServerConfig {
             p.as_ref().canonicalize().with_context(|| format!("Plugin directory {} was not found", p.as_ref().display()))
 
         }).collect::<Result<Vec<PathBuf>>>()?;
+
+        // Ensure that no paths point to the same place
+        plugin_path.sort_unstable();
+        plugin_path.dedup();
 
         // Server will attempt to create unix socket, so we should make sure it doesn't exist, but the directory it's in does
         if unix_socket.as_ref().try_exists()
