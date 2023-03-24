@@ -93,6 +93,8 @@ impl PluginManager {
             None => Weak::new(),
         };
 
+        log::trace!("Plugin Manager initialized with: {:#?}", self.list_metadata());
+
         Ok(())
     }
 

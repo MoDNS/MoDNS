@@ -32,6 +32,7 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
         .and(warp::path!("plugins")
             .then(move || {
             let pm = metadata_pm.clone();
+            log::trace!("Plugin metadata list requested");
             get_metadata_list(pm)
             })
         )
@@ -62,8 +63,9 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
 // }
 
 pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>) -> impl Reply {
-    let metadata = pm.read().await.list_metadata().into_iter()
-    .map(|(_, p)| p).collect::<Vec<_>>();
+    let metadata = pm.read().await.list_metadata();
+
+    log::trace!("Sending plugin metadata: {metadata:#?}");
 
     json(&metadata)
 }
