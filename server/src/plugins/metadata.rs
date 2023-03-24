@@ -67,14 +67,13 @@ impl DnsPlugin {
 impl PluginManager {
     pub fn list_metadata(&self) -> BTreeMap<Uuid, PluginMetadata> {
         self.plugins().iter().map(|(id, p)| {
-            (id.clone(), p.blocking_read().metadata())
+            (id.clone(), p.metadata())
         }).collect()
     }
 
     pub fn get_metadata(&self, id: &Uuid) -> Result<PluginMetadata> {
         Ok(self.plugins().get(id)
             .context("Plugin with uuid {id} was not found")?
-            .blocking_read()
             .metadata())
     }
 }

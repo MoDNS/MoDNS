@@ -5,15 +5,14 @@ use std::collections::BTreeMap;
 
 use anyhow::{Context, Result, bail};
 use modns_sdk::ffi;
-use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use super::plugin::{DnsPlugin, PluginExecutorError};
 
 pub struct PluginManager {
-    plugins: BTreeMap<uuid::Uuid, Arc<RwLock<DnsPlugin>>>,
-    listener: Weak<RwLock<DnsPlugin>>,
-    resolver: Weak<RwLock<DnsPlugin>>
+    plugins: BTreeMap<uuid::Uuid, Arc<DnsPlugin>>,
+    listener: Weak<DnsPlugin>,
+    resolver: Weak<DnsPlugin>
 }
 
 impl PluginManager {
@@ -30,11 +29,11 @@ impl PluginManager {
 
         let dir = PathBuf::from(dir_path.as_ref()).canonicalize().context("Couldn't canonicalize plugin path")?;
 
-        let plugin = Arc::new(RwLock::new(DnsPlugin::load(&dir, enable)?));
+        let plugin = Arc::new(DnsPlugin::load(&dir, enable)?);
 
-        log::info!("Loaded plugin `{}` from directory {}", plugin.blocking_read().friendly_name(), dir.display());
+        log::info!("Loaded plugin `{}` from directory {}", plugin.friendly_name(), dir.display());
 
-        log::trace!("Metadata for `{}`:\n{:#?}", plugin.blocking_read().friendly_name(), plugin.blocking_read().metadata());
+        log::trace!("Metadata for `{}`:\n{:#?}", plugin.friendly_name(), plugin.metadata());
 
         self.plugins.insert( id, plugin);
 
@@ -84,11 +83,10 @@ impl PluginManager {
     }
 
     pub fn init(&mut self) -> Result<()> {
-        self.listener = match self.plugins.values_mut().find(|p| p.blocking_read().is_listener()) {
+        self.listener = match self.plugins.values_mut().find(|p| p.is_listener()) {
             Some(p) => {
                 Arc::get_mut(p)
                     .context("Failed to get mutable reference for listener")?
-                    .blocking_write()
                     .enable()
                     .context("Failed to enable listener")?;
 
@@ -97,11 +95,10 @@ impl PluginManager {
             None => Weak::new(),
         };
 
-        self.resolver = match self.plugins.values_mut().find(|p| p.blocking_read().is_resolver()) {
+        self.resolver = match self.plugins.values_mut().find(|p| p.is_resolver()) {
             Some(p) => {
                 Arc::get_mut(p)
                     .context("Failed to get mutable reference to resolver")?
-                    .blocking_write()
                     .enable()
                     .context("Failed to enable resolver")?;
 
@@ -117,22 +114,24 @@ impl PluginManager {
 
         let plugin = self.plugins().get(uuid).context("Failed to get plugin with uuid {uuid}")?;
 
-        if plugin.blocking_read().enabled() {
+        if plugin.enabled() {
             bail!("Plugin is already enabled")
         }
 
-        if plugin.blocking_read().is_listener() {
+        if plugin.is_listener() {
             self.disable_listener()?;
         }
 
         let plugin = self.plugins().get(uuid).context("Failed to get plugin with uuid {uuid}")?;
 
-        if plugin.blocking_read().is_resolver() {
+        if plugin.is_resolver() {
             self.disable_resolver()?;
         }
 
-        self.plugins().get(uuid).context("Failed to get plugin with uuid {uuid}")?
-            .blocking_write()
+        let plugin_mut = self.plugins.get_mut(uuid).context("Failed to get plugin with uuid {uuid}")?;
+
+        Arc::get_mut(plugin_mut)
+            .context("Couldn't get mutable reference to plugin because it has more than one reference")?
             .enable()
             .context("Couldn't enable plugin")?;
 
@@ -152,18 +151,16 @@ impl PluginManager {
 
         Arc::get_mut(plugin)
             .context("Couldn't get mutable reference to plugin")?
-            .blocking_write()
             .disable()
     }
 
     fn disable_listener(&mut self) -> Result<()> {
         self.listener = Weak::new();
         for enabled_listener in self.plugins.values_mut()
-            .filter(|p| p.blocking_read().enabled() && p.blocking_read().is_listener())
+            .filter(|p| p.enabled() && p.is_listener())
             {
                 Arc::get_mut(enabled_listener)
                     .with_context(|| format!("Failed to get mutable reference to currently enabled listener"))?
-                    .blocking_write()
                     .disable()
                     .context("Failed to disable currently enabled listener")?;
             };
@@ -174,11 +171,10 @@ impl PluginManager {
     fn disable_resolver(&mut self) -> Result<()> {
         self.resolver = Weak::new();
         for enabled_resolver in self.plugins.values_mut()
-            .filter(|p| p.blocking_read().enabled() && p.blocking_read().is_resolver())
+            .filter(|p| p.enabled() && p.is_resolver())
             {
                 Arc::get_mut(enabled_resolver)
                     .with_context(|| format!("Failed to get mutable reference to currently enabled listener"))?
-                    .blocking_write()
                     .disable()
                     .context("Failed to disable currently enabled listener")?;
             };
@@ -188,11 +184,11 @@ impl PluginManager {
 
     fn place_plugin(&mut self, uuid: &Uuid) -> Result<()> {
         let plugin = self.plugins.get_mut(&uuid).context("plugin was not found")?;
-        if plugin.blocking_read().is_listener() {
+        if plugin.is_listener() {
             self.listener = Arc::downgrade(plugin);
         }
 
-        if plugin.blocking_read().is_resolver() {
+        if plugin.is_resolver() {
             self.resolver = Arc::downgrade(plugin);
         };
 
@@ -225,25 +221,22 @@ impl PluginManager {
     pub fn decode(&self, req: &[u8]) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
         self.listener.upgrade()
             .ok_or(PluginExecutorError::NoneEnabled)?
-            .blocking_read()
             .decode(req)
     }
 
     pub fn encode(&self, message: Box<ffi::DnsMessage>) -> Result<Vec<i8>, PluginExecutorError> {
         self.listener.upgrade()
             .ok_or(PluginExecutorError::NoneEnabled)?
-            .blocking_read()
             .encode(message)
     }
 
     pub fn resolve(&self, request: Box<ffi::DnsMessage>) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
         self.resolver.upgrade()
             .ok_or(PluginExecutorError::NoneEnabled)?
-            .blocking_read()
             .resolve(request)
     }
 
-    pub fn plugins(&self) -> &BTreeMap<uuid::Uuid, Arc<RwLock<DnsPlugin>>> {
+    pub fn plugins(&self) -> &BTreeMap<uuid::Uuid, Arc<DnsPlugin>> {
         &self.plugins
     }
 }
