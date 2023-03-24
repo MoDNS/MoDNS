@@ -1,6 +1,6 @@
 
-use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn};
-use modns_sdk::ffi;
+use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn};
+use modns_sdk::{ffi, PluginState};
 
 use libloading::{Symbol, Library};
 use serde::Deserialize;
@@ -10,9 +10,11 @@ use std::{fs, io};
 use std::path::{PathBuf, Path};
 use std::ffi::{OsStr, c_char};
 
-const DECODER_FN_NAME: &[u8] = b"impl_decode_req";
-const ENCODER_FN_NAME: &[u8] = b"impl_encode_resp";
-const RESOLVER_FN_NAME: &[u8] = b"impl_resolve_req";
+const SETUP_FN_NAME:    &[u8] = b"impl_plugin_setup";
+const TEARDOWN_FN_NAME: &[u8] = b"impl_plugin_teardown";
+const DECODER_FN_NAME:  &[u8] = b"impl_listener_sync_decode_req";
+const ENCODER_FN_NAME:  &[u8] = b"impl_listener_sync_encode_resp";
+const RESOLVER_FN_NAME: &[u8] = b"impl_resolver_sync_resolve_req";
 
 #[derive(Debug, Error)]
 pub enum PluginLoaderError {
@@ -83,7 +85,9 @@ pub struct DnsPlugin {
 
     /// Human-readable description for this plugin provided by the author
     /// in the plugin's `manifest.yaml` file
-    description: String
+    description: String,
+
+    state_ptr: PluginState
 }
 
 impl DnsPlugin {
@@ -94,7 +98,8 @@ impl DnsPlugin {
         home_dir: PathBuf,
         enabled: bool,
         friendly_name: String,
-        description: String
+        description: String,
+        state_ptr: PluginState,
     ) -> Self {
         Self{
             lib,
@@ -103,18 +108,11 @@ impl DnsPlugin {
             home_dir,
             enabled,
             friendly_name,
-            description
+            description,
+            state_ptr,
         }
     }
     
-    pub fn is_listener(&self) -> bool {
-        self.is_listener
-    }
-
-    pub fn is_resolver(&self) -> bool {
-        self.is_resolver
-    }
-
     pub fn decode(&self, buf: &[u8]) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
 
         let f: Symbol<ListenerDecodeFn> = unsafe { self.lib.get(DECODER_FN_NAME) }
@@ -122,7 +120,7 @@ impl DnsPlugin {
 
         let mut message = Box::new(ffi::DnsMessage::default());
 
-        let rc = unsafe {f(buf.into(), message.as_mut())};
+        let rc = unsafe {f(buf.into(), message.as_mut(), self.state_ptr.into())};
 
         if rc == 0 {
             Ok(message)
@@ -139,7 +137,7 @@ impl DnsPlugin {
         let mut buf = Vec::new().into();
 
         let rc = unsafe {
-            f(message.as_ref(), &mut buf)
+            f(message.as_ref(), &mut buf, self.state_ptr.into())
         };
 
         if rc != 0 {
@@ -158,7 +156,7 @@ impl DnsPlugin {
         let mut resp = Box::new(ffi::DnsMessage::default());
 
         let rc = unsafe {
-            f(req.as_ref(), resp.as_mut())
+            f(req.as_ref(), resp.as_mut(), self.state_ptr.into())
         };
 
         if rc == 0 {
@@ -167,14 +165,6 @@ impl DnsPlugin {
             Err(rc.into())
         }
 
-    }
-
-    pub fn enabled(&self) -> bool {
-        self.enabled
-    }
-
-    pub fn home_dir(&self) -> &Path {
-        &self.home_dir
     }
 
     pub fn load<P: AsRef<OsStr>>(home_dir: P, enable: bool) -> Result<Self, PluginLoaderError> {
@@ -188,11 +178,16 @@ impl DnsPlugin {
         let manifest: PluginManifest = serde_yaml::from_str(&manifest_file)?;
 
         let is_listener =
-        get_sym::<ListenerDecodeFn>(&lib, DECODER_FN_NAME)?.is_some() &&
-        get_sym::<ListenerEncodeFn>(&lib, ENCODER_FN_NAME)?.is_some();
+        check_sym::<ListenerDecodeFn>(&lib, DECODER_FN_NAME)?.is_some() &&
+            check_sym::<ListenerEncodeFn>(&lib, ENCODER_FN_NAME)?.is_some();
 
         let is_resolver =
-        get_sym::<ResolverFn>(&lib, RESOLVER_FN_NAME)?.is_some();
+        check_sym::<ResolverFn>(&lib, RESOLVER_FN_NAME)?.is_some();
+
+        let state_ptr = match (enable, check_sym::<SetupFn>(&lib, SETUP_FN_NAME)?) {
+            (true, Some(f)) => unsafe { f() },
+            _ => std::ptr::null_mut(),
+        };
 
         Ok(Self::new(
             lib, 
@@ -201,10 +196,27 @@ impl DnsPlugin {
             home_dir,
             enable,
             manifest.friendly_name,
-            manifest.description
+            manifest.description,
+            state_ptr.into()
         ))
     }
 
+    pub fn is_listener(&self) -> bool {
+        self.is_listener
+    }
+
+    pub fn is_resolver(&self) -> bool {
+        self.is_resolver
+    }
+
+
+    pub fn enabled(&self) -> bool {
+        self.enabled
+    }
+
+    pub fn home_dir(&self) -> &Path {
+        &self.home_dir
+    }
 
     pub fn friendly_name(&self) -> &str {
         self.friendly_name.as_ref()
@@ -215,7 +227,7 @@ impl DnsPlugin {
     }
 }
 
-fn get_sym<'lib, T> (lib: &'lib Library, name: &[u8]) -> Result<Option<Symbol<'lib, T>>, libloading::Error> {
+fn check_sym<'lib, T> (lib: &'lib Library, name: &[u8]) -> Result<Option<Symbol<'lib, T>>, libloading::Error> {
     let sym = unsafe {
         lib.get(name)
     };
