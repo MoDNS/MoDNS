@@ -1,14 +1,15 @@
 
-use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn};
+use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn};
 use modns_sdk::{ffi, PluginState};
 
 use libloading::{Symbol, Library};
 use serde::Deserialize;
+use anyhow::Result;
 use thiserror::Error;
 
 use std::{fs, io};
 use std::path::{PathBuf, Path};
-use std::ffi::{OsStr, c_char};
+use std::ffi::{OsStr, c_char, c_void};
 
 const SETUP_FN_NAME:    &[u8] = b"impl_plugin_setup";
 const TEARDOWN_FN_NAME: &[u8] = b"impl_plugin_teardown";
@@ -199,6 +200,29 @@ impl DnsPlugin {
             manifest.description,
             state_ptr.into()
         ))
+    }
+
+    pub fn enable(&mut self) -> Result<()> {
+        self.state_ptr = if let Some(f) = check_sym::<SetupFn>(&self.lib, SETUP_FN_NAME)? {
+            unsafe { f() }.into()
+        } else { std::ptr::null_mut::<c_void>().into() };
+
+        self.enabled = true;
+
+        Ok(())
+    }
+
+    pub fn disable(&mut self) -> Result<()> {
+        
+        if let Some(f) = check_sym::<TeardownFn>(&self.lib, TEARDOWN_FN_NAME)? {
+            unsafe { f(self.state_ptr.into()) }
+        };
+
+        self.state_ptr = std::ptr::null_mut::<c_void>().into();
+
+        self.enabled = false;
+
+        Ok(())
     }
 
     pub fn is_listener(&self) -> bool {
