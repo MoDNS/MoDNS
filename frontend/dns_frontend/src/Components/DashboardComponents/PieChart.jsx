@@ -1,8 +1,7 @@
 import { ResponsivePie } from "@nivo/pie";
 // import { mockDataFruits as data } from "../../Tmp/TempData.js"
 
-const PieChart = ( data ) => {
-
+const PieChart = ({ data }) => {
   return (
     <ResponsivePie
       data={data}
@@ -11,20 +10,17 @@ const PieChart = ( data ) => {
       padAngle={0.7}
       cornerRadius={3}
       activeOuterRadiusOffset={8}
-      borderWidth={1}
+      borderWidth={4}
       borderColor={{
         from: "color",
         modifiers: [["darker", 0.2]],
       }}
       arcLinkLabelsSkipAngle={10}
-      arcLinkLabelsTextColor="#333333"
+      arcLinkLabelsTextColor="#ffffff"
       arcLinkLabelsThickness={2}
-      arcLinkLabelsColor={{ from: "color" }}
+      arcLinkLabelsColor="black"
       arcLabelsSkipAngle={10}
-      arcLabelsTextColor={{
-        from: "color",
-        modifiers: [["darker", 2]],
-      }}
+      arcLabelsTextColor="black"
       defs={[
         {
           id: "dots",
@@ -105,7 +101,7 @@ const PieChart = ( data ) => {
           itemsSpacing: 0,
           itemWidth: 100,
           itemHeight: 18,
-          itemTextColor: "#999",
+          itemTextColor: "#FFFFFF",
           itemDirection: "left-to-right",
           itemOpacity: 1,
           symbolSize: 18,
@@ -114,7 +110,7 @@ const PieChart = ( data ) => {
             {
               on: "hover",
               style: {
-                itemTextColor: "#000",
+                itemTextColor: "#FFFFFF",
               },
             },
           ],
