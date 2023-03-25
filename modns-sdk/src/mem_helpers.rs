@@ -1,5 +1,7 @@
 use std::mem;
 
+use crate::ffi::{QuestionVector, RRVector};
+
 use super::ffi;
 
 //@ Helper functions exposed to the C api that allows for all data that pass the FFI
@@ -14,106 +16,49 @@ pub enum DnsField {
     Additional
 }
 
-/// Safely resize a field of the provided [DnsMessage] struct, and set the appropriate header field.
+/// Safely resize the provided [QuestionVector]
 /// 
 /// This funciton should always be used to add and remove fields to the message struct,
 /// so that all memory that is persistent across calls to your plugin is handled consistently.
 #[no_mangle]
-pub extern "C" fn resize_field(msg_ptr: *mut ffi::DnsMessage, num: u16, field: DnsField) {
-    let Some(msg) = (unsafe { msg_ptr.as_mut() }) else { return };
+pub extern "C" fn resize_question_field(field: &mut QuestionVector, new_size: usize) -> bool {
 
-    // println!("resize_field called to increase {field:?} to {num}");
-    match field {
-        DnsField::Question => {
-            let mut request_vec = if msg.question.is_null() {
-                Vec::with_capacity(0)
-            } else {
-                unsafe {
-                    Vec::from_raw_parts(
-                        msg.question,
-                        msg.header.qdcount.into(),
-                        msg.header.qdcount.into()
-                    )
-                }
-            };
+    let Ok(mut request_vec) = Vec::try_from(*field) else { return false };
 
-            request_vec.resize_with(num.into(), Default::default);
+    request_vec.resize_with(new_size, Default::default);
 
-            request_vec.shrink_to_fit();
+    request_vec.shrink_to_fit();
 
-            let mut request_vec = mem::ManuallyDrop::new(request_vec);
+    let mut request_vec = mem::ManuallyDrop::new(request_vec);
 
-            msg.question = request_vec.as_mut_ptr();
+    *field = QuestionVector::from(*request_vec);
 
-            msg.header.qdcount = num;
+    true
 
-        },
-        DnsField::Answer => {
-            let mut answer_vec = if msg.answer.is_null() {
-                Vec::with_capacity(0)
-            } else {
-                unsafe {
-                    Vec::from_raw_parts(
-                        msg.answer,
-                        msg.header.ancount.into(),
-                        msg.header.ancount.into()
-                    )
-                }
-            };
+}
 
-            answer_vec.resize_with(num.into(), Default::default);
+/// Safely resize the provided [RRVector]
+/// 
+/// This funciton should always be used to add and remove fields to the message struct,
+/// so that all memory that is persistent across calls to your plugin is handled consistently.
+#[no_mangle]
+pub extern "C" fn resize_rr_field(field: *mut RRVector, new_size: usize) -> bool {
 
-            let mut answer_vec = mem::ManuallyDrop::new(answer_vec);
+    let Some(field) = (unsafe {
+        field.as_mut()
+    }) else { return false };
 
-            msg.answer = answer_vec.as_mut_ptr();
+    let Ok(mut v) = Vec::try_from(field) else { return false };
 
-            msg.header.ancount = num;
-        },
-        DnsField::Authority => {
-            let mut auth_vec = if msg.authority.is_null() {
-                Vec::with_capacity(0)
-            } else {
-                unsafe {
-                    Vec::from_raw_parts(
-                        msg.authority,
-                        msg.header.nscount.into(),
-                        msg.header.nscount.into()
-                    )
-                }
-            };
+    v.resize_with(new_size, Default::default);
 
-            auth_vec.resize_with(num.into(), Default::default);
+    v.shrink_to_fit();
 
-            let mut auth_vec = mem::ManuallyDrop::new(auth_vec);
+    let mut v = mem::ManuallyDrop::new(v);
 
-            msg.authority = auth_vec.as_mut_ptr();
+    *field = RRVector::from(*v);
 
-            msg.header.nscount = num;
-
-        },
-        DnsField::Additional => {
-            let mut additional_vec = if msg.additional.is_null() {
-                Vec::with_capacity(0)
-            } else {
-                unsafe {
-                    Vec::from_raw_parts(
-                        msg.additional,
-                        msg.header.arcount.into(),
-                        msg.header.arcount.into()
-                    )
-                }
-            };
-
-            additional_vec.resize_with(num.into(), Default::default);
-
-            let mut additional_vec = mem::ManuallyDrop::new(additional_vec);
-
-            msg.additional = additional_vec.as_mut_ptr();
-
-            msg.header.arcount = num;
-
-        },
-    }
+    true
 }
 
 /// Reallocate memory for a buffer of chars so that it can fit `new_size` values

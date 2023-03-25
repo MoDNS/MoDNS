@@ -1,22 +1,6 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
 #[derive(Debug)]
-pub struct DnsHeader {
-    pub id: u16,
-    pub is_response: bool,
-    pub opcode: DnsOpcode,
-    pub authoritative_answer: bool,
-    pub truncation: bool,
-    pub recursion_desired: bool,
-    pub recursion_available: bool,
-    pub response_code: DnsResponseCode,
-    pub qdcount: u16,
-    pub ancount: u16,
-    pub nscount: u16,
-    pub arcount: u16
-}
-
-#[derive(Debug)]
 pub enum DnsOpcode {
     Query,
     InverseQuery,
@@ -45,7 +29,7 @@ pub struct DnsQuestion {
 
 #[derive(Debug)]
 pub struct DnsResourceRecord {
-    pub name: String,
+    pub name: Vec<String>,
     pub type_code: u16,
     pub class_code: u16,
     pub ttl: i32,
@@ -75,7 +59,14 @@ pub enum DnsResourceData {
 
 #[derive(Debug)]
 pub struct DnsMessage {
-    pub header: DnsHeader,
+    pub id: u16,
+    pub is_response: bool,
+    pub opcode: DnsOpcode,
+    pub authoritative_answer: bool,
+    pub truncation: bool,
+    pub recursion_desired: bool,
+    pub recursion_available: bool,
+    pub response_code: DnsResponseCode,
     pub question: Vec<DnsQuestion>,
     pub answer: Vec<DnsResourceRecord>,
     pub authority: Vec<DnsResourceRecord>,

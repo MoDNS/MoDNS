@@ -1,12 +1,19 @@
-use std::{ffi::{c_char, CStr}, mem, net::Ipv6Addr};
+
+use std::{net::Ipv6Addr, mem};
+use std::ffi::c_char;
+use std::string::FromUtf8Error;
+use std::mem::ManuallyDrop;
 use std::net::Ipv4Addr;
 use std::panic::catch_unwind;
+
+use crate::ffi::RRVector;
 
 use super::{ffi, safe};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum FfiConversionError {
-    InvalidString(*const c_char),
+    InvalidNulTermString(*const c_char),
+    InvalidVectorizedString(FromUtf8Error),
     UnexpectedNullPointer,
     ExpectedNullPointer,
     InvalidEnum
@@ -16,12 +23,75 @@ unsafe impl Send for FfiConversionError {}
 
 unsafe impl Sync for FfiConversionError {}
 
-impl TryFrom<ffi::DnsOpcode> for safe::DnsOpcode {
-    type Error = FfiConversionError;
+trait FfiType {
+    type Safe;
 
-    fn try_from(value: ffi::DnsOpcode) -> Result<Self, Self::Error> {
+    fn try_safe(self) -> Result<Self::Safe, FfiConversionError>; 
+    fn from_safe(safe_val: Self::Safe) -> Self;
+}
+
+/// Types which are an FFI-safe vector struct for a given item
+trait FfiVector: Sized {
+    type Item: Default;
+
+    fn as_mut_ptr(&self) -> *mut Self::Item;
+    fn len(&self) -> usize;
+    fn capacity(&self) -> usize;
+    fn from_safe_vec(v: Vec<Self::Item>) -> Self;
+
+    unsafe fn try_safe_vec(self) -> Result<Vec<Self::Item>, FfiConversionError> {
+        if self.as_mut_ptr().is_null() && self.capacity() > 0 {
+            return Err(FfiConversionError::UnexpectedNullPointer)
+        };
+
+        Ok(Vec::from_raw_parts(self.as_mut_ptr(), self.len(), self.capacity()))
+    }
+
+    unsafe fn resize(vec: &mut Self, new_size: usize) -> Option<Self> {
+        if vec.as_mut_ptr().is_null() && vec.capacity() > 0 {
+            return None
+        }
+
+        let v = unsafe {
+            Vec::from_raw_parts(vec.as_mut_ptr(), vec.len(), vec.capacity())
+        };
+
+        v.resize_with(new_size, Default::default);
+        
+        Some(Self::from_safe_vec(v))
+    }
+}
+
+/// FFI Vectors of FFI types can become safe vectors of safe types
+impl<T, S> FfiType for T where 
+T: FfiVector<Item = S>,
+S: FfiType
+{
+    type Safe = Vec<S::Safe>;
+
+    fn try_safe(self) -> Result<Self::Safe, FfiConversionError> {
+        unsafe { self.try_safe_vec() }?
+            .into_iter()
+            .map(FfiType::try_safe)
+            .collect()
+
+    }
+
+    fn from_safe(safe_val: Self::Safe) -> Self {
+        let v = safe_val.into_iter()
+            .map(FfiType::from_safe)
+            .collect();
+
+        Self::from_safe_vec(v)
+    }
+}
+
+impl FfiType for ffi::DnsOpcode {
+    type Safe = safe::DnsOpcode;
+
+    fn try_safe(self) -> Result<Self::Safe, FfiConversionError> {
         catch_unwind(|| {
-            match value {
+            match self {
                 ffi::DnsOpcode::Query => safe::DnsOpcode::Query,
                 ffi::DnsOpcode::InverseQuery => safe::DnsOpcode::InverseQuery,
                 ffi::DnsOpcode::Status => safe::DnsOpcode::Status,
@@ -32,14 +102,25 @@ impl TryFrom<ffi::DnsOpcode> for safe::DnsOpcode {
         })
         .or(Err(FfiConversionError::InvalidEnum))
     }
+
+    fn from_safe(safe_val: Self::Safe) -> Self {
+        match safe_val {
+            safe::DnsOpcode::Query => ffi::DnsOpcode::Query,
+            safe::DnsOpcode::InverseQuery => ffi::DnsOpcode::InverseQuery,
+            safe::DnsOpcode::Status => ffi::DnsOpcode::Status,
+            safe::DnsOpcode::Notify => ffi::DnsOpcode::Notify,
+            safe::DnsOpcode::Update => ffi::DnsOpcode::Update,
+            safe::DnsOpcode::DSO => ffi::DnsOpcode::DSO,
+        }
+    }
 }
 
-impl TryFrom<ffi::DnsResponseCode> for safe::DnsResponseCode {
-    type Error = FfiConversionError;
+impl FfiType for ffi::DnsResponseCode {
+    type Safe = safe::DnsResponseCode;
 
-    fn try_from(value: ffi::DnsResponseCode) -> Result<Self, Self::Error> {
+    fn try_safe(self) -> Result<Self::Safe, FfiConversionError> {
         catch_unwind(|| {
-            match value {
+            match self {
                 ffi::DnsResponseCode::NoError => safe::DnsResponseCode::NoError,
                 ffi::DnsResponseCode::FormatError => safe::DnsResponseCode::FormatError,
                 ffi::DnsResponseCode::ServerFailure => safe::DnsResponseCode::ServerFailure,
@@ -50,13 +131,24 @@ impl TryFrom<ffi::DnsResponseCode> for safe::DnsResponseCode {
         })
         .or(Err(FfiConversionError::InvalidEnum))
     }
+
+    fn from_safe(safe_val: Self::Safe) -> Self {
+        match safe_val {
+            safe::DnsResponseCode::NoError => ffi::DnsResponseCode::NoError,
+            safe::DnsResponseCode::FormatError => ffi::DnsResponseCode::FormatError,
+            safe::DnsResponseCode::ServerFailure => ffi::DnsResponseCode::ServerFailure,
+            safe::DnsResponseCode::NameError => ffi::DnsResponseCode::NameError,
+            safe::DnsResponseCode::NotImplemented => ffi::DnsResponseCode::NotImplemented,
+            safe::DnsResponseCode::Refused => ffi::DnsResponseCode::Refused,
+        }
+    }
 }
 
-impl TryFrom<ffi::DnsResourceData> for safe::DnsResourceData {
-    type Error = FfiConversionError;
+impl FfiType for ffi::DnsResourceData {
+    type Safe = safe::DnsResourceData;
 
-    fn try_from(value: ffi::DnsResourceData) -> Result<Self, Self::Error> {
-        match value {
+    fn try_safe(self) -> Result<Self::Safe, FfiConversionError> {
+        match self {
             ffi::DnsResourceData::A { address } => Ok(safe::DnsResourceData::A { address: Ipv4Addr::from(address) }),
             ffi::DnsResourceData::AAAA { address } => Ok(safe::DnsResourceData::AAAA { address: Ipv6Addr::from(address) }),
             ffi::DnsResourceData::Ns { nsdname } => Ok(safe::DnsResourceData::Ns { nsdname: nsdname.try_into()? }),
@@ -73,32 +165,28 @@ impl TryFrom<ffi::DnsResourceData> for safe::DnsResourceData {
             } => Ok(safe::DnsResourceData::Soa {
                 mname: mname.try_into()?,
                 rname: rname.try_into()?,
-                serial: serial,
+                serial,
                 refresh,
                 retry,
                 expire,
                 minimum
             }),
             ffi::DnsResourceData::Txt { txt_data } => Ok(safe::DnsResourceData::Txt { txt_data: txt_data.try_into()? }),
-            ffi::DnsResourceData::Other { rdata } => Ok(safe::DnsResourceData::Other { rdata: rdata.try_into()? }),
+            ffi::DnsResourceData::Other { rdata } => unsafe { Ok(safe::DnsResourceData::Other { rdata: rdata.try_safe_vec()? }) }
         }
+    }
+
+    fn from_safe(safe_val: Self::Safe) -> Self {
+        todo!()
     }
 }
 
-impl TryFrom<ffi::DnsMessage> for safe::DnsMessage {
-    type Error = FfiConversionError;
+impl FfiType for ffi::DnsMessage {
+    type Safe = safe::DnsMessage;
 
-    fn try_from(value: ffi::DnsMessage) -> Result<Self, Self::Error> {
+    fn try_safe(self) -> Result<Self::Safe, FfiConversionError> {
 
         let ffi::DnsMessage {
-            header: unsafe_header,
-            question: unsafe_question,
-            answer: unsafe_answer,
-            authority: unsafe_authority,
-            additional: unsafe_additional
-        } = value;
-
-        let ffi::DnsHeader {
             id,
             is_response,
             opcode: unsafe_opcode,
@@ -107,26 +195,21 @@ impl TryFrom<ffi::DnsMessage> for safe::DnsMessage {
             recursion_desired,
             recursion_available,
             response_code: unsafe_response_code,
-            qdcount,
-            ancount,
-            nscount,
-            arcount,
-        } = unsafe_header;
+            questions: unsafe_question,
+            answers: unsafe_answer,
+            authorities: unsafe_authority,
+            additional: unsafe_additional
+        } = self;
 
-        println!("Mark");
-        let question = unsafe { question_ptr_to_safe_vec(unsafe_question, qdcount.into())}?;
-        println!("Mark");
-        let answer = unsafe { rr_ptr_to_safe_vec(unsafe_answer, ancount.into())}?;
-        println!("Mark");
-        let authority = unsafe { rr_ptr_to_safe_vec(unsafe_authority, nscount.into())}?;
-        println!("Mark");
-        let additional = unsafe { rr_ptr_to_safe_vec(unsafe_additional, arcount.into())}?;
-        println!("Mark");
+        let question = unsafe{ unsafe_question.try_safe()? };
+        let answer = unsafe{ unsafe_answer.try_safe()? };
+        let authority = unsafe{ unsafe_authority.try_safe()? };
+        let additional = unsafe{ unsafe_additional.try_safe()? };
 
-        let opcode = safe::DnsOpcode::try_from(unsafe_opcode)?;
-        let response_code = safe::DnsResponseCode::try_from(unsafe_response_code)?;
+        let opcode = unsafe_opcode.try_safe()?;
+        let response_code = unsafe_response_code.try_safe()?;
 
-        let header = safe::DnsHeader{
+        Ok(safe::DnsMessage{
             id,
             is_response,
             opcode,
@@ -135,104 +218,65 @@ impl TryFrom<ffi::DnsMessage> for safe::DnsMessage {
             recursion_desired,
             recursion_available,
             response_code,
-            qdcount,
-            ancount,
-            nscount,
-            arcount
-        };
-
-        Ok(safe::DnsMessage{ header, question, answer, authority, additional })
+            question,
+            answer,
+            authority,
+            additional
+        })
     }
-}
 
-unsafe fn question_ptr_to_safe_vec(ptr: *mut ffi::DnsQuestion, len: usize) -> Result<Vec<safe::DnsQuestion>, FfiConversionError> {
-
-    if len > 0 && ptr.is_null() { return Err(FfiConversionError::UnexpectedNullPointer);}
-
-    Vec::from_raw_parts(ptr, len, len)
-
-    .into_iter().map(|q| {
-        let ffi::DnsQuestion { name: unsafe_name_vec, type_code, class_code } = q;
-
-        let name = Vec::from_raw_parts(
-            unsafe_name_vec.ptr,
-            unsafe_name_vec.size,
-            unsafe_name_vec.capacity
-        ).into_iter().map(|ptr| {
-            String::from_utf8_lossy(CStr::from_ptr(ptr.ptr).to_bytes()).into()
-        }).collect();
-
-        Ok(safe::DnsQuestion { name, type_code, class_code })
-    }).collect()
-}
-
-unsafe fn rr_ptr_to_safe_vec(ptr: *mut ffi::DnsResourceRecord, len: usize) -> Result<Vec<safe::DnsResourceRecord>, FfiConversionError> {
-
-    if len > 0 && ptr.is_null() { println!("BOOM"); return Err(FfiConversionError::UnexpectedNullPointer);}
-
-    Vec::from_raw_parts(ptr, len, len)
-
-    .into_iter().map(|q| {
-        let ffi::DnsResourceRecord{
-            name: unsafe_name_vec,
-            type_code,
-            class_code,
-            ttl,
-            rdlength,
-            rdata: unsafe_rdata
-        } = q;
-
-        let name = Vec::from_raw_parts(
-            unsafe_name_vec.ptr,
-            unsafe_name_vec.size,
-            unsafe_name_vec.capacity
-        ).into_iter().map(|ptr| {
-            String::from_utf8_lossy(CStr::from_ptr(ptr.ptr).to_bytes())
-        }).collect();
-
-        println!("Hello");
-        let rdata = safe::DnsResourceData::try_from(unsafe_rdata)?;
-        println!("Goodbye");
-
-        Ok(safe::DnsResourceRecord{ name, type_code, class_code, ttl, rdlength, rdata })
-    }).collect()
+    fn from_safe(safe_val: Self::Safe) -> Self {
+        todo!()
+    }
 }
 
 impl From<&[u8]> for ffi::ByteVector {
     fn from(value: &[u8]) -> Self {
-        Self { ptr: value.as_ptr() as *mut c_char, size: value.len(), capacity: value.len() }
+        Self { ptr: value.as_mut_ptr(), size: value.len(), capacity: value.len() }
     }
 }
 
-impl From<Vec<c_char>> for ffi::ByteVector {
-    fn from(value: Vec<c_char>) -> Self {
-        let mut v = mem::ManuallyDrop::new(value);
+impl FfiVector for ffi::ByteVector {
+    type Item = u8;
+
+    fn as_mut_ptr(&self) -> *mut Self::Item {
+        self.ptr
+    }
+
+    fn len(&self) -> usize {
+        self.size
+    }
+
+    fn capacity(&self) -> usize {
+        self.capacity
+    }
+
+    fn from_safe_vec(v: Vec<Self::Item>) -> Self {
+        let mut v = ManuallyDrop::new(v);
 
         Self { ptr: v.as_mut_ptr(), size: v.len(), capacity: v.capacity() }
     }
 }
 
-impl From<Vec<ffi::ByteVector>> for ffi::BytePtrVector {
-    fn from(value: Vec<ffi::ByteVector>) -> Self {
-        let mut v = mem::ManuallyDrop::new(value);
+impl FfiVector for ffi::BytePtrVector {
+    type Item = ffi::ByteVector;
+
+    fn as_mut_ptr(&self) -> *mut Self::Item {
+        self.ptr
+    }
+
+    fn len(&self) -> usize {
+        self.size
+    }
+
+    fn capacity(&self) -> usize {
+        self.capacity
+    }
+
+    fn from_safe_vec(v: Vec<Self::Item>) -> Self {
+        let mut v = ManuallyDrop::new(v);
 
         Self { ptr: v.as_mut_ptr(), size: v.len(), capacity: v.capacity() }
-    }
-}
-
-impl TryInto<Vec<c_char>> for ffi::ByteVector {
-    type Error = FfiConversionError;
-
-    fn try_into(self) -> Result<Vec<c_char>, Self::Error> {
-        if self.ptr.is_null() && self.size > 0 {
-            return Err(FfiConversionError::UnexpectedNullPointer);
-        }
-
-        unsafe { Ok(Vec::from_raw_parts(
-            self.ptr,
-            self.size,
-            self.capacity
-        )) }
     }
 }
 
@@ -240,35 +284,10 @@ impl TryInto<String> for ffi::ByteVector {
     type Error = FfiConversionError;
 
     fn try_into(self) -> Result<String, Self::Error> {
-        if self.ptr.is_null() && self.size > 0 {
-            return Err(FfiConversionError::UnexpectedNullPointer);
-        }
-
-        unsafe { Ok(String::from_raw_parts(
-            self.ptr as *mut u8,
-            self.size,
-            self.capacity
-        ))}
-    }
-}
-
-impl TryInto<Vec<u8>> for ffi::ByteVector {
-    type Error = FfiConversionError;
-
-    fn try_into(self) -> Result<Vec<u8>, Self::Error> {
-        if self.ptr.is_null() && self.size > 0 {
-            return Err(FfiConversionError::UnexpectedNullPointer);
-        }
-
-        if self.ptr.is_null() {
-            return Ok(Vec::new());
-        }
-
-        unsafe { Ok(Vec::from_raw_parts(
-            self.ptr as *mut u8,
-            self.size,
-            self.capacity
-        ))}
+        String::from_utf8(unsafe {
+            self.try_safe_vec()?  
+        })
+            .map_err(|e| FfiConversionError::InvalidVectorizedString(e))
     }
 }
 
@@ -276,15 +295,116 @@ impl TryInto<Vec<String>> for ffi::BytePtrVector {
     type Error = FfiConversionError;
 
     fn try_into(self) -> Result<Vec<String>, Self::Error> {
-        if self.ptr.is_null() && self.size > 0 {
-            return Err(FfiConversionError::UnexpectedNullPointer);
-        };
-
-        unsafe{
-            Vec::from_raw_parts(self.ptr, self.size, self.capacity)
+        unsafe {
+            self.try_safe_vec()?
         }
-        .into_iter()
-        .map(TryInto::try_into)
-        .collect()
+            .into_iter().map(TryInto::try_into)
+            .collect()
     }
 }
+
+impl FfiVector for ffi::QuestionVector {
+    type Item = ffi::DnsQuestion;
+
+    fn as_mut_ptr(&self) -> *mut Self::Item {
+        self.ptr
+    }
+
+    fn len(&self) -> usize {
+        self.size
+    }
+
+    fn capacity(&self) -> usize {
+        self.capacity
+    }
+
+    fn from_safe_vec(v: Vec<Self::Item>) -> Self {
+        let mut v = ManuallyDrop::new(v);
+
+        Self { ptr: v.as_mut_ptr(), size: v.len(), capacity: v.capacity() }
+    }
+}
+
+impl FfiType for ffi::DnsQuestion {
+    type Safe = safe::DnsQuestion;
+
+    fn try_safe(self) -> Result<Self::Safe, FfiConversionError> {
+        let Self { name: unsafe_name_vec, type_code, class_code } = self;
+
+        let name = unsafe{ unsafe_name_vec.try_safe_vec()? }
+            .into_iter().map(TryInto::try_into)
+            .collect::<Result<Vec<String>, FfiConversionError>>()?;
+
+        Ok(safe::DnsQuestion { name, type_code, class_code })
+    }
+
+    fn from_safe(safe_val: Self::Safe) -> Self {
+        todo!()
+    }
+}
+
+impl FfiVector for RRVector {
+    type Item = ffi::DnsResourceRecord;
+
+    fn as_mut_ptr(&self) -> *mut Self::Item {
+        self.ptr
+    }
+
+    fn len(&self) -> usize {
+        self.size
+    }
+
+    fn capacity(&self) -> usize {
+        self.capacity
+    }
+
+    fn from_safe_vec(v: Vec<Self::Item>) -> Self {
+        let mut v = ManuallyDrop::new(v);
+
+        Self { ptr: v.as_mut_ptr(), size: v.len(), capacity: v.capacity() }
+    }
+}
+
+impl FfiType for ffi::DnsResourceRecord {
+    type Safe = safe::DnsResourceRecord;
+
+    fn try_safe(self) -> Result<Self::Safe, FfiConversionError> {
+        
+        let Self { name: unsafe_name_vec, type_code, class_code, ttl, rdlength, rdata: unsafe_rdata } = self;
+
+        let name = unsafe {
+            unsafe_name_vec.try_into()?
+        };
+
+        let rdata = unsafe {
+            unsafe_rdata.try_safe()?
+        };
+
+        Ok(
+            safe::DnsResourceRecord { name, type_code, class_code, ttl, rdlength, rdata }
+        )
+    }
+
+    fn from_safe(safe_val: Self::Safe) -> Self {
+        todo!()
+    }
+}
+
+impl TryInto<safe::DnsResourceRecord> for ffi::DnsResourceRecord {
+    type Error = FfiConversionError;
+
+    fn try_into(self) -> Result<safe::DnsResourceRecord, Self::Error> {
+        
+        let Self { name: unsafe_name_vec, type_code, class_code, ttl, rdlength, rdata: unsafe_rdata } = self;
+
+        let name = unsafe_name_vec.try_into()?;
+
+        let rdata = unsafe_rdata.try_safe()?;
+
+        Ok(
+            safe::DnsResourceRecord { name, type_code, class_code, ttl, rdlength, rdata }
+        )
+
+    }
+}
+
