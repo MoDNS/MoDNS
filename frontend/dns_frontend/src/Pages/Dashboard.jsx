@@ -120,15 +120,6 @@ const Dashboard = () => {
           >
             <HorizontalBarChart data={mockBarData} />
           </Box>
-          {/* <Box
-            gridColumn="span 6"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            height="300px"
-          >
-            <GeoMap data={mockGeographyData} />
-          </Box> */}
         </Box>
       </div>
     </MainBox>
