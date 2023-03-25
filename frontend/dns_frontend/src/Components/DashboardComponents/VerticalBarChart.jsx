@@ -1,7 +1,7 @@
 import { ResponsiveBar } from "@nivo/bar";
 // import { mockDataFruits as data } from "../../Tmp/TempData.js"
 
-const BarChart = ({ data }) => {
+const VerticalBarchart = ({ data }) => {
   return (
     <ResponsiveBar
       data={data}
@@ -9,6 +9,7 @@ const BarChart = ({ data }) => {
       indexBy="country"
       margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
       padding={0.3}
+      groupMode="grouped"
       valueScale={{ type: "linear" }}
       indexScale={{ type: "band", round: true }}
       colors={{ scheme: "nivo" }}
@@ -107,4 +108,4 @@ const BarChart = ({ data }) => {
   );
 };
 
-export default BarChart;
+export default VerticalBarchart;
