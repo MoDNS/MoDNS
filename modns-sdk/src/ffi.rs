@@ -1,6 +1,6 @@
 
 #[repr(C)]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DnsOpcode {
     Query = 0,
     InverseQuery,
@@ -11,7 +11,7 @@ pub enum DnsOpcode {
 }
 
 #[repr(C)]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DnsResponseCode {
     NoError,
     FormatError,
@@ -107,6 +107,23 @@ pub struct DnsMessage {
     pub additional: RRVector
 }
 
+#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DnsHeader {
+    pub id: u16,
+    pub is_response: bool,
+    pub opcode: DnsOpcode,
+    pub authoritative_answer: bool,
+    pub truncation: bool,
+    pub recursion_desired: bool,
+    pub recursion_available: bool,
+    pub response_code: DnsResponseCode,
+    pub qdcount: usize,
+    pub ancount: usize,
+    pub nscount: usize,
+    pub arcount: usize
+}
+
 unsafe impl Send for DnsMessage {}
 
 impl DnsMessage {
@@ -125,6 +142,24 @@ impl DnsMessage {
 
         rv
     }
+
+    pub fn header(&self) -> DnsHeader {
+        DnsHeader {
+            id: self.id,
+            is_response: self.is_response,
+            opcode: self.opcode,
+            authoritative_answer: self.authoritative_answer,
+            truncation: self.truncation,
+            recursion_desired: self.recursion_desired,
+            recursion_available: self.recursion_available,
+            response_code: self.response_code,
+            qdcount: self.questions.size,
+            ancount: self.answers.size,
+            nscount: self.authorities.size,
+            arcount: self.additional.size,
+        }
+    }
+
 }
 
 impl Default for DnsMessage {
@@ -161,6 +196,16 @@ pub struct ByteVector {
     pub ptr: *mut u8,
     pub size: usize,
     pub capacity: usize
+}
+
+impl Default for ByteVector {
+    fn default() -> Self {
+        Self {
+            ptr: std::ptr::null_mut(),
+            size: 0,
+            capacity: 0
+        }
+    }
 }
 
 #[repr(C)]

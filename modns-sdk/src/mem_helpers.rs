@@ -1,6 +1,6 @@
 use std::mem;
 
-use crate::ffi::{QuestionVector, RRVector};
+use crate::{ffi::{QuestionVector, RRVector}, conversion::FfiVector};
 
 use super::ffi;
 
@@ -23,15 +23,11 @@ pub enum DnsField {
 #[no_mangle]
 pub extern "C" fn resize_question_field(field: &mut QuestionVector, new_size: usize) -> bool {
 
-    let Ok(mut request_vec) = Vec::try_from(*field) else { return false };
+    let Some(vec) = (unsafe {
+        FfiVector::resize(field, new_size)
+    }) else {return false};   
 
-    request_vec.resize_with(new_size, Default::default);
-
-    request_vec.shrink_to_fit();
-
-    let mut request_vec = mem::ManuallyDrop::new(request_vec);
-
-    *field = QuestionVector::from(*request_vec);
+    *field = vec;
 
     true
 
@@ -42,23 +38,18 @@ pub extern "C" fn resize_question_field(field: &mut QuestionVector, new_size: us
 /// This funciton should always be used to add and remove fields to the message struct,
 /// so that all memory that is persistent across calls to your plugin is handled consistently.
 #[no_mangle]
-pub extern "C" fn resize_rr_field(field: *mut RRVector, new_size: usize) -> bool {
+pub extern "C" fn resize_rr_field(field: &mut RRVector, new_size: usize) -> bool {
 
-    let Some(field) = (unsafe {
-        field.as_mut()
-    }) else { return false };
 
-    let Ok(mut v) = Vec::try_from(field) else { return false };
+    let Some(vec) = (unsafe {
+        FfiVector::resize(field, new_size)
+    }) else {return false};   
 
-    v.resize_with(new_size, Default::default);
-
-    v.shrink_to_fit();
-
-    let mut v = mem::ManuallyDrop::new(v);
-
-    *field = RRVector::from(*v);
+    *field = vec;
 
     true
+
+
 }
 
 /// Reallocate memory for a buffer of chars so that it can fit `new_size` values
@@ -71,7 +62,7 @@ pub extern "C" fn resize_rr_field(field: *mut RRVector, new_size: usize) -> bool
 pub extern "C" fn extend_char_vec(buf: ffi::ByteVector, num_to_add: usize) -> ffi::ByteVector {
 
     if buf.ptr.is_null() {
-        return ffi::ByteVector::from(Vec::with_capacity(num_to_add));
+        return ffi::ByteVector::from_safe_vec(Vec::with_capacity(num_to_add));
     }
 
     let mut v = unsafe {
@@ -80,14 +71,14 @@ pub extern "C" fn extend_char_vec(buf: ffi::ByteVector, num_to_add: usize) -> ff
 
     v.reserve_exact(num_to_add);
 
-    ffi::ByteVector::from(v)
+    ffi::ByteVector::from_safe_vec(v)
 }
 
 #[no_mangle]
 pub extern "C" fn extend_ptr_vec(buf: ffi::BytePtrVector, num_to_add: usize) -> ffi::BytePtrVector {
 
     if buf.ptr.is_null() {
-        return ffi::BytePtrVector::from(Vec::with_capacity(num_to_add));
+        return ffi::BytePtrVector::from_safe_vec(Vec::with_capacity(num_to_add));
     }
 
     let mut v = unsafe {
@@ -96,7 +87,7 @@ pub extern "C" fn extend_ptr_vec(buf: ffi::BytePtrVector, num_to_add: usize) -> 
 
     v.reserve_exact(num_to_add);
 
-    ffi::BytePtrVector::from(v)
+    ffi::BytePtrVector::from_safe_vec(v)
 }
 
 #[no_mangle]

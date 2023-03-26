@@ -1,12 +1,10 @@
 
-use std::{net::Ipv6Addr, mem};
+use std::net::Ipv6Addr;
 use std::ffi::c_char;
 use std::string::FromUtf8Error;
 use std::mem::ManuallyDrop;
 use std::net::Ipv4Addr;
 use std::panic::catch_unwind;
-
-use crate::ffi::RRVector;
 
 use super::{ffi, safe};
 
@@ -23,7 +21,7 @@ unsafe impl Send for FfiConversionError {}
 
 unsafe impl Sync for FfiConversionError {}
 
-trait FfiType {
+pub trait FfiType {
     type Safe;
 
     fn try_safe(self) -> Result<Self::Safe, FfiConversionError>; 
@@ -31,7 +29,7 @@ trait FfiType {
 }
 
 /// Types which are an FFI-safe vector struct for a given item
-trait FfiVector: Sized {
+pub trait FfiVector: Sized {
     type Item: Default;
 
     fn as_mut_ptr(&self) -> *mut Self::Item;
@@ -52,7 +50,7 @@ trait FfiVector: Sized {
             return None
         }
 
-        let v = unsafe {
+        let mut v = unsafe {
             Vec::from_raw_parts(vec.as_mut_ptr(), vec.len(), vec.capacity())
         };
 
@@ -177,7 +175,32 @@ impl FfiType for ffi::DnsResourceData {
     }
 
     fn from_safe(safe_val: Self::Safe) -> Self {
-        todo!()
+        match safe_val {
+            safe::DnsResourceData::A { address } => ffi::DnsResourceData::A { address: address.octets() },
+            safe::DnsResourceData::AAAA { address } => ffi::DnsResourceData::AAAA { address: address.octets() },
+            safe::DnsResourceData::Ns { nsdname } => ffi::DnsResourceData::Ns { nsdname: ffi::BytePtrVector::from(nsdname) },
+            safe::DnsResourceData::Cname { cname } => ffi::DnsResourceData::Cname { cname: ffi::BytePtrVector::from(cname) },
+            safe::DnsResourceData::Ptr { ptrdname } => ffi::DnsResourceData::Ptr { ptrdname: ffi::BytePtrVector::from(ptrdname) },
+            safe::DnsResourceData::Soa {
+                mname,
+                rname,
+                serial,
+                refresh,
+                retry,
+                expire,
+                minimum
+            } => ffi::DnsResourceData::Soa {
+                mname: ffi::BytePtrVector::from(mname),
+                rname: ffi::BytePtrVector::from(rname),
+                serial,
+                refresh,
+                retry,
+                expire,
+                minimum
+            },
+            safe::DnsResourceData::Txt { txt_data } => ffi::DnsResourceData::Txt { txt_data: ffi::BytePtrVector::from(txt_data) },
+            safe::DnsResourceData::Other { rdata } => ffi::DnsResourceData::Other { rdata: ffi::ByteVector::from_safe_vec(rdata) } 
+        }
     }
 }
 
@@ -201,10 +224,10 @@ impl FfiType for ffi::DnsMessage {
             additional: unsafe_additional
         } = self;
 
-        let question = unsafe{ unsafe_question.try_safe()? };
-        let answer = unsafe{ unsafe_answer.try_safe()? };
-        let authority = unsafe{ unsafe_authority.try_safe()? };
-        let additional = unsafe{ unsafe_additional.try_safe()? };
+        let question = unsafe_question.try_safe()?;
+        let answer = unsafe_answer.try_safe()?;
+        let authority = unsafe_authority.try_safe()?;
+        let additional = unsafe_additional.try_safe()?;
 
         let opcode = unsafe_opcode.try_safe()?;
         let response_code = unsafe_response_code.try_safe()?;
@@ -226,13 +249,50 @@ impl FfiType for ffi::DnsMessage {
     }
 
     fn from_safe(safe_val: Self::Safe) -> Self {
-        todo!()
+
+        let safe::DnsMessage {
+            id,
+            is_response,
+            opcode,
+            authoritative_answer,
+            truncation,
+            recursion_desired,
+            recursion_available,
+            response_code,
+            question,
+            answer,
+            authority,
+            additional
+        } = safe_val;
+
+        let questions = ffi::QuestionVector::from_safe(question);
+        let answers = ffi::RRVector::from_safe(answer);
+        let authorities = ffi::RRVector::from_safe(authority);
+        let additional = ffi::RRVector::from_safe(additional);
+
+        let opcode = ffi::DnsOpcode::from_safe(opcode);
+        let response_code = ffi::DnsResponseCode::from_safe(response_code);
+
+        Self {
+            id,
+            is_response,
+            opcode,
+            authoritative_answer,
+            truncation,
+            recursion_desired,
+            recursion_available,
+            response_code,
+            questions,
+            answers,
+            authorities,
+            additional
+        }
     }
 }
 
 impl From<&[u8]> for ffi::ByteVector {
     fn from(value: &[u8]) -> Self {
-        Self { ptr: value.as_mut_ptr(), size: value.len(), capacity: value.len() }
+        Self { ptr: value.as_ptr() as *mut u8, size: value.len(), capacity: value.len() }
     }
 }
 
@@ -303,6 +363,16 @@ impl TryInto<Vec<String>> for ffi::BytePtrVector {
     }
 }
 
+impl From<Vec<String>> for ffi::BytePtrVector {
+    fn from(value: Vec<String>) -> Self {
+        Self::from_safe_vec(
+            value.into_iter()
+                .map(|s| ffi::ByteVector::from(s.as_bytes()))
+                .collect()
+        )
+    }
+}
+
 impl FfiVector for ffi::QuestionVector {
     type Item = ffi::DnsQuestion;
 
@@ -333,17 +403,25 @@ impl FfiType for ffi::DnsQuestion {
 
         let name = unsafe{ unsafe_name_vec.try_safe_vec()? }
             .into_iter().map(TryInto::try_into)
-            .collect::<Result<Vec<String>, FfiConversionError>>()?;
+            .collect::<Result<_, _>>()?;
 
         Ok(safe::DnsQuestion { name, type_code, class_code })
     }
 
     fn from_safe(safe_val: Self::Safe) -> Self {
-        todo!()
+        let safe::DnsQuestion {
+            name,
+            type_code,
+            class_code,
+        } = safe_val;
+
+        let name = ffi::BytePtrVector::from(name);
+
+        Self { name, type_code, class_code }
     }
 }
 
-impl FfiVector for RRVector {
+impl FfiVector for ffi::RRVector {
     type Item = ffi::DnsResourceRecord;
 
     fn as_mut_ptr(&self) -> *mut Self::Item {
@@ -372,13 +450,9 @@ impl FfiType for ffi::DnsResourceRecord {
         
         let Self { name: unsafe_name_vec, type_code, class_code, ttl, rdlength, rdata: unsafe_rdata } = self;
 
-        let name = unsafe {
-            unsafe_name_vec.try_into()?
-        };
+        let name = unsafe_name_vec.try_into()?;
 
-        let rdata = unsafe {
-            unsafe_rdata.try_safe()?
-        };
+        let rdata = unsafe_rdata.try_safe()?;
 
         Ok(
             safe::DnsResourceRecord { name, type_code, class_code, ttl, rdlength, rdata }
@@ -386,7 +460,20 @@ impl FfiType for ffi::DnsResourceRecord {
     }
 
     fn from_safe(safe_val: Self::Safe) -> Self {
-        todo!()
+        let safe::DnsResourceRecord {
+            name,
+            type_code,
+            class_code,
+            ttl,
+            rdlength,
+            rdata,
+        } = safe_val;
+
+        let name = ffi::BytePtrVector::from(name);
+
+        let rdata = ffi::DnsResourceData::from_safe(rdata);
+
+        Self { name, type_code, class_code, ttl, rdlength, rdata }
     }
 }
 

@@ -1,10 +1,9 @@
 
 pub mod ffi;
 pub mod safe;
+pub mod conversion;
 
 pub mod mem_helpers;
-
-mod conversion;
 
 use std::ffi::c_void;
 

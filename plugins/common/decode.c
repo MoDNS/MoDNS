@@ -87,14 +87,14 @@ uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
     }
 
     // Update header struct fields
-    message->header.id = req_id;
-    message->header.is_response = qr;
-    message->header.authoritative_answer = aa;
-    message->header.truncation = tc;
-    message->header.recursion_desired = rd;
-    message->header.recursion_available = ra;
-    message->header.opcode = opcode;
-    message->header.response_code = rcode;
+    message->id = req_id;
+    message->is_response = qr;
+    message->authoritative_answer = aa;
+    message->truncation = tc;
+    message->recursion_desired = rd;
+    message->recursion_available = ra;
+    message->opcode = opcode;
+    message->response_code = rcode;
 
     // Get the number of each field from the header
     uint16_t qdcount = ntohs(*(uint16_t *)(req.ptr + 4));
@@ -102,10 +102,10 @@ uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
     uint16_t nscount = ntohs(*(uint16_t *)(req.ptr + 8));
     uint16_t arcount = ntohs(*(uint16_t *)(req.ptr + 10));
 
-    if (qdcount > 0) { resize_field(message, qdcount, Query);}
-    if (ancount > 0) { resize_field(message, ancount, Answer);}
-    if (nscount > 0) { resize_field(message, nscount, Authority);}
-    if (arcount > 0) { resize_field(message, arcount, Additional);}
+    if (qdcount > 0) { resize_question_field(&message->questions, qdcount);}
+    if (ancount > 0) { resize_rr_field(&message->answers, ancount);}
+    if (nscount > 0) { resize_rr_field(&message->authorities, nscount);}
+    if (arcount > 0) { resize_rr_field(&message->additional, arcount);}
 
     uintptr_t cursor = 12; // Start a cursor at the end of the header
 
@@ -115,7 +115,7 @@ uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
         printf("Decoding question %d, cursor at %ld\n", i, cursor);
 #endif
 
-        cursor = decode_question(req, cursor, message->question + i);
+        cursor = decode_question(req, cursor, message->questions.ptr + i);
 
 #ifdef DEBUG
         printf("Decoded, cursor at %ld\n", cursor);
@@ -129,7 +129,7 @@ uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
         printf("Decoding answer %d, cursor at %ld\n", i, cursor);
 #endif
 
-        cursor = decode_rr(req, cursor, message->answer + i);
+        cursor = decode_rr(req, cursor, message->answers.ptr + i);
 
 #ifdef DEBUG
         printf("Decoded, cursor at %ld\n", cursor);
@@ -143,7 +143,7 @@ uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
         printf("Decoding authority %d, cursor at %ld\n", i, cursor);
 #endif
 
-        cursor = decode_rr(req, cursor, message->authority + i);
+        cursor = decode_rr(req, cursor, message->authorities.ptr + i);
 
 #ifdef DEBUG
         printf("Decoded, cursor at %ld\n", cursor);
@@ -157,7 +157,7 @@ uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
 #ifdef DEBUG
         printf("Decoding additional %d, cursor at %ld\n", i, cursor);
 #endif
-        cursor = decode_rr(req, cursor, message->additional + i);
+        cursor = decode_rr(req, cursor, message->additional.ptr + i);
 
 #ifdef DEBUG
         printf("Decoded, cursor at %ld\n", cursor);

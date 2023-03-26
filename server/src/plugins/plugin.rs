@@ -1,5 +1,6 @@
 
 use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn};
+use modns_sdk::conversion::FfiVector;
 use modns_sdk::{ffi, PluginState};
 
 use libloading::{Symbol, Library};
@@ -9,7 +10,7 @@ use thiserror::Error;
 
 use std::{fs, io};
 use std::path::{PathBuf, Path};
-use std::ffi::{OsStr, c_char, c_void};
+use std::ffi::{OsStr, c_void};
 
 const SETUP_FN_NAME:    &[u8] = b"impl_plugin_setup";
 const TEARDOWN_FN_NAME: &[u8] = b"impl_plugin_teardown";
@@ -130,12 +131,12 @@ impl DnsPlugin {
         }
     }
 
-    pub fn encode(&self, message: Box<ffi::DnsMessage>) -> Result<Vec<c_char>, PluginExecutorError> {
+    pub fn encode(&self, message: Box<ffi::DnsMessage>) -> Result<Vec<u8>, PluginExecutorError> {
 
         let f: Symbol<ListenerEncodeFn> = unsafe { self.lib.get(ENCODER_FN_NAME) }
         .or(Err(PluginExecutorError::DoesNotImplement))?;
 
-        let mut buf = Vec::new().into();
+        let mut buf = ffi::ByteVector::from_safe_vec(Vec::new());
 
         let rc = unsafe {
             f(message.as_ref(), &mut buf, self.state_ptr.into())
@@ -144,7 +145,7 @@ impl DnsPlugin {
         if rc != 0 {
             Err(PluginExecutorError::ErrorCode(rc))
         } else {
-            Ok(buf.try_into()?)
+            Ok(unsafe { buf.try_safe_vec() }?)
         }
 
     }

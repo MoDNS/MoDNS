@@ -1,4 +1,4 @@
-CFLAGS+= -Wall
+CFLAGS+= -Wall -Wno-pointer-sign
 LDFLAGS=$(SDK_LINK_ARGS) -I../common
 
 all: plugin.so

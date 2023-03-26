@@ -224,7 +224,7 @@ impl PluginManager {
             .decode(req)
     }
 
-    pub fn encode(&self, message: Box<ffi::DnsMessage>) -> Result<Vec<i8>, PluginExecutorError> {
+    pub fn encode(&self, message: Box<ffi::DnsMessage>) -> Result<Vec<u8>, PluginExecutorError> {
         self.listener.upgrade()
             .ok_or(PluginExecutorError::NoneEnabled)?
             .encode(message)
