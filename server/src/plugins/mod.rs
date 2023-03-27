@@ -9,19 +9,19 @@ type SetupFn = unsafe extern "C" fn() -> *mut c_void;
 type TeardownFn = unsafe extern "C" fn(*mut c_void);
 
 type ListenerDecodeFn = unsafe extern "C" fn(
-    modns_sdk::ffi::ByteVector,
-    *mut modns_sdk::ffi::DnsMessage,
+    modns_sdk::types::ffi::ByteVector,
+    *mut modns_sdk::types::ffi::DnsMessage,
     *mut c_void
 ) -> u8;
 
 type ListenerEncodeFn = unsafe extern "C" fn(
-    *const modns_sdk::ffi::DnsMessage,
-    *mut modns_sdk::ffi::ByteVector,
+    *const modns_sdk::types::ffi::DnsMessage,
+    *mut modns_sdk::types::ffi::ByteVector,
     *mut c_void
 ) -> u8;
 
 type ResolverFn = unsafe extern "C" fn(
-    *const modns_sdk::ffi::DnsMessage,
-    *mut modns_sdk::ffi::DnsMessage,
+    *const modns_sdk::types::ffi::DnsMessage,
+    *mut modns_sdk::types::ffi::DnsMessage,
     *mut c_void
 ) -> u8;

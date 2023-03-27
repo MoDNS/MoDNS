@@ -183,15 +183,6 @@ impl Default for DnsMessage {
 
 #[repr(C)]
 #[derive(Debug)]
-pub enum SectionToAdd {
-    Question,
-    Answer,
-    Authority,
-    Additional
-}
-
-#[repr(C)]
-#[derive(Debug)]
 pub struct ByteVector {
     pub ptr: *mut u8,
     pub size: usize,

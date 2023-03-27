@@ -1,5 +1,5 @@
 
-use modns_sdk::ffi;
+use modns_sdk::types::ffi;
 
 use anyhow::Result;
 use futures::future::try_join_all;

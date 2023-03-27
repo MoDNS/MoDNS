@@ -1,7 +1,7 @@
 
 use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn};
-use modns_sdk::conversion::FfiVector;
-use modns_sdk::{ffi, PluginState};
+use modns_sdk::types::conversion::FfiVector;
+use modns_sdk::{types::ffi, PluginState};
 
 use libloading::{Symbol, Library};
 use serde::Deserialize;

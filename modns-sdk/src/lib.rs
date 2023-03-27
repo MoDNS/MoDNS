@@ -1,9 +1,9 @@
 
-pub mod ffi;
-pub mod safe;
-pub mod conversion;
+pub mod types;
 
-pub mod mem_helpers;
+use types::{ffi, conversion};
+
+pub mod helpers;
 
 use std::ffi::c_void;
 

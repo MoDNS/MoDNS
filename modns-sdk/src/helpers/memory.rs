@@ -1,8 +1,8 @@
 use std::mem;
 
-use crate::{ffi::{QuestionVector, RRVector}, conversion::FfiVector};
+use crate::types::{ffi::{QuestionVector, RRVector}, conversion::FfiVector};
 
-use super::ffi;
+use crate::types::ffi;
 
 //@ Helper functions exposed to the C api that allows for all data that pass the FFI
 //@ boundary to have their memory managed by the Rust allocator.

@@ -2,7 +2,7 @@
 use pretty_assertions::assert_eq;
 use std::{path::PathBuf, env};
 
-use modns_sdk::{ffi::{self, ByteVector}, safe, conversion::{FfiType, FfiVector}};
+use modns_sdk::types::{ffi::{self, ByteVector}, safe, conversion::{FfiType, FfiVector}};
 
 use modnsd::plugins::manager::PluginManager;
 

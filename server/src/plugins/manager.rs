@@ -4,7 +4,7 @@ use std::sync::{Arc, Weak};
 use std::collections::BTreeMap;
 
 use anyhow::{Context, Result, bail};
-use modns_sdk::ffi;
+use modns_sdk::types::ffi;
 use uuid::Uuid;
 
 use super::plugin::{DnsPlugin, PluginExecutorError};
