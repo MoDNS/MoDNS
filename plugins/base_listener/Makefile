@@ -1,4 +1,4 @@
-CFLAGS+= -Wall -Wno-pointer-sign
+CFLAGS+= -Wall -Wno-pointer-sign -u_init_modns_sdk
 LDFLAGS=$(SDK_LINK_ARGS) -I../common
 
 all: plugin.so

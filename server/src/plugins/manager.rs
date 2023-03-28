@@ -83,6 +83,9 @@ impl PluginManager {
     }
 
     pub fn init(&mut self) -> Result<()> {
+
+        log::info!("Initializing Plugin Manager");
+
         self.listener = match self.plugins.values_mut().find(|p| p.is_listener()) {
             Some(p) => {
                 Arc::get_mut(p)
@@ -106,6 +109,8 @@ impl PluginManager {
             },
             None => Weak::new(),
         };
+
+        log::trace!("PluginManager status after init: {:#?}", self.list_metadata());
 
         Ok(())
     }

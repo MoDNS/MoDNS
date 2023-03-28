@@ -4,6 +4,8 @@ pub mod manager;
 pub mod plugin;
 pub mod metadata;
 
+type SdkInitFn = extern "Rust" fn(&str, &'static dyn log::Log) -> Result<(), log::SetLoggerError>;
+
 type SetupFn = unsafe extern "C" fn() -> *mut c_void;
 
 type TeardownFn = unsafe extern "C" fn(*mut c_void);

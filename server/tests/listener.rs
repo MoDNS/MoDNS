@@ -49,9 +49,17 @@ const SAMPLE_RESPONSE_HEADER: ffi::DnsHeader = ffi::DnsHeader {
     arcount: 1,
 };
 
+fn init_logger() {
+    let _ = env_logger::builder()
+        .is_test(true)
+        .filter_level(log::LevelFilter::Trace)
+        .try_init();
+}
 
 #[test]
 fn listener_plugin_decoder_success() {
+
+    init_logger();
 
     let mut pm = PluginManager::new();
 
@@ -105,6 +113,7 @@ fn listener_plugin_decoder_success() {
 
 #[test]
 fn listener_plugin_decoder_failure() {
+    init_logger();
     let mut pm = PluginManager::new();
 
     pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]).unwrap();
@@ -120,6 +129,7 @@ fn listener_plugin_decoder_failure() {
 
 #[test]
 fn listener_plugin_encoder_success() {
+    init_logger();
     let mut pm = PluginManager::new();
 
     pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]).unwrap();

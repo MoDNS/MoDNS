@@ -13,13 +13,9 @@ uintptr_t get_label_list_size(struct BytePtrVector list);
 
 uint8_t encode_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
 
-#ifdef DEBUG
-    printf("Starting encoder...\n");
-#endif
+    modns_log(4, 25, "Starting encoder...");
     uintptr_t resp_size = get_encoded_size(msg);
-#ifdef DEBUG
-    printf("Estimated size of response: %ld\n", resp_size);
-#endif
+    modns_log(4, 40, "Estimated size of response: %ld", resp_size);
 
     bool truncation_required = msg.truncation;
 
@@ -31,9 +27,7 @@ uint8_t encode_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
     // Header
     *resp_buf = extend_char_vec(*resp_buf, resp_size - resp_buf->size);
     resp_buf->size = resp_size;
-#ifdef DEBUG
-    printf("Buffer resized to len %ld and capacity %ld\n", resp_buf->size, resp_buf->capacity);
-#endif
+    modns_log(4, 55, "Buffer resized to len %ld and capacity %ld", resp_buf->size, resp_buf->capacity);
 
     *(uint16_t *)(resp_buf->ptr) = htons(msg.id);
 
@@ -59,42 +53,32 @@ uint8_t encode_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
     *(uint16_t *)(resp_buf->ptr + 10) = htons(msg.additional.size);
 
     uintptr_t cursor = 12;
-#ifdef DEBUG
-    printf("Successfully encoded header\n");
-#endif
+    modns_log(4, 35, "Successfully encoded header");
 
     // Questions
     for (uint16_t i = 0; i < msg.questions.size; i++) {
         cursor = encode_question(msg.questions.ptr[i], *resp_buf, cursor);
     }
-#ifdef DEBUG
-    printf("Successfully encoded %d questions, cursor at %ld\n", msg.questions.size, cursor);
-#endif
+    modns_log(4, 65, "Successfully encoded %d questions, cursor at %ld", msg.questions.size, cursor);
 
 
     // Answers
     for (uint16_t i = 0; i < msg.answers.size; i++) {
         cursor = encode_rr(msg.answers.ptr[i], *resp_buf, cursor);
     }
-#ifdef DEBUG
-    printf("Successfully encoded %d answers, cursor at %ld\n", msg.answers.size, cursor);
-#endif
+    modns_log(4, 65, "Successfully encoded %d answers, cursor at %ld", msg.answers.size, cursor);
 
     // Authorities
     for (uint16_t i = 0; i < msg.authorities.size; i++) {
         cursor = encode_rr(msg.authorities.ptr[i], *resp_buf, cursor);
     }
-#ifdef DEBUG
-    printf("Successfully encoded %d authorities, cursor at %ld\n", msg.authorities.size, cursor);
-#endif
+    modns_log(4, 65, "Successfully encoded %d authorities, cursor at %ld", msg.authorities.size, cursor);
 
     // Additional
     for (uint16_t i = 0; i < msg.additional.size; i++) {
         cursor = encode_rr(msg.additional.ptr[i], *resp_buf, cursor);
     }
-#ifdef DEBUG
-    printf("Successfully encoded %d additional entries, cursor at %ld\n", msg.additional.size, cursor);
-#endif
+    modns_log(4, 75, "Successfully encoded %d additional entries, cursor at %ld", msg.additional.size, cursor);
 
     if (cursor > resp_buf->capacity) {
         return 0;
@@ -120,9 +104,7 @@ uintptr_t encode_question(struct DnsQuestion question, struct ByteVector resp_bu
 uintptr_t encode_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, uintptr_t initial_offset) {
     uintptr_t cursor = initial_offset;
 
-#ifdef DEBUG
-    printf("Encoding resource record header\n");
-#endif
+    modns_log(4, 35, "Encoding resource record header");
     cursor = encode_label_list(rr.name, resp_buf, cursor);
 
     *(uint16_t *)(resp_buf.ptr + cursor) = htons(rr.type_code);
@@ -137,9 +119,7 @@ uintptr_t encode_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, uin
     *(uint16_t *)(resp_buf.ptr + cursor) = htons(rr.rdlength);
     cursor += 2;
 
-#ifdef DEBUG
-    printf("Encoding resource record rdata\n");
-#endif
+    modns_log(4, 35, "Encoding resource record rdata");
 
     // RDATA encoding
     switch (rr.rdata.tag) {
@@ -193,16 +173,12 @@ uintptr_t encode_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, uin
 uintptr_t encode_label_list(struct BytePtrVector list, struct ByteVector resp_buf, uintptr_t initial_offset) {
     uintptr_t cursor = initial_offset;
 
-#ifdef DEBUG
-    printf("Encoding label list of size %ld, cursor at %ld\n", list.size, cursor);
-#endif
+    modns_log(4, 65, "Encoding label list of size %ld, cursor at %ld", list.size, cursor);
     
     for (uintptr_t i = 0; i < list.size; i++) {
         resp_buf.ptr[cursor++] = list.ptr[i].size;
 
-#ifdef DEBUG
-            printf("Encoding label of size %ld, cursor at %ld\n", list.ptr[i].size, cursor);
-#endif
+        modns_log(4, 60, "Encoding label of size %ld, cursor at %ld", list.ptr[i].size, cursor);
 
         cursor = encode_byte_vec(list.ptr[i], resp_buf, cursor);
     }

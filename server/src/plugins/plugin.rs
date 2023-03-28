@@ -1,5 +1,5 @@
 
-use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn};
+use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn, SdkInitFn};
 use modns_sdk::types::conversion::FfiVector;
 use modns_sdk::{types::ffi, PluginState};
 
@@ -10,8 +10,9 @@ use thiserror::Error;
 
 use std::{fs, io};
 use std::path::{PathBuf, Path};
-use std::ffi::{OsStr, c_void};
+use std::ffi::{OsStr, c_void, OsString};
 
+const SDK_INIT_FN_NAME: &[u8] = b"_init_modns_sdk";
 const SETUP_FN_NAME:    &[u8] = b"impl_plugin_setup";
 const TEARDOWN_FN_NAME: &[u8] = b"impl_plugin_teardown";
 const DECODER_FN_NAME:  &[u8] = b"impl_listener_sync_decode_req";
@@ -26,6 +27,8 @@ pub enum PluginLoaderError {
     ManifestOpenError(#[from] io::Error),
     #[error("Unable to read manifest.yaml")]
     ManifestReadError(#[from] serde_yaml::Error),
+    #[error("SDK initialization failed")]
+    SDKInitError,
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]
@@ -190,6 +193,29 @@ impl DnsPlugin {
             (true, Some(f)) => unsafe { f() },
             _ => std::ptr::null_mut(),
         };
+
+        let log_name = home_dir.file_name()
+            .unwrap_or(&OsString::from("unknown"))
+            .to_string_lossy()
+            .to_string();
+
+        match check_sym::<SdkInitFn>(&lib, SDK_INIT_FN_NAME)? {
+            Some(sdk_init) => {
+
+                log::trace!("Initializing SDK logger for {log_name}");
+
+                if let Err(e) = sdk_init(&log_name, log::logger()) {
+
+                    log::warn!("Failed to initialize SDK for {log_name}");
+                    log::debug!("Got error while initializing SDK: {e:?}");
+
+                };
+            }
+            None => {
+                    log::error!("Couldn't find SDK init function for {log_name}");
+                    return Err(PluginLoaderError::SDKInitError)
+                }
+        }
 
         Ok(Self::new(
             lib, 
