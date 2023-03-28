@@ -27,6 +27,7 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 sx={{ marginTop: 2 }}
                 onClick={ () => {
                     if (text === "") {
+                        alert("Input must not be empty");
                         return
                     }
                     let newJson = jsonPage;
@@ -80,6 +81,7 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 sx={{ marginTop: 2 }}
                 onClick={ () => {
                     if (text === "") {
+                        alert("Input must not be empty");
                         return
                     }
                     let newJson = jsonPage;
@@ -150,6 +152,7 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 sx={{ marginTop: 2 }}
                 onClick={ () => {
                     if (text === "" || key === "") {
+                        alert("Input must not be empty");
                         return
                     }
                     let newJson = jsonPage;
@@ -221,6 +224,7 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 sx={{ marginTop: 2 }}
                 onClick={ () => {
                     if (text === "" || key === "") {
+                        alert("Input must not be empty");
                         return
                     }
                     let newJson = jsonPage;
@@ -277,6 +281,7 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 sx={{ marginTop: 2 }}
                 onClick={ () => {
                     if (text === "" || key === "") {
+                        alert("Input must not be empty");
                         return
                     }
                     let newJson = jsonPage;
@@ -333,6 +338,7 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 sx={{ marginTop: 2 }}
                 onClick={ () => {
                     if (text === "" || key === "") {
+                        alert("Input must not be empty");
                         return
                     }
                     let newJson = jsonPage;
