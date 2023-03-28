@@ -3,6 +3,8 @@
 
 //////////////////////////////////////////////////////// SETTINGS ////////////////////////////////////////////////////////
 
+import { settingsPageJson } from "./default_settings";
+
 /////////////////////////////// SERVER MANAGE ///////////////////////////////
 export const setServerConfig = (key, value) => {
     console.log(key, value);
@@ -302,6 +304,10 @@ export const getPluginLogo = (uuid) => {
     return null;
 }
 
+export const getPluginCustomSettings = (uuid) => {
+    return settingsPageJson;
+}
+
 export const setPluginOrder = (uuidList) => {
     console.log(uuidList);
 }
@@ -311,10 +317,22 @@ export const enabledisablePlugin = (uuid, enabled) => {
 }
 
 export const configurePlugin = (uuid, key, value) => {
-
+    console.log(key + ": " + value);
 }
 
-export const getPluginConfig = (uuid, key, value) => {
-    return null;
+export const getPluginConfig = (uuid, key) => {
+    if (key === "9674bbc8-7b17-4640-afb0-130413702a67") {
+        return true
+    } else if (key === "90163cd9-50fb-41c9-a8d0-e2sfg57733ad") {
+        return false
+    } else if ( key === "90163cd9-50fb-41c9-a8d0-e216337733al") {
+        return "input text here"
+    } else if (key === "b78622da-6a53-4ed4-94b8-e7960f82cb27") {
+        return "insert pie chart here";
+    } else if (key === "2f1b29bb-9522-4201-8863-604f57645541") {
+        return "put a table here put a table here put a table here"
+    } else {
+        return null
+    }
 }
 

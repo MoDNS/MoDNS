@@ -2,8 +2,8 @@ import { Button, Dialog, DialogContent, DialogTitle, Divider, FormControlLabel, 
 import React, { useState } from 'react';
 import { PropTypes } from 'prop-types';
 import CloseIcon from '@mui/icons-material/Close';
-import { uninstallPlugin } from '../API/getsetAPI';
-import { parseCustomSettings } from '../scripts/customSettingsBox';
+import { getPluginCustomSettings, uninstallPlugin } from '../API/getsetAPI';
+import { ParseCustomSettings } from '../scripts/ParseCustomSettings';
 
 const SettingsDialog = ({ uuid, friendlyName, description, home, is_listener, is_interceptor, is_resolver, is_validator, is_inspector, interceptPosition, setInterceptOrder, numInterceptors, pluginState, togglePlugin, dialogOpen, setDialogStatus, }) => {
     const theme = useTheme();
@@ -194,12 +194,12 @@ const SettingsDialog = ({ uuid, friendlyName, description, home, is_listener, is
                     }
 
                     <Divider />
-                    { parseCustomSettings("a") }
+
+                    <ParseCustomSettings uuid={uuid} settingsJson={getPluginCustomSettings()} />
 
                 </div>
             </DialogContent>
             
-
 
             <Dialog
                 PaperProps={{

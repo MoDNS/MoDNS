@@ -43,7 +43,6 @@ const Login = ({ setLoggedIn }) => {
             sx={{ position: 'relative', top: 150, marginLeft: 'auto', marginRight: 'auto', width: 415, }} 
             title={'Login'}
             titleCentered
-            noDivider
         >
 
             <Box 
