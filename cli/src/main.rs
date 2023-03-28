@@ -1,14 +1,31 @@
 
-use std::{path::PathBuf, net::Ipv4Addr};
+use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 
+mod util;
+mod commands;
+
 fn main() {
-    println!("{:?}", CLI::parse())
+
+    let config = CLI::parse();
+
+    if config.verbose() > 2 {
+        println!("Parsed arguments: {config:#?}")
+    }
+
+    match config.command() {
+        CLICommand::Plugin { command } => match command {
+            PluginCommand::List => commands::plugins::list_plugins(&config),
+            _ => eprintln!("Not implemented")
+        },
+        _ => eprintln!("Not implemented")
+    };
+
 }
 
 #[derive(Debug, Parser)]
-struct CLI {
+pub struct CLI {
 
     #[command(subcommand)]
     command: CLICommand,
@@ -23,7 +40,7 @@ struct CLI {
 
     /// Control a modns daemon on another machine
     #[arg(short='H', long)]
-    remote_host: Option<Ipv4Addr>,
+    remote_host: Option<String>,
 
     /// Port to use when contacting a daemon over http(s)
     #[arg(short, long)]
@@ -34,8 +51,34 @@ struct CLI {
 
 }
 
+impl CLI {
+    pub fn command(&self) -> &CLICommand {
+        &self.command
+    }
+
+    pub fn unix_socket(&self) -> &PathBuf {
+        &self.unix_socket
+    }
+
+    pub fn verbose(&self) -> u8 {
+        self.verbose
+    }
+
+    pub fn remote_host(&self) -> Option<&str> {
+        self.remote_host.as_deref()
+    }
+
+    pub fn remote_port(&self) -> Option<u16> {
+        self.remote_port
+    }
+
+    pub fn https(&self) -> bool {
+        self.https
+    }
+}
+
 #[derive(Debug, Subcommand)]
-enum CLICommand {
+pub enum CLICommand {
 
     /// Do things with plugins
     Plugin {
@@ -57,7 +100,7 @@ enum CLICommand {
 }
 
 #[derive(Debug, Subcommand)]
-enum PluginCommand {
+pub enum PluginCommand {
     List,
     Install {
         path: PathBuf
@@ -86,7 +129,7 @@ enum PluginCommand {
 }
 
 #[derive(Debug, Subcommand)]
-enum ConfigCommand {
+pub enum ConfigCommand {
     Get {
         key: Vec<String>
     },
