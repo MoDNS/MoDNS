@@ -1,13 +1,15 @@
-import { Box, Button, useTheme } from '@mui/material';
+import { Box, useTheme } from '@mui/material';
 import React, { useState } from 'react';
 import MainBox from '../Components/MainBox';
-import CustomSettings from '../Components/Tools/CustomSettings';
-import CustomSettingsTools from '../Components/Tools/CustomSettingsTools';
+import CustomSettings from '../Components/Tools/CustomSettings/CustomSettings';
+import CustomSettingsTools from '../Components/Tools/CustomSettings/CustomSettingsTools';
 
 const Tools = () => {
     const theme = useTheme();
 
-    const [buildBox, setBuildBox] = useState(0);
+    // IMPLEMENENT WHEN MULTIPLE TOOLS EXIST
+    // const [buildBox, setBuildBox] = useState(0);
+    const buildBox = 0;
     const [jsonPage, setJsonPage] = useState([]);
 
     const buildBoxes = [ 
@@ -24,18 +26,6 @@ const Tools = () => {
         >
             <div style={{ display: 'flex', flexDirection:'row', overflow: 'hidden', flexGrow: 1 }}>
                 
-                {
-                    //  IMPLEMENT WHEN MULTIPLE TOOLS ARE HOSTED ON THIS PAGE
-                /* <div style={{ marginRight: 'auto', paddingTop: 10, width: 200 }} >
-                    <Button
-                        variant={'contained'}
-                        sx={{ marginY: 'auto' }}
-                        onClick={ () => setBuildBox(0) }
-                    >
-                        Plugin Settings Builder
-                    </Button>
-
-                </div> */}
                 <Box
                     sx={{
                         borderRadius: 8, 

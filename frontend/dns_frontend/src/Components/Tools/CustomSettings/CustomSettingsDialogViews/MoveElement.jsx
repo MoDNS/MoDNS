@@ -30,8 +30,6 @@ const MoveElement = ({ jsonPage, setJsonPage }) => {
 
     const [draggable, startDrag] = useState(false);
 
-    console.log(jsonPage)
-
     return (
         <div style={{ paddingLeft: 20, paddingRight: 20, paddingBottom: 25 }} >
             { jsonPage.length === 0 ? <Typography> There are no elements added. </Typography> :

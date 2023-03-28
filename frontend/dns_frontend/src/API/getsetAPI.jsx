@@ -3,8 +3,6 @@
 
 //////////////////////////////////////////////////////// SETTINGS ////////////////////////////////////////////////////////
 
-import { settingsPageJson } from "./default_settings";
-
 /////////////////////////////// SERVER MANAGE ///////////////////////////////
 export const setServerConfig = (key, value) => {
     console.log(key, value);
@@ -305,7 +303,7 @@ export const getPluginLogo = (uuid) => {
 }
 
 export const getPluginCustomSettings = (uuid) => {
-    return settingsPageJson;
+    return [];
 }
 
 export const setPluginOrder = (uuidList) => {

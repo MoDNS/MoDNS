@@ -166,7 +166,6 @@ export const ParseCustomSettings = ({uuid, settingsJson, buildMode}) => {
             sub_elements.push(null);
         }
 
-        console.log(sub_elements);
         while (sub_elements.length >= maxWidth || index + 1 === settingsJson.length) {
             children = [ sub_elements[0] ];
 

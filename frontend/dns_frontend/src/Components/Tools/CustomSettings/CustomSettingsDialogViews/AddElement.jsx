@@ -26,20 +26,22 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 variant='contained'
                 sx={{ marginTop: 2 }}
                 onClick={ () => {
-                        let newJson = jsonPage;
-                        newJson.push(
-                            {
-                                "type": "title",
-                                "display_text": text,
-                                "wide": true
-                            }
-                        );
-                        setJsonPage([...newJson]);
-                        setShowDialog(false);
-                        setText("");
-                        setElement(["", false])
+                    if (text === "") {
+                        return
                     }
-                }
+                    let newJson = jsonPage;
+                    newJson.push(
+                        {
+                            "type": "title",
+                            "display_text": text,
+                            "wide": true
+                        }
+                    );
+                    setJsonPage([...newJson]);
+                    setShowDialog(false);
+                    setText("");
+                    setElement(["", false])
+                }}
             >
                 Submit
             </Button>
@@ -77,21 +79,23 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 variant='contained'
                 sx={{ marginTop: 2 }}
                 onClick={ () => {
-                        let newJson = jsonPage;
-                        newJson.push(
-                            {
-                                "type": "text",
-                                "display_text": text,
-                                "wide": wide
-                            }
-                        );
-                        setJsonPage([...newJson]);
-                        setShowDialog(false);
-                        setText("");
-                        setWide(false);
-                        setElement(["", false])
+                    if (text === "") {
+                        return
                     }
-                }
+                    let newJson = jsonPage;
+                    newJson.push(
+                        {
+                            "type": "text",
+                            "display_text": text,
+                            "wide": wide
+                        }
+                    );
+                    setJsonPage([...newJson]);
+                    setShowDialog(false);
+                    setText("");
+                    setWide(false);
+                    setElement(["", false])
+                }}
             >
                 Submit
             </Button>
@@ -145,23 +149,25 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 variant='contained'
                 sx={{ marginTop: 2 }}
                 onClick={ () => {
-                        let newJson = jsonPage;
-                        newJson.push(
-                            {
-                                "type": "switch",
-                                "key_name": key,
-                                "display_text": text,
-                                "wide": wide
-                            }
-                        );
-                        setJsonPage([...newJson]);
-                        setShowDialog(false);
-                        setKey("");
-                        setText("");
-                        setWide(false);
-                        setElement(["", false])
+                    if (text === "" || key === "") {
+                        return
                     }
-                }
+                    let newJson = jsonPage;
+                    newJson.push(
+                        {
+                            "type": "switch",
+                            "key_name": key,
+                            "display_text": text,
+                            "wide": wide
+                        }
+                    );
+                    setJsonPage([...newJson]);
+                    setShowDialog(false);
+                    setKey("");
+                    setText("");
+                    setWide(false);
+                    setElement(["", false])
+                }}
             >
                 Submit
             </Button>
@@ -214,23 +220,25 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 variant='contained'
                 sx={{ marginTop: 2 }}
                 onClick={ () => {
-                        let newJson = jsonPage;
-                        newJson.push(
-                            {
-                                "type": "input",
-                                "key_name": key,
-                                "display_text": text,
-                                "wide": wide
-                            }
-                        );
-                        setJsonPage([...newJson]);
-                        setShowDialog(false);
-                        setKey("");
-                        setText("");
-                        setWide(false);
-                        setElement(["", false])
+                    if (text === "" || key === "") {
+                        return
                     }
-                }
+                    let newJson = jsonPage;
+                    newJson.push(
+                        {
+                            "type": "input",
+                            "key_name": key,
+                            "display_text": text,
+                            "wide": wide
+                        }
+                    );
+                    setJsonPage([...newJson]);
+                    setShowDialog(false);
+                    setKey("");
+                    setText("");
+                    setWide(false);
+                    setElement(["", false])
+                }}
             >
                 Submit
             </Button>
@@ -268,23 +276,25 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 variant='contained'
                 sx={{ marginTop: 2 }}
                 onClick={ () => {
-                        let newJson = jsonPage;
-                        newJson.push(
-                            {
-                                "type": "pie",
-                                "key_name": key,
-                                "display_text": text,
-                                "wide": wide
-                            }
-                        );
-                        setJsonPage([...newJson]);
-                        setShowDialog(false);
-                        setKey("");
-                        setText("");
-                        setWide(false);
-                        setElement(["", false])
+                    if (text === "" || key === "") {
+                        return
                     }
-                }
+                    let newJson = jsonPage;
+                    newJson.push(
+                        {
+                            "type": "pie",
+                            "key_name": key,
+                            "display_text": text,
+                            "wide": wide
+                        }
+                    );
+                    setJsonPage([...newJson]);
+                    setShowDialog(false);
+                    setKey("");
+                    setText("");
+                    setWide(false);
+                    setElement(["", false])
+                }}
             >
                 Submit
             </Button>
@@ -322,23 +332,25 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 variant='contained'
                 sx={{ marginTop: 2 }}
                 onClick={ () => {
-                        let newJson = jsonPage;
-                        newJson.push(
-                            {
-                                "type": "table",
-                                "key_name": key,
-                                "display_text": text,
-                                "wide": wide
-                            }
-                        );
-                        setJsonPage([...newJson]);
-                        setShowDialog(false);
-                        setKey("");
-                        setText("");
-                        setWide(false);
-                        setElement(["", false])
+                    if (text === "" || key === "") {
+                        return
                     }
-                }
+                    let newJson = jsonPage;
+                    newJson.push(
+                        {
+                            "type": "table",
+                            "key_name": key,
+                            "display_text": text,
+                            "wide": wide
+                        }
+                    );
+                    setJsonPage([...newJson]);
+                    setShowDialog(false);
+                    setKey("");
+                    setText("");
+                    setWide(false);
+                    setElement(["", false])
+                }}
             >
                 Submit
             </Button>
@@ -355,18 +367,17 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 variant='contained'
                 sx={{ marginTop: 2 }}
                 onClick={ () => {
-                        let newJson = jsonPage;
-                        newJson.push(
-                            {
-                                "type": "placeholder",
-                                "wide": false
-                            }
-                        );
-                        setShowDialog(false);
-                        setJsonPage([...newJson]);
-                        setElement(["", false])
-                    }
-                }
+                    let newJson = jsonPage;
+                    newJson.push(
+                        {
+                            "type": "placeholder",
+                            "wide": false
+                        }
+                    );
+                    setShowDialog(false);
+                    setJsonPage([...newJson]);
+                    setElement(["", false])
+                }}
             >
                 Submit
             </Button>
