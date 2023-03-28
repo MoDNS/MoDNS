@@ -38,5 +38,51 @@ pub fn list_plugins(config: &CLI) {
         },
     };
 
-    println!("{:#?}", metadata.iter())
+    if config.verbose() > 2 {
+        println!("{:#?}", metadata.iter());
+        return
+    }
+
+    println!("Plugins:");
+    println!("=========================");
+    for (id, plugin) in metadata.iter() {
+        println!();
+        println!("Name: {}", plugin.friendly_name());
+        println!("UUID: {}", id);
+        if !plugin.enabled() {
+            println!("Disabled");
+        } else if config.verbose() > 0 {
+            println!("Enabled");
+        }
+
+        if config.verbose() > 0 {
+            println!();
+            println!("Home directory on server: {}", plugin.home().display());
+            print!("Modules: ");
+            if plugin.is_listener() {
+                print!("Listener ");
+            }
+            if plugin.is_interceptor() {
+                print!("Interceptor ");
+            }
+            if plugin.is_resolver() {
+                print!("Resolver ");
+            }
+            if plugin.is_validator() {
+                print!("Validator ");
+            }
+            if plugin.is_inspector() {
+                print!("Inspector");
+            }
+            println!();
+
+            if let Some(pos) = plugin.intercept_position() {
+                println!("Intercept Position: {pos}");
+            }
+        }
+        println!();
+        println!("{}", plugin.description().replace(r"\n", "\n"));
+        println!();
+        println!("=========================");
+    }
 }
