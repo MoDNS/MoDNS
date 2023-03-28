@@ -86,29 +86,32 @@ impl PluginManager {
 
         log::info!("Initializing Plugin Manager");
 
-        self.listener = match self.plugins.values_mut().find(|p| p.is_listener()) {
-            Some(p) => {
-                Arc::get_mut(p)
-                    .context("Failed to get mutable reference for listener")?
-                    .enable()
-                    .context("Failed to enable listener")?;
+        if !self.has_listener() {
 
-                Arc::downgrade(p)
-            },
-            None => Weak::new(),
-        };
+            log::info!("No listener was enabled, attempting to enable one");
 
-        self.resolver = match self.plugins.values_mut().find(|p| p.is_resolver()) {
-            Some(p) => {
-                Arc::get_mut(p)
-                    .context("Failed to get mutable reference to resolver")?
-                    .enable()
-                    .context("Failed to enable resolver")?;
+            if let Some((id, _)) = self.plugins.iter().find(|(_, p)| p.is_listener()) {
+                let id = id.clone();
 
-                Arc::downgrade(p)
-            },
-            None => Weak::new(),
-        };
+                if let Err(e) = self.enable_plugin(&id) {
+                    log::error!("Failed to enable a fallback listener plugin: {e}");
+                }
+            };
+            
+        }
+
+        if !self.has_resolver() {
+
+            log::info!("No resolver was enabled, attempting to enable one");
+
+            if let Some((id, _)) = self.plugins.iter().find(|(_, p)| p.is_resolver()) {
+                let id = id.clone();
+                if let Err(e) = self.enable_plugin(&id) {
+                    log::error!("Failed to enable a fallback resolver plugin: {e}");
+                };
+            };
+
+        }
 
         log::trace!("PluginManager status after init: {:#?}", self.list_metadata());
 
@@ -123,13 +126,13 @@ impl PluginManager {
             bail!("Plugin is already enabled")
         }
 
-        if plugin.is_listener() {
+        if plugin.is_listener() && self.has_listener() {
             self.disable_listener()?;
         }
 
         let plugin = self.plugins().get(uuid).context("Failed to get plugin with uuid {uuid}")?;
 
-        if plugin.is_resolver() {
+        if plugin.is_resolver() && self.has_resolver() {
             self.disable_resolver()?;
         }
 
@@ -139,6 +142,8 @@ impl PluginManager {
             .context("Couldn't get mutable reference to plugin because it has more than one reference")?
             .enable()
             .context("Couldn't enable plugin")?;
+
+        log::info!("Enabled plugin `{}` (UUID: {})", plugin_mut.friendly_name(), uuid);
 
         self.place_plugin(uuid)
     }
@@ -154,9 +159,13 @@ impl PluginManager {
             self.resolver = Weak::new();
         }
 
-        Arc::get_mut(plugin)
+        let rc = Arc::get_mut(plugin)
             .context("Couldn't get mutable reference to plugin")?
-            .disable()
+            .disable();
+
+        log::info!("Disabled plugin `{}` (UUID: {})", plugin.friendly_name(), uuid);
+
+        rc
     }
 
     fn disable_listener(&mut self) -> Result<()> {
@@ -209,11 +218,11 @@ impl PluginManager {
         let missing_resolver = self.resolver.strong_count() == 0;
 
         if missing_listener {
-            log::warn!("No listener is enabled, server will be unable to handle DNS requests");
+            log::error!("No listener is enabled, server will be unable to handle DNS requests");
         };
 
         if missing_resolver {
-            log::warn!("No resolver is enabled, server will be unable to handle DNS requests");
+            log::error!("No resolver is enabled, server will be unable to handle DNS requests");
         }
 
         if (missing_listener || missing_resolver) && return_err {
@@ -243,5 +252,13 @@ impl PluginManager {
 
     pub fn plugins(&self) -> &BTreeMap<uuid::Uuid, Arc<DnsPlugin>> {
         &self.plugins
+    }
+
+    pub fn has_listener(&self) -> bool {
+        self.listener.strong_count() > 0
+    }
+
+    pub fn has_resolver(&self) -> bool {
+        self.resolver.strong_count() > 0
     }
 }
