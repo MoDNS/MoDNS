@@ -15,7 +15,10 @@ pub fn list_plugins(config: &CLI) {
             r.body().to_owned()
         },
         Ok(r) => {
-            eprintln!("Got {} error code from daemon: {}", r.status(), r.body());
+            eprintln!("Got error code from daemon: {}", r.status());
+            if !r.body().is_empty() {
+                eprintln!("{}", r.body());
+            }
             return
         },
         Err(e) => {

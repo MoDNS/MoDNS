@@ -1,7 +1,7 @@
 
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, Args};
 
 mod util;
 mod commands;
@@ -30,22 +30,35 @@ pub struct CLI {
     #[command(subcommand)]
     command: CLICommand,
 
+    #[clap(flatten)]
+    global_args: CliOptions
+
+}
+
+#[derive(Debug, Args)]
+struct CliOptions {
+
     /// Unix domain socket to use for communication with the modns daemon
-    #[arg(short, long, default_value = "/tmp/modns.sock")]
+    #[arg(global = true)]
+    #[arg(short, long, default_value = "/tmp/modnsd.sock")]
     unix_socket: PathBuf,
 
     /// Show extra information in output
+    #[arg(global = true)]
     #[arg(short, long, action=clap::ArgAction::Count)]
     verbose: u8,
 
     /// Control a modns daemon on another machine
+    #[arg(global = true)]
     #[arg(short='H', long)]
     remote_host: Option<String>,
 
     /// Port to use when contacting a daemon over http(s)
+    #[arg(global = true)]
     #[arg(short, long)]
     remote_port: Option<u16>,
 
+    #[arg(global = true)]
     #[arg(short='s', long, action = clap::ArgAction::SetTrue)]
     https: bool,
 
@@ -56,24 +69,24 @@ impl CLI {
         &self.command
     }
 
-    pub fn unix_socket(&self) -> &PathBuf {
-        &self.unix_socket
+    pub fn unix_socket(&self) -> &Path {
+        &self.global_args.unix_socket.as_ref()
     }
 
     pub fn verbose(&self) -> u8 {
-        self.verbose
+        self.global_args.verbose
     }
 
     pub fn remote_host(&self) -> Option<&str> {
-        self.remote_host.as_deref()
+        self.global_args.remote_host.as_deref()
     }
 
     pub fn remote_port(&self) -> Option<u16> {
-        self.remote_port
+        self.global_args.remote_port
     }
 
     pub fn https(&self) -> bool {
-        self.https
+        self.global_args.https
     }
 }
 
