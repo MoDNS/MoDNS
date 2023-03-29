@@ -27,6 +27,12 @@ impl From<PluginState> for *mut c_void {
     }
 }
 
+impl PluginState {
+    pub fn new() -> Self {
+        Self(std::ptr::null_mut())
+    }
+}
+
 // Plugin implementation functions
 extern "C" {
 
