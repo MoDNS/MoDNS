@@ -47,16 +47,59 @@ pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, module: Option<St
     for plugin in metadata
     {
         let uuid = plugin.0;
-
-        let word = String::from("interceptor");
         
         match module.as_ref()
         {
             Some(word) =>
             {
-                if pm.read().await.get_plugin_interceptor(&uuid).unwrap()
+                match module.as_ref().unwrap().as_str()
                 {
-                    reply.insert(uuid, plugin.1);
+                    "listener" =>
+                    {
+                        if pm.read().await.get_plugin_listener(&uuid).unwrap()
+                        {
+                            log::trace!("Found matching plugin");
+                            reply.insert(uuid, plugin.1);
+                        }
+                    }
+
+                    "interceptor" =>
+                    {
+                        if pm.read().await.get_plugin_interceptor(&uuid).unwrap()
+                        {
+                            log::trace!("Found matching plugin");
+                            reply.insert(uuid, plugin.1);
+                        }
+                    }
+                    "resolver" =>
+                    {
+                        if pm.read().await.get_plugin_resolver(&uuid).unwrap()
+                        {
+                            log::trace!("Found matching plugin");
+                            reply.insert(uuid, plugin.1);
+                        }
+                    }
+                    "validator" =>
+                    {
+                        if pm.read().await.get_plugin_validator(&uuid).unwrap()
+                        {
+                            log::trace!("Found matching plugin");
+                            reply.insert(uuid, plugin.1);
+                        }
+                    }
+                    "inspector" =>
+                    {
+                        if pm.read().await.get_plugin_inspector(&uuid).unwrap()
+                        {
+                            log::trace!("Found matching plugin");
+                            reply.insert(uuid, plugin.1);
+                        }
+                    }
+
+                    _ =>
+                    {
+                        log::trace!("Plugin not found\nProceeding...")
+                    }
                 }
             }
 
@@ -66,10 +109,6 @@ pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, module: Option<St
                 break;
             }
 
-            _ =>
-            {
-                log::trace!("Plugin not found\nProceeding...")
-            }
         }
 
         //log::trace!("{test:#?}");
