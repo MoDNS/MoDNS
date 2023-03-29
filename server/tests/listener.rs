@@ -2,7 +2,7 @@
 use pretty_assertions::assert_eq;
 use std::{path::PathBuf, env};
 
-use modns_sdk::{ffi::{self, ByteVector}, safe};
+use modns_sdk::types::{ffi::{self, ByteVector}, safe, conversion::{FfiType, FfiVector}};
 
 use modnsd::plugins::manager::PluginManager;
 
@@ -49,9 +49,17 @@ const SAMPLE_RESPONSE_HEADER: ffi::DnsHeader = ffi::DnsHeader {
     arcount: 1,
 };
 
+fn init_logger() {
+    let _ = env_logger::builder()
+        .is_test(true)
+        .filter_level(log::LevelFilter::Trace)
+        .try_init();
+}
 
 #[test]
 fn listener_plugin_decoder_success() {
+
+    init_logger();
 
     let mut pm = PluginManager::new();
 
@@ -59,14 +67,14 @@ fn listener_plugin_decoder_success() {
 
     let test_response = pm.decode(&SAMPLE_REQUEST[..]).unwrap();
 
-    assert_eq!(test_response.header, SAMPLE_REQUEST_HEADER);
+    assert_eq!(test_response.header(), SAMPLE_REQUEST_HEADER);
 
-    assert!(!test_response.question.is_null());
-    assert!(test_response.answer.is_null());
-    assert!(test_response.authority.is_null());
-    assert!(test_response.additional.is_null());
+    assert_eq!(test_response.questions.size, 1);
+    assert_eq!(test_response.answers.size, 0);
+    assert_eq!(test_response.authorities.size, 0);
+    assert_eq!(test_response.additional.size, 0);
 
-    let safe_response: safe::DnsMessage = (*test_response).try_into().unwrap();
+    let safe_response: safe::DnsMessage = test_response.try_safe().unwrap();
 
     assert_eq!(
         safe_response.question,
@@ -81,18 +89,14 @@ fn listener_plugin_decoder_success() {
 
     let test_response = pm.decode(&SAMPLE_RESPONSE[..]).unwrap();
 
-    assert_eq!(test_response.header, SAMPLE_RESPONSE_HEADER);
+    assert_eq!(test_response.header(), SAMPLE_RESPONSE_HEADER);
 
-    assert!(!test_response.question.is_null());
-    assert!(!test_response.answer.is_null());
-    assert!(test_response.authority.is_null());
-    assert!(!test_response.additional.is_null());
+    assert_eq!(test_response.questions.size, 1);
+    assert_eq!(test_response.answers.size, 1);
+    assert_eq!(test_response.authorities.size, 0);
+    assert_eq!(test_response.additional.size, 1);
 
-    println!("{test_response:?}");
-    println!("answer: {:?}", unsafe { test_response.answer.as_ref() });
-    println!("additional: {:?}", unsafe { test_response.additional.as_ref() });
-
-    let safe_response: safe::DnsMessage = (*test_response).try_into().unwrap();
+    let safe_response: safe::DnsMessage = test_response.try_safe().unwrap();
 
     assert_eq!(
         safe_response.question,
@@ -109,6 +113,7 @@ fn listener_plugin_decoder_success() {
 
 #[test]
 fn listener_plugin_decoder_failure() {
+    init_logger();
     let mut pm = PluginManager::new();
 
     pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]).unwrap();
@@ -124,37 +129,45 @@ fn listener_plugin_decoder_failure() {
 
 #[test]
 fn listener_plugin_encoder_success() {
+    init_logger();
     let mut pm = PluginManager::new();
 
     pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]).unwrap();
 
     let message = Box::new(ffi::DnsMessage {
-            header: SAMPLE_REQUEST_HEADER,
-            question: &mut ffi::DnsQuestion {
-                name: ffi::BytePtrVector{
-                    ptr: [ByteVector {
-                        ptr: b"example".as_ptr() as *mut i8,
-                        size: 7,
-                        capacity: 7,
-                    }, ByteVector {
-                        ptr: b"com".as_ptr() as *mut i8,
+        id: SAMPLE_REQUEST_HEADER.id,
+        is_response: SAMPLE_REQUEST_HEADER.is_response,
+        opcode: SAMPLE_REQUEST_HEADER.opcode,
+        authoritative_answer: SAMPLE_REQUEST_HEADER.authoritative_answer,
+        truncation: SAMPLE_REQUEST_HEADER.truncation,
+        recursion_desired: SAMPLE_REQUEST_HEADER.recursion_desired,
+        recursion_available: SAMPLE_REQUEST_HEADER.recursion_available,
+        response_code: SAMPLE_REQUEST_HEADER.response_code,
+        questions: ffi::QuestionVector::from_safe_vec(vec![ffi::DnsQuestion {
+            name: ffi::BytePtrVector{
+                ptr: [ByteVector {
+                    ptr: b"example".as_ptr() as *mut u8,
+                    size: 7,
+                    capacity: 7,
+                }, ByteVector {
+                        ptr: b"com".as_ptr() as *mut u8,
                         size: 3,
                         capacity: 3,
                     }].as_mut_ptr(),
-                    size: 2,
-                    capacity: 2,
-                },
-                type_code: 1,
-                class_code: 1,
+                size: 2,
+                capacity: 2,
             },
-            answer: std::ptr::null_mut(),
-            authority: std::ptr::null_mut(),
-            additional: std::ptr::null_mut(),
+            type_code: 1,
+            class_code: 1,
+        }]),
+        answers: ffi::RRVector::from_safe_vec(Vec::new()),
+        authorities: ffi::RRVector::from_safe_vec(Vec::new()),
+        additional: ffi::RRVector::from_safe_vec(Vec::new()),
         });
 
     let test_response = pm.encode(message).unwrap();
 
-    assert_eq!(unsafe{std::mem::transmute::<&[i8], &[u8]>(&test_response[..])}, SAMPLE_REQUEST);
+    assert_eq!(&test_response[..], SAMPLE_REQUEST);
 
 
 }

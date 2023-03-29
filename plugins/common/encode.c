@@ -7,21 +7,17 @@ uintptr_t encode_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, uin
 uintptr_t encode_label_list(struct BytePtrVector list, struct ByteVector resp_buf, uintptr_t initial_offset);
 uintptr_t encode_byte_vec(struct ByteVector vec, struct ByteVector resp_buf, uintptr_t initial_offset);
 uintptr_t get_encoded_size(struct DnsMessage msg);
-uintptr_t get_qd_encoded_size(uint16_t count, struct DnsQuestion *qlist);
-uintptr_t get_rr_encoded_size(uint16_t count, struct DnsResourceRecord *rrlist);
+uintptr_t get_qd_encoded_size(struct QuestionVector vec);
+uintptr_t get_rr_encoded_size(struct RRVector vec);
 uintptr_t get_label_list_size(struct BytePtrVector list);
 
 uint8_t encode_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
 
-#ifdef DEBUG
-    printf("Starting encoder...\n");
-#endif
+    modns_log(4, 25, "Starting encoder...");
     uintptr_t resp_size = get_encoded_size(msg);
-#ifdef DEBUG
-    printf("Estimated size of response: %ld\n", resp_size);
-#endif
+    modns_log(4, 40, "Estimated size of response: %ld", resp_size);
 
-    bool truncation_required = msg.header.truncation;
+    bool truncation_required = msg.truncation;
 
     if (resp_size > 512) {
         resp_size = 512;
@@ -31,70 +27,58 @@ uint8_t encode_bytes(struct DnsMessage msg, struct ByteVector *resp_buf) {
     // Header
     *resp_buf = extend_char_vec(*resp_buf, resp_size - resp_buf->size);
     resp_buf->size = resp_size;
-#ifdef DEBUG
-    printf("Buffer resized to len %ld and capacity %ld\n", resp_buf->size, resp_buf->capacity);
-#endif
+    modns_log(4, 55, "Buffer resized to len %ld and capacity %ld", resp_buf->size, resp_buf->capacity);
 
-    *(uint16_t *)(resp_buf->ptr) = htons(msg.header.id);
+    *(uint16_t *)(resp_buf->ptr) = htons(msg.id);
 
     uint8_t bitflags_msb = 0x00;
-    if (msg.header.is_response)             { bitflags_msb |= 0b10000000; }
-    if (msg.header.authoritative_answer)    { bitflags_msb |= 0b00000100; }
+    if (msg.is_response)             { bitflags_msb |= 0b10000000; }
+    if (msg.authoritative_answer)    { bitflags_msb |= 0b00000100; }
     if (truncation_required)                { bitflags_msb |= 0b00000010; }
-    if (msg.header.recursion_desired)       { bitflags_msb |= 0b00000001; }
+    if (msg.recursion_desired)       { bitflags_msb |= 0b00000001; }
 
-    bitflags_msb |= (msg.header.opcode & 0b00001111) << 3;
+    bitflags_msb |= (msg.opcode & 0b00001111) << 3;
 
     resp_buf->ptr[2] = bitflags_msb;
 
     uint8_t bitflags_lsb = 0x00;
-    if (msg.header.recursion_available)     { bitflags_lsb |= 0b10000000; }
-    bitflags_lsb |= msg.header.response_code & 0b00001111;
+    if (msg.recursion_available)     { bitflags_lsb |= 0b10000000; }
+    bitflags_lsb |= msg.response_code & 0b00001111;
 
     resp_buf->ptr[3] = bitflags_lsb;
 
-    *(uint16_t *)(resp_buf->ptr + 4) = htons(msg.header.qdcount);
-    *(uint16_t *)(resp_buf->ptr + 6) = htons(msg.header.ancount);
-    *(uint16_t *)(resp_buf->ptr + 8) = htons(msg.header.nscount);
-    *(uint16_t *)(resp_buf->ptr + 10) = htons(msg.header.arcount);
+    *(uint16_t *)(resp_buf->ptr + 4) = htons(msg.questions.size);
+    *(uint16_t *)(resp_buf->ptr + 6) = htons(msg.answers.size);
+    *(uint16_t *)(resp_buf->ptr + 8) = htons(msg.authorities.size);
+    *(uint16_t *)(resp_buf->ptr + 10) = htons(msg.additional.size);
 
     uintptr_t cursor = 12;
-#ifdef DEBUG
-    printf("Successfully encoded header\n");
-#endif
+    modns_log(4, 35, "Successfully encoded header");
 
     // Questions
-    for (uint16_t i = 0; i < msg.header.qdcount; i++) {
-        cursor = encode_question(msg.question[i], *resp_buf, cursor);
+    for (uint16_t i = 0; i < msg.questions.size; i++) {
+        cursor = encode_question(msg.questions.ptr[i], *resp_buf, cursor);
     }
-#ifdef DEBUG
-    printf("Successfully encoded %d questions, cursor at %ld\n", msg.header.qdcount, cursor);
-#endif
+    modns_log(4, 65, "Successfully encoded %d questions, cursor at %ld", msg.questions.size, cursor);
 
 
     // Answers
-    for (uint16_t i = 0; i < msg.header.ancount; i++) {
-        cursor = encode_rr(msg.answer[i], *resp_buf, cursor);
+    for (uint16_t i = 0; i < msg.answers.size; i++) {
+        cursor = encode_rr(msg.answers.ptr[i], *resp_buf, cursor);
     }
-#ifdef DEBUG
-    printf("Successfully encoded %d answers, cursor at %ld\n", msg.header.ancount, cursor);
-#endif
+    modns_log(4, 65, "Successfully encoded %d answers, cursor at %ld", msg.answers.size, cursor);
 
     // Authorities
-    for (uint16_t i = 0; i < msg.header.nscount; i++) {
-        cursor = encode_rr(msg.authority[i], *resp_buf, cursor);
+    for (uint16_t i = 0; i < msg.authorities.size; i++) {
+        cursor = encode_rr(msg.authorities.ptr[i], *resp_buf, cursor);
     }
-#ifdef DEBUG
-    printf("Successfully encoded %d authorities, cursor at %ld\n", msg.header.nscount, cursor);
-#endif
+    modns_log(4, 65, "Successfully encoded %d authorities, cursor at %ld", msg.authorities.size, cursor);
 
     // Additional
-    for (uint16_t i = 0; i < msg.header.arcount; i++) {
-        cursor = encode_rr(msg.additional[i], *resp_buf, cursor);
+    for (uint16_t i = 0; i < msg.additional.size; i++) {
+        cursor = encode_rr(msg.additional.ptr[i], *resp_buf, cursor);
     }
-#ifdef DEBUG
-    printf("Successfully encoded %d additional entries, cursor at %ld\n", msg.header.arcount, cursor);
-#endif
+    modns_log(4, 75, "Successfully encoded %d additional entries, cursor at %ld", msg.additional.size, cursor);
 
     if (cursor > resp_buf->capacity) {
         return 0;
@@ -120,9 +104,7 @@ uintptr_t encode_question(struct DnsQuestion question, struct ByteVector resp_bu
 uintptr_t encode_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, uintptr_t initial_offset) {
     uintptr_t cursor = initial_offset;
 
-#ifdef DEBUG
-    printf("Encoding resource record header\n");
-#endif
+    modns_log(4, 35, "Encoding resource record header");
     cursor = encode_label_list(rr.name, resp_buf, cursor);
 
     *(uint16_t *)(resp_buf.ptr + cursor) = htons(rr.type_code);
@@ -137,9 +119,7 @@ uintptr_t encode_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, uin
     *(uint16_t *)(resp_buf.ptr + cursor) = htons(rr.rdlength);
     cursor += 2;
 
-#ifdef DEBUG
-    printf("Encoding resource record rdata\n");
-#endif
+    modns_log(4, 35, "Encoding resource record rdata");
 
     // RDATA encoding
     switch (rr.rdata.tag) {
@@ -193,16 +173,12 @@ uintptr_t encode_rr(struct DnsResourceRecord rr, struct ByteVector resp_buf, uin
 uintptr_t encode_label_list(struct BytePtrVector list, struct ByteVector resp_buf, uintptr_t initial_offset) {
     uintptr_t cursor = initial_offset;
 
-#ifdef DEBUG
-    printf("Encoding label list of size %ld, cursor at %ld\n", list.size, cursor);
-#endif
+    modns_log(4, 65, "Encoding label list of size %ld, cursor at %ld", list.size, cursor);
     
     for (uintptr_t i = 0; i < list.size; i++) {
         resp_buf.ptr[cursor++] = list.ptr[i].size;
 
-#ifdef DEBUG
-            printf("Encoding label of size %ld, cursor at %ld\n", list.ptr[i].size, cursor);
-#endif
+        modns_log(4, 60, "Encoding label of size %ld, cursor at %ld", list.ptr[i].size, cursor);
 
         cursor = encode_byte_vec(list.ptr[i], resp_buf, cursor);
     }
@@ -225,32 +201,32 @@ uintptr_t encode_byte_vec(struct ByteVector vec, struct ByteVector resp_buf, uin
 uintptr_t get_encoded_size(struct DnsMessage msg) {
     uintptr_t total = 12; // Header length
 
-    total += get_qd_encoded_size(msg.header.qdcount, msg.question);
+    total += get_qd_encoded_size(msg.questions);
 
-    total += get_rr_encoded_size(msg.header.ancount, msg.answer);
+    total += get_rr_encoded_size(msg.answers);
 
-    total += get_rr_encoded_size(msg.header.nscount, msg.authority);
+    total += get_rr_encoded_size(msg.authorities);
 
-    total += get_rr_encoded_size(msg.header.arcount, msg.additional);
+    total += get_rr_encoded_size(msg.additional);
 
     return total;
 }
 
-uintptr_t get_qd_encoded_size(uint16_t count, struct DnsQuestion *qlist) {
+uintptr_t get_qd_encoded_size(struct QuestionVector vec) {
     uintptr_t total = 0;
-    for (uint16_t i = 0; i < count; i++) {
-        total += get_label_list_size(qlist[i].name) + 4;
+    for (uint16_t i = 0; i < vec.size; i++) {
+        total += get_label_list_size(vec.ptr[i].name) + 4;
     }
     
     return total;
 }
 
-uintptr_t get_rr_encoded_size(uint16_t count, struct DnsResourceRecord *rrlist) {
+uintptr_t get_rr_encoded_size(struct RRVector vec) {
     uintptr_t total = 0;
 
-    for (uint16_t i = 0; i < count; i++) {
-        total += get_label_list_size(rrlist->name) + 10;
-        total += rrlist[i].rdlength;
+    for (uint16_t i = 0; i < vec.size; i++) {
+        total += get_label_list_size(vec.ptr[i].name) + 10;
+        total += vec.ptr[i].rdlength;
     }
 
     return total;

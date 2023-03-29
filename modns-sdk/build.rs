@@ -10,6 +10,7 @@ fn main() {
     let defaults = cbindgen::Builder::new()
         .with_crate(&crate_dir)
         .with_namespace("modns_sdk")
+        .include_item("_init_modns_sdk")
         .with_include_guard("MODNS_SDK_H")
         .with_autogen_warning("/* Generated using cbindgen from the modns-sdk rust crate. Do not modify manually */");
 

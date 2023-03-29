@@ -1,4 +1,5 @@
 use std::{path::PathBuf, collections::BTreeMap};
+use anyhow::{Context, Result};
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
@@ -41,6 +42,7 @@ pub struct PluginMetadata {
 }
 
 impl PluginMetadata {
+
     pub fn friendly_name(&self) -> &str {
         self.friendly_name.as_ref()
     }
@@ -101,16 +103,14 @@ impl DnsPlugin {
 
 impl PluginManager {
     pub fn list_metadata(&self) -> BTreeMap<Uuid, PluginMetadata> {
-        let mut metadata_map = BTreeMap::new();
-
-        for (id, p) in self.plugins().iter() {
-            metadata_map.insert(id.clone(), p.metadata());
-        };
-
-        metadata_map
+        self.plugins().iter().map(|(id, p)| {
+            (id.clone(), p.metadata())
+        }).collect()
     }
 
-    pub fn get_metadata(&self, id: &Uuid) -> Option<PluginMetadata> {
-        self.plugins().get(id).and_then(|p| Some(p.metadata()))
+    pub fn get_metadata(&self, id: &Uuid) -> Result<PluginMetadata> {
+        Ok(self.plugins().get(id)
+            .context("Plugin with uuid {id} was not found")?
+            .metadata())
     }
 }
