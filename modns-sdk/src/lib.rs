@@ -54,7 +54,7 @@ pub fn impl_plugin_teardown(plugin_state: *mut c_void);
 ///
 /// Notes:
 ///
-/// The server makes no guaruntees about the content of `message`. When decoding
+/// The server makes no guarantees about the content of `message`. When decoding
 /// a request, be sure to specify a value for all fields of the response, and
 /// ensure all vector fields are of the proper size.
 ///
@@ -87,7 +87,7 @@ pub fn impl_listener_sync_encode_resp(
 ///
 /// Notes:
 ///
-/// The server makes no guaruntees about the contents of `resp`. When responding to a
+/// The server makes no guarantees about the contents of `resp`. When responding to a
 /// request, always specify a value for all fields of the response, and ensure all
 /// vector fields are of the proper size.
 ///
@@ -107,7 +107,7 @@ pub fn impl_intercept_req(
 ///
 /// Notes:
 ///
-/// The server makes no guaruntees about the contents of `resp`. When responding to a
+/// The server makes no guarantees about the contents of `resp`. When responding to a
 /// request, always specify a value for all fields of the response, and ensure all
 /// vector fields are of the proper size.
 pub fn impl_resolver_sync_resolve_req(
@@ -124,7 +124,7 @@ pub fn impl_resolver_sync_resolve_req(
 ///
 /// Notes:
 ///
-/// The server makes no guaruntees about the contents of `resp`. When responding to a
+/// The server makes no guarantees about the contents of `resp`. When responding to a
 /// request, always specify a value for all fields of the response, and ensure all
 /// vector fields are of the proper size.
 ///
