@@ -1,4 +1,6 @@
 
+export SDK_LINK_ARGS = -I${CURDIR}/modns-sdk/headers -L${CURDIR}/target/debug -lmodns_sdk
+
 all: sdk server plugins
 
 .PHONY: server
@@ -13,13 +15,16 @@ sdk: $(wildcard $(CURDIR)/modns-sdk/src/*)
 	cargo build -p modns-sdk
 
 .PHONY: plugins
-export SDK_LINK_ARGS = -I${CURDIR}/modns-sdk/headers -L${CURDIR}/target/debug -lmodns_sdk
 plugins: sdk
 	$(MAKE) -C plugins/base_listener/
 	$(MAKE) -C plugins/base_resolver/
 
+.PHONY: test-plugins
+test-plugins: sdk
+	$(MAKE) -C server/tests/test-plugin/
+
 .PHONY: test
-test: all
+test: sdk plugins test-plugins
 	cargo test
 
 .PHONY: clean
