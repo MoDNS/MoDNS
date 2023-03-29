@@ -1,4 +1,6 @@
 import { ResponsiveBar } from "@nivo/bar";
+// import { getThemeStorage } from './scripts/getsetLocalStorage';
+// import { useTheme } from '@mui/material';
 // import { mockDataFruits as data } from "../../Tmp/TempData.js"
 
 const HorizontalBarChart = ({ data }) => {
@@ -104,6 +106,39 @@ const HorizontalBarChart = ({ data }) => {
       ariaLabel="Nivo bar chart demo"
       barAriaLabel={function (e) {
         return e.id + ": " + e.formattedValue + " in country: " + e.indexValue;
+      }}
+      // This is for themeing the stuff
+      theme={{
+        axis: {
+          ticks: {
+            line: {
+              stroke: "black"
+            },
+            text: {
+              fill: "white",
+              fontSize: "8pt"
+            }
+          },
+          legend: {
+            text: {
+              fill: "white",
+              fontSize: "8pt"
+            }
+          }
+        },
+        grid: {
+          line: {
+            stroke: "black",
+            strokeWidth: 2,
+            strokeDasharray: "4 4"
+          }
+        },
+        legends:{
+          text: {
+            fill: "white",
+            fontSize: "12pt"
+          }
+        },
       }}
     />
   );

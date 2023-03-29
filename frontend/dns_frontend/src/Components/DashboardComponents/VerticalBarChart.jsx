@@ -104,6 +104,39 @@ const VerticalBarchart = ({ data }) => {
       barAriaLabel={function (e) {
         return e.id + ": " + e.formattedValue + " in country: " + e.indexValue;
       }}
+      // This is for themeing the stuff
+      theme={{
+        axis: {
+          ticks: {
+            line: {
+              stroke: "black"
+            },
+            text: {
+              fill: "white",
+              fontSize: "8pt"
+            }
+          },
+          legend: {
+            text: {
+              fill: "white",
+              fontSize: "8pt"
+            }
+          }
+        },
+        grid: {
+          line: {
+            stroke: "black",
+            strokeWidth: 2,
+            strokeDasharray: "4 4"
+          }
+        },
+        legends:{
+          text: {
+            fill: "white",
+            fontSize: "12pt"
+          }
+        },
+      }}
     />
   );
 };

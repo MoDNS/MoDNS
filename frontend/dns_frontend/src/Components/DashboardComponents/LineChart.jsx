@@ -1,6 +1,9 @@
 import { ResponsiveLine } from "@nivo/line";
+import { useTheme } from '@mui/material';
 
 const LineChart = ({ data }) => {
+  const theme = useTheme();
+
   return (
     <ResponsiveLine
       data={data}
@@ -24,6 +27,8 @@ const LineChart = ({ data }) => {
         legend: "transportation",
         legendOffset: 36,
         legendPosition: "middle",
+        fill: "white",
+        fontSize: "12pt"
       }}
       axisLeft={{
         orient: "left",
@@ -54,7 +59,7 @@ const LineChart = ({ data }) => {
           itemOpacity: 0.75,
           symbolSize: 12,
           symbolShape: "circle",
-          symbolBorderColor: "rgba(0, 0, 0, .5)",
+          symbolBorderColor: theme.palette.text,
           effects: [
             {
               on: "hover",
@@ -66,6 +71,39 @@ const LineChart = ({ data }) => {
           ],
         },
       ]}
+      // This is for themeing the stuff
+      theme={{
+        axis: {
+          ticks: {
+            line: {
+              stroke: "black"
+            },
+            text: {
+              fill: "white",
+              fontSize: "8pt"
+            }
+          },
+          legend: {
+            text: {
+              fill: "white",
+              fontSize: "8pt"
+            }
+          }
+        },
+        grid: {
+          line: {
+            stroke: "black",
+            strokeWidth: 2,
+            strokeDasharray: "4 4"
+          }
+        },
+        legends:{
+          text: {
+            fill: "white",
+            fontSize: "12pt"
+          }
+        },
+      }}
     />
   );
 };
