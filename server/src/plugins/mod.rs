@@ -1,4 +1,7 @@
+
 use std::ffi::c_void;
+
+use modns_sdk::types::ffi;
 
 pub mod manager;
 pub mod plugin;
@@ -11,19 +14,39 @@ type SetupFn = unsafe extern "C" fn() -> *mut c_void;
 type TeardownFn = unsafe extern "C" fn(*mut c_void);
 
 type ListenerDecodeFn = unsafe extern "C" fn(
-    modns_sdk::types::ffi::ByteVector,
-    *mut modns_sdk::types::ffi::DnsMessage,
+    ffi::ByteVector,
+    *mut ffi::DnsMessage,
     *mut c_void
 ) -> u8;
 
 type ListenerEncodeFn = unsafe extern "C" fn(
-    *const modns_sdk::types::ffi::DnsMessage,
-    *mut modns_sdk::types::ffi::ByteVector,
+    *const ffi::DnsMessage,
+    *mut ffi::ByteVector,
+    *mut c_void
+) -> u8;
+
+type InterceptorFn = unsafe extern "C" fn(
+    *const ffi::DnsMessage,
+    *mut ffi::DnsMessage,
     *mut c_void
 ) -> u8;
 
 type ResolverFn = unsafe extern "C" fn(
-    *const modns_sdk::types::ffi::DnsMessage,
-    *mut modns_sdk::types::ffi::DnsMessage,
+    *const ffi::DnsMessage,
+    *mut ffi::DnsMessage,
+    *mut c_void
+) -> u8;
+
+type ValidatorFn = unsafe extern "C" fn(
+    *const ffi::DnsMessage,
+    *const ffi::DnsMessage,
+    *mut ffi::DnsMessage,
+    *mut c_void
+) -> u8;
+
+type InspectorFn = unsafe extern "C" fn(
+    *const ffi::DnsMessage,
+    *const ffi::DnsMessage,
+    u8,
     *mut c_void
 ) -> u8;
