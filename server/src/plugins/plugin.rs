@@ -1,5 +1,5 @@
 
-use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn, SdkInitFn, InterceptorFn, ValidatorFn, InspectorFn};
+use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn, SdkInitFn, InterceptorFn, ValidatorFn, InspectorFn, ResponseSource};
 use modns_sdk::types::conversion::FfiVector;
 use modns_sdk::{types::ffi, PluginState};
 
@@ -34,12 +34,14 @@ pub enum PluginLoaderError {
     SDKInitError,
 }
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[derive(Error, Debug)]
 pub enum PluginExecutorError {
     #[error("Plugin returned error code {0}")]
     ErrorCode(u8),
     #[error("Required module implementation was not found for a plugin")]
     DoesNotImplement,
+    #[error("Plugin library returned an error")]
+    LibraryError(#[from] libloading::Error),
     #[error("No plugins are enabled that implement the required module")]
     NoneEnabled,
     #[error("Got an error while converting the plugin's output: {0:?}")]
@@ -57,6 +59,16 @@ impl From<u8> for PluginExecutorError {
 impl From<modns_sdk::FfiConversionError> for PluginExecutorError{
     fn from(value: modns_sdk::FfiConversionError) -> Self {
         Self::InvalidReturnValue(value)
+    }
+}
+
+impl PluginExecutorError {
+    pub fn error_code(&self) -> Option<u8> {
+        if let Self::ErrorCode(e) = self {
+            Some(*e)
+        } else {
+            None
+        }
     }
 }
 
@@ -185,6 +197,25 @@ impl DnsPlugin {
 
     }
 
+    pub fn check_intercept(&self, req: &Box<ffi::DnsMessage>) -> Result<Option<Box<ffi::DnsMessage>>, PluginExecutorError> {
+
+        let f = check_sym::<InterceptorFn>(&self.lib, INTERCEPTOR_FN_NAME)?
+        .ok_or(PluginExecutorError::DoesNotImplement)?;
+
+        let mut resp = Box::new(ffi::DnsMessage::default());
+
+        let rc = unsafe{
+            f(req.as_ref(), resp.as_mut(), self.state_ptr.into())
+        };
+
+        match rc {
+            0 => Ok(None),
+            1 => Ok(Some(resp)),
+            e => Err(PluginExecutorError::ErrorCode(e))
+        }
+
+    }
+
     pub fn resolve(&self, req: Box<ffi::DnsMessage>) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
 
         let f: Symbol<ResolverFn> = unsafe { self.lib.get(RESOLVER_FN_NAME) }
@@ -200,6 +231,42 @@ impl DnsPlugin {
             Ok(resp)
         } else {
             Err(rc.into())
+        }
+
+    }
+
+    pub fn validate(&self, req: &Box<ffi::DnsMessage>, resp: &Box<ffi::DnsMessage>) -> Result<Option<Box<ffi::DnsMessage>>, PluginExecutorError> {
+
+        let f = check_sym::<ValidatorFn>(&self.lib, INTERCEPTOR_FN_NAME)?
+        .ok_or(PluginExecutorError::DoesNotImplement)?;
+
+        let mut err_resp = Box::new(ffi::DnsMessage::default());
+
+        let rc = unsafe{
+            f(req.as_ref(), resp.as_ref(), err_resp.as_mut(), self.state_ptr.into())
+        };
+
+        match rc {
+            0 => Ok(None),
+            1 => Ok(Some(err_resp)),
+            e => Err(PluginExecutorError::ErrorCode(e))
+        }
+
+    }
+
+    pub fn inspect(&self, req: &Box<ffi::DnsMessage>, resp: &Box<ffi::DnsMessage>, source: ResponseSource) -> Result<(), PluginExecutorError> {
+
+        let f = check_sym::<InspectorFn>(&self.lib, INTERCEPTOR_FN_NAME)?
+        .ok_or(PluginExecutorError::DoesNotImplement)?;
+
+        let rc = unsafe{
+            f(req.as_ref(), resp.as_ref(), source as u8, self.state_ptr.into())
+        };
+
+        if rc != 0 {
+            Err(PluginExecutorError::ErrorCode(rc))
+        } else {
+            Ok(())
         }
 
     }

@@ -7,6 +7,13 @@ pub mod manager;
 pub mod plugin;
 pub mod metadata;
 
+#[repr(u8)]
+pub enum ResponseSource {
+    Interceptor = 0,
+    Resolver,
+    Validator
+}
+
 type SdkInitFn = extern "Rust" fn(&str, &'static dyn log::Log) -> Result<(), log::SetLoggerError>;
 
 type SetupFn = unsafe extern "C" fn() -> *mut c_void;
