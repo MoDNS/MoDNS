@@ -16,11 +16,7 @@ use crate::plugins::manager::PluginManager;
 #[derive(Deserialize)]
 pub struct PluginQuery
 {
-    is_listener: bool,
-    is_interceptor: bool,
-    is_resolver: bool,
-    is_validator: bool,
-    is_inspector: bool,
+    module: Option<String>,
 }
 
 pub fn root_redirect() -> BoxedFilter<(impl Reply,)> {
@@ -38,22 +34,45 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             .then(move |pq: PluginQuery| {
             let pm = metadata_pm.clone();
             log::trace!("Plugin metadata list requested");
-            get_metadata_list(pm, pq.is_inspector, pq.is_interceptor, pq.is_listener, pq.is_resolver, pq.is_validator)
+            get_metadata_list(pm, pq.module)
             })
         )
     .boxed()
 }
 
-pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, is_inspector: bool, is_interceptor: bool, is_listener: bool, is_resolver: bool, is_validator: bool) -> impl Reply {
+pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, module: Option<String>) -> impl Reply {
     let metadata = pm.read().await.list_metadata();
     let mut reply: BTreeMap<Uuid, PluginMetadata> = BTreeMap::new();
     
     for plugin in metadata
     {
         let uuid = plugin.0;
-        let data = pm.read().await.get_plugin_interceptor(&uuid);
+
+        let word = String::from("interceptor");
+        
+        match module.as_ref()
+        {
+            Some(word) =>
+            {
+                if pm.read().await.get_plugin_interceptor(&uuid).unwrap()
+                {
+                    reply.insert(uuid, plugin.1);
+                }
+            }
+
+            None =>
+            {
+                reply = pm.read().await.list_metadata();
+                break;
+            }
+
+            _ =>
+            {
+                log::trace!("Plugin not found\nProceeding...")
+            }
+        }
+
         //log::trace!("{test:#?}");
-        reply.insert(uuid, plugin.1);
     }
     
     // let test: Vec<PluginMetadata> = metadata.into_iter().map(|x| x.1 ).collect();
@@ -66,9 +85,9 @@ pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, is_inspector: boo
     
     //log::trace!("Sending plugin metadata: {metadata:#?}");
     
-    let metadata = pm.read().await.list_metadata();
+    // let metadata = pm.read().await.list_metadata();
 
-    let json = json(&metadata);
+    let json = json(&reply);
 
     return json
 }
