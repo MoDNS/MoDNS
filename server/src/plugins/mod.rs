@@ -8,6 +8,7 @@ pub mod plugin;
 pub mod metadata;
 
 #[repr(u8)]
+#[derive(Debug, Clone, Copy)]
 pub enum ResponseSource {
     Interceptor = 0,
     Resolver,

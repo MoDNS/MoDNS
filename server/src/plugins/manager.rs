@@ -7,12 +7,16 @@ use anyhow::{Context, Result, bail};
 use modns_sdk::types::ffi;
 use uuid::Uuid;
 
+use super::ResponseSource;
 use super::plugin::{DnsPlugin, PluginExecutorError};
 
 pub struct PluginManager {
     plugins: BTreeMap<uuid::Uuid, Arc<DnsPlugin>>,
     listener: Weak<DnsPlugin>,
-    resolver: Weak<DnsPlugin>
+    interceptors: Vec<Weak<DnsPlugin>>,
+    resolver: Weak<DnsPlugin>,
+    validators: Vec<Weak<DnsPlugin>>,
+    inspectors: Vec<Weak<DnsPlugin>>,
 }
 
 impl PluginManager {
@@ -20,7 +24,10 @@ impl PluginManager {
         Self {
             plugins: BTreeMap::new(),
             listener: Weak::new(),
-            resolver: Weak::new()
+            interceptors: Vec::new(),
+            resolver: Weak::new(),
+            validators: Vec::new(),
+            inspectors: Vec::new(),
         }
     }
 
@@ -213,7 +220,7 @@ impl PluginManager {
     /// minimum number of enabled plugins to resolve DNS requests
     /// (i.e. at least a Listener & Resolver)
     /// 
-    pub fn validate(&self, return_err: bool) -> Result<()> {
+    pub fn is_valid_state(&self, return_err: bool) -> Result<()> {
         let missing_listener = self.listener.strong_count() == 0;
         let missing_resolver = self.resolver.strong_count() == 0;
 
@@ -244,10 +251,79 @@ impl PluginManager {
             .encode(message)
     }
 
+    pub fn poll_interceptors(&self, req: &Box<ffi::DnsMessage>) -> Result<Option<Box<ffi::DnsMessage>>, PluginExecutorError> {
+        
+        for plugin_weakref in &self.interceptors {
+
+            let Some(plugin) = plugin_weakref.upgrade() else {
+                log::error!("An interceptor plugin went missing unexpectedly");
+                continue;
+            };
+
+            match plugin.check_intercept(req) {
+
+                Ok(Some(resp)) => return Ok(Some(resp)),
+
+                Ok(None) => continue,
+
+                Err(e) => {
+                    log::error!("Attempt to poll interceptor plugin `{}` encountered an unrecoverable error: {e}", plugin.friendly_name());
+                    log::debug!("Full error: {e:#?}");
+                    continue;
+                },
+            }
+        }
+
+        Ok(None)
+    }
+
     pub fn resolve(&self, request: Box<ffi::DnsMessage>) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
         self.resolver.upgrade()
             .ok_or(PluginExecutorError::NoneEnabled)?
             .resolve(request)
+    }
+
+    pub fn poll_validators(&self, req: &Box<ffi::DnsMessage>, resp: &Box<ffi::DnsMessage>) -> Result<Option<Box<ffi::DnsMessage>>, PluginExecutorError> {
+
+        for plugin_weakref in &self.validators {
+
+            let Some(plugin) = plugin_weakref.upgrade() else {
+                log::error!("An interceptor plugin went missing unexpectedly");
+                continue;
+            };
+
+            match plugin.validate(req, resp) {
+
+                Ok(Some(resp)) => return Ok(Some(resp)),
+
+                Ok(None) => continue,
+
+                Err(e) => {
+                    log::error!("Attempt to poll validator plugin `{}` encountered an unrecoverable error: {e}", plugin.friendly_name());
+                    log::debug!("Full error: {e:#?}");
+                    continue;
+                },
+            }
+        }
+
+        Ok(None)
+    }
+
+    pub fn notify_inspectors(&self, req: &Box<ffi::DnsMessage>, resp: &Box<ffi::DnsMessage>, source: ResponseSource) {
+
+        for plugin_weakref in &self.inspectors {
+
+            let Some(plugin) = plugin_weakref.upgrade() else {
+                log::error!("An inspector plugin went missing unexpectedly");
+                continue;
+            };
+
+            if let Err(e) = plugin.inspect(req, resp, source) {
+                log::error!("Attempt to notify inspector plugin `{}` encountered an unrecoverable error: {e}", plugin.friendly_name());
+                log::debug!("Full error: {e:#?}");
+                continue;
+            }
+        }
     }
 
     pub fn plugins(&self) -> &BTreeMap<uuid::Uuid, Arc<DnsPlugin>> {
