@@ -271,7 +271,7 @@ impl DnsPlugin {
 
     }
 
-    pub fn load<P: AsRef<OsStr>>(home_dir: P, enable: bool) -> Result<Self, PluginLoaderError> {
+    pub fn load<P: AsRef<OsStr>>(home_dir: P) -> Result<Self, PluginLoaderError> {
 
         let home_dir = PathBuf::from(home_dir.as_ref());
 
@@ -305,18 +305,12 @@ impl DnsPlugin {
 
         let manifest: PluginManifest = serde_yaml::from_str(&manifest_file)?;
 
-        let mut plugin = Self::new(
+        let plugin = Self::new(
             lib, 
             home_dir,
             manifest.friendly_name,
             manifest.description,
         )?;
-
-        if enable {
-            if let Err(e) = plugin.enable() {
-                log::error!("Failed to enable plugin `{log_name}` on startup: {e}");
-            }
-        }
 
         Ok(plugin)
     }

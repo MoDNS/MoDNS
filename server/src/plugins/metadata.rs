@@ -54,10 +54,10 @@ impl DnsPlugin {
             description: self.description().to_owned(),
             home: self.home_dir().to_owned(),
             is_listener: self.is_listener(),
-            is_interceptor: false, // Not implemented
+            is_interceptor: self.is_interceptor(),
             is_resolver: self.is_resolver(),
-            is_validator: false, // Not implemented
-            is_inspector: false, // Not implemented
+            is_validator: self.is_validator(),
+            is_inspector: self.is_inspector(),
             intercept_position: None,
             enabled: self.enabled(),
         }

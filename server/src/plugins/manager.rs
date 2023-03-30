@@ -36,13 +36,21 @@ impl PluginManager {
 
         let dir = PathBuf::from(dir_path.as_ref()).canonicalize().context("Couldn't canonicalize plugin path")?;
 
-        let plugin = Arc::new(DnsPlugin::load(&dir, enable)?);
+        let plugin = Arc::new(DnsPlugin::load(&dir)?);
 
-        log::info!("Loaded plugin `{}` from directory {}", plugin.friendly_name(), dir.display());
+        let name = plugin.friendly_name().to_owned();
 
-        log::trace!("Metadata for `{}`:\n{:#?}", plugin.friendly_name(), plugin.metadata());
+        log::info!("Loaded plugin `{name}` from directory {}", dir.display());
 
-        self.plugins.insert( id, plugin);
+        log::trace!("Metadata for `{name}`:\n{:#?}", plugin.metadata());
+
+        self.plugins.insert(id, plugin);
+
+        if enable {
+            if let Err(e) = self.enable_plugin(&id) {
+                log::warn!("Failed to initialize plugin `{name}` on load: {e}");
+            };
+        }
 
         Ok(id)
     }
@@ -166,6 +174,18 @@ impl PluginManager {
             self.resolver = Weak::new();
         }
 
+        if plugin.is_interceptor() {
+            self.interceptors.retain(|r| r.as_ptr() != Arc::as_ptr(plugin))
+        };
+
+        if plugin.is_validator() {
+            self.validators.retain(|r| r.as_ptr() != Arc::as_ptr(plugin))
+        };
+
+        if plugin.is_inspector() {
+            self.inspectors.retain(|r| r.as_ptr() != Arc::as_ptr(plugin))
+        }
+
         let rc = Arc::get_mut(plugin)
             .context("Couldn't get mutable reference to plugin")?
             .disable();
@@ -204,7 +224,9 @@ impl PluginManager {
     }
 
     fn place_plugin(&mut self, uuid: &Uuid) -> Result<()> {
-        let plugin = self.plugins.get_mut(&uuid).context("plugin was not found")?;
+
+        let plugin = self.plugins.get(&uuid).context("plugin was not found")?;
+
         if plugin.is_listener() {
             self.listener = Arc::downgrade(plugin);
         }
@@ -212,6 +234,18 @@ impl PluginManager {
         if plugin.is_resolver() {
             self.resolver = Arc::downgrade(plugin);
         };
+
+        if plugin.is_interceptor() {
+            self.interceptors.push(Arc::downgrade(plugin))
+        }
+
+        if plugin.is_validator() {
+            self.validators.push(Arc::downgrade(plugin))
+        }
+
+        if plugin.is_inspector() {
+            self.inspectors.push(Arc::downgrade(plugin))
+        }
 
         Ok(())
     }
@@ -334,7 +368,19 @@ impl PluginManager {
         self.listener.strong_count() > 0
     }
 
+    pub fn num_interceptors(&self) -> usize {
+        self.interceptors.len()
+    }
+
     pub fn has_resolver(&self) -> bool {
         self.resolver.strong_count() > 0
+    }
+
+    pub fn num_inspectors(&self) -> usize {
+        self.inspectors.len()
+    }
+
+    pub fn num_validators(&self) -> usize {
+        self.validators.len()
     }
 }
