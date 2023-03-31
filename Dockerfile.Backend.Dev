@@ -13,4 +13,4 @@ COPY . .
 EXPOSE 8080 
 EXPOSE 5300/udp
 
-ENTRYPOINT [ "cargo", "watch", "--poll", "-w", "server", "-x", "run", "--why" ]
+ENTRYPOINT [ "make", "&&", "cargo", "watch", "--poll", "-w", "server", "-x", "run", "--why" ]

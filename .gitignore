@@ -1,5 +1,5 @@
 /target
 Cargo.lock
 .vscode
-/backend_build
+/backend_build/*
 /modns-data
