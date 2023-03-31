@@ -71,6 +71,7 @@ pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, module: Option<St
                             reply.insert(uuid, plugin.1);
                         }
                     }
+
                     "resolver" =>
                     {
                         if pm.read().await.get_plugin_resolver(&uuid).unwrap()
@@ -79,6 +80,7 @@ pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, module: Option<St
                             reply.insert(uuid, plugin.1);
                         }
                     }
+
                     "validator" =>
                     {
                         if pm.read().await.get_plugin_validator(&uuid).unwrap()
@@ -87,6 +89,7 @@ pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, module: Option<St
                             reply.insert(uuid, plugin.1);
                         }
                     }
+
                     "inspector" =>
                     {
                         if pm.read().await.get_plugin_inspector(&uuid).unwrap()
@@ -110,21 +113,7 @@ pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, module: Option<St
             }
 
         }
-
-        //log::trace!("{test:#?}");
     }
-    
-    // let test: Vec<PluginMetadata> = metadata.into_iter().map(|x| x.1 ).collect();
-    // log::trace!("Testing plugin metadata: {test:#?}");
-    // let test2 = 
-    
-    /*.into_iter().filter(|pm| {
-        1 == 1
-    }).collect::<BTreeMap<Uuid, PluginMetadata>>();*/
-    
-    //log::trace!("Sending plugin metadata: {metadata:#?}");
-    
-    // let metadata = pm.read().await.list_metadata();
 
     let json = json(&reply);
 
