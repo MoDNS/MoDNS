@@ -18,6 +18,7 @@ sdk: $(wildcard $(CURDIR)/modns-sdk/src/*)
 plugins: sdk
 	$(MAKE) -C plugins/base_listener/
 	$(MAKE) -C plugins/base_resolver/
+	$(MAKE) -C plugins/cache/
 
 .PHONY: test-plugins
 test-plugins: sdk
@@ -36,3 +37,4 @@ cargo-clean:
 plugin-clean:
 	$(MAKE) -C plugins/base_listener/ clean
 	$(MAKE) -C plugins/base_resolver/ clean
+	$(MAKE) -C plugins/cache/ clean
