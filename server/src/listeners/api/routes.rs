@@ -46,11 +46,11 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             log::trace!("Plugin metadata list requested");
             get_metadata_list(pm, pq)
         })
-            .or(warp::path!("enable").and(warp::query::<EnableQuery>())
-            .then(move |eq: EnableQuery| {
-                let pm = enable_pm.clone();
-                log::trace!("Plugin enabled status change requested");
-                set_plugin_stat(pm, eq)
+        .or(warp::path!("plugins" / "enable").and(warp::query::<EnableQuery>())
+        .then(move |eq: EnableQuery| {
+            let pm = enable_pm.clone();
+            log::trace!("Plugin enabled status change requested");
+            set_plugin_stat(pm, eq)
             })
         )
     ).boxed()
