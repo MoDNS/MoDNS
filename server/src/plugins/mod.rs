@@ -6,6 +6,7 @@ use modns_sdk::types::ffi;
 pub mod manager;
 pub mod plugin;
 pub mod metadata;
+pub mod handler;
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]

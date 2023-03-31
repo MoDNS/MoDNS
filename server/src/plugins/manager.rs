@@ -311,7 +311,7 @@ impl PluginManager {
         Ok(None)
     }
 
-    pub fn resolve(&self, request: Box<ffi::DnsMessage>) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
+    pub fn resolve(&self, request: &Box<ffi::DnsMessage>) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
         self.resolver.upgrade()
             .ok_or(PluginExecutorError::NoneEnabled)?
             .resolve(request)

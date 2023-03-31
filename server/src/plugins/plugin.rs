@@ -216,7 +216,7 @@ impl DnsPlugin {
 
     }
 
-    pub fn resolve(&self, req: Box<ffi::DnsMessage>) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
+    pub fn resolve(&self, req: &Box<ffi::DnsMessage>) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
 
         let f: Symbol<ResolverFn> = unsafe { self.lib.get(RESOLVER_FN_NAME) }
         .or(Err(PluginExecutorError::DoesNotImplement))?;
