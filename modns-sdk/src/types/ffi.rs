@@ -1,24 +1,6 @@
-use std::os::raw::c_char;
 
 #[repr(C)]
-#[derive(Debug, PartialEq, Eq)]
-pub struct DnsHeader {
-    pub id: u16,
-    pub is_response: bool,
-    pub opcode: DnsOpcode,
-    pub authoritative_answer: bool,
-    pub truncation: bool,
-    pub recursion_desired: bool,
-    pub recursion_available: bool,
-    pub response_code: DnsResponseCode,
-    pub qdcount: u16,
-    pub ancount: u16,
-    pub nscount: u16,
-    pub arcount: u16
-}
-
-#[repr(C)]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DnsOpcode {
     Query = 0,
     InverseQuery,
@@ -29,7 +11,7 @@ pub enum DnsOpcode {
 }
 
 #[repr(C)]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DnsResponseCode {
     NoError,
     FormatError,
@@ -111,11 +93,35 @@ impl Default for DnsResourceData {
 #[repr(C)]
 #[derive(Debug)]
 pub struct DnsMessage {
-    pub header: DnsHeader,
-    pub question: *mut DnsQuestion,
-    pub answer: *mut DnsResourceRecord,
-    pub authority: *mut DnsResourceRecord,
-    pub additional: *mut DnsResourceRecord
+    pub id: u16,
+    pub is_response: bool,
+    pub opcode: DnsOpcode,
+    pub authoritative_answer: bool,
+    pub truncation: bool,
+    pub recursion_desired: bool,
+    pub recursion_available: bool,
+    pub response_code: DnsResponseCode,
+    pub questions: QuestionVector,
+    pub answers: RRVector,
+    pub authorities: RRVector,
+    pub additional: RRVector
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DnsHeader {
+    pub id: u16,
+    pub is_response: bool,
+    pub opcode: DnsOpcode,
+    pub authoritative_answer: bool,
+    pub truncation: bool,
+    pub recursion_desired: bool,
+    pub recursion_available: bool,
+    pub response_code: DnsResponseCode,
+    pub qdcount: usize,
+    pub ancount: usize,
+    pub nscount: usize,
+    pub arcount: usize
 }
 
 unsafe impl Send for DnsMessage {}
@@ -124,7 +130,7 @@ impl DnsMessage {
     pub fn with_error_code(code: u8) -> Self {
         let mut rv = Self::default();
 
-        rv.header.response_code = match code {
+        rv.response_code = match code {
             0 => DnsResponseCode::NoError,
             1 => DnsResponseCode::FormatError,
             2 => DnsResponseCode::ServerFailure,
@@ -136,9 +142,27 @@ impl DnsMessage {
 
         rv
     }
+
+    pub fn header(&self) -> DnsHeader {
+        DnsHeader {
+            id: self.id,
+            is_response: self.is_response,
+            opcode: self.opcode,
+            authoritative_answer: self.authoritative_answer,
+            truncation: self.truncation,
+            recursion_desired: self.recursion_desired,
+            recursion_available: self.recursion_available,
+            response_code: self.response_code,
+            qdcount: self.questions.size,
+            ancount: self.answers.size,
+            nscount: self.authorities.size,
+            arcount: self.additional.size,
+        }
+    }
+
 }
 
-impl Default for DnsHeader {
+impl Default for DnsMessage {
     fn default() -> Self {
         Self {
             id: 0,
@@ -149,41 +173,30 @@ impl Default for DnsHeader {
             recursion_desired: false,
             recursion_available: false,
             response_code: DnsResponseCode::ServerFailure,
-            qdcount: 0,
-            ancount: 0,
-            nscount: 0,
-            arcount: 0
+            questions: QuestionVector::default(),
+            answers: RRVector::default(),
+            authorities: RRVector::default(),
+            additional: RRVector::default()
         }
     }
-}
-
-impl Default for DnsMessage {
-    fn default() -> Self {
-        Self {
-            header: Default::default(),
-            question: std::ptr::null_mut(),
-            answer: std::ptr::null_mut(),
-            authority: std::ptr::null_mut(),
-            additional: std::ptr::null_mut()
-        }
-    }
-}
-
-#[repr(C)]
-#[derive(Debug)]
-pub enum SectionToAdd {
-    Question,
-    Answer,
-    Authority,
-    Additional
 }
 
 #[repr(C)]
 #[derive(Debug)]
 pub struct ByteVector {
-    pub ptr: *mut c_char,
+    pub ptr: *mut u8,
     pub size: usize,
     pub capacity: usize
+}
+
+impl Default for ByteVector {
+    fn default() -> Self {
+        Self {
+            ptr: std::ptr::null_mut(),
+            size: 0,
+            capacity: 0
+        }
+    }
 }
 
 #[repr(C)]
@@ -195,6 +208,42 @@ pub struct BytePtrVector {
 }
 
 impl Default for BytePtrVector {
+    fn default() -> Self {
+        Self {
+            ptr: std::ptr::null_mut(),
+            size: 0,
+            capacity: 0
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct QuestionVector {
+    pub ptr: *mut DnsQuestion,
+    pub size: usize,
+    pub capacity: usize
+}
+
+impl Default for QuestionVector {
+    fn default() -> Self {
+        Self {
+            ptr: std::ptr::null_mut(),
+            size: 0,
+            capacity: 0
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct RRVector {
+    pub ptr: *mut DnsResourceRecord,
+    pub size: usize,
+    pub capacity: usize
+}
+
+impl Default for RRVector {
     fn default() -> Self {
         Self {
             ptr: std::ptr::null_mut(),

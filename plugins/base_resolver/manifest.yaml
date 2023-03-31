@@ -1,0 +1,7 @@
+
+friendly_name: Base DNS Resolver
+
+description: > 
+  Default DNS resolver included with the MoDNS server.
+
+  Forwards any unresolved DNS requests to 8.8.8.8 using unencrypted DNS.

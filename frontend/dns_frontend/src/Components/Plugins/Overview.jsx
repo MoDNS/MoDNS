@@ -2,7 +2,7 @@ import React from 'react';
 import { PropTypes } from 'prop-types';
 import PluginOverview from '../PluginOverview';
 
-const Overview = ({ togglePlugin, pluginStates, numInterceptors, pluginList, setPluginLists, interceptorOrderDict }) => {
+const Overview = ({ pluginDict, numInterceptors, pluginsEnabledDict, togglePlugin, interceptorUuidOrder, setInterceptOrder }) => {
 
     return (
         <div 
@@ -15,24 +15,26 @@ const Overview = ({ togglePlugin, pluginStates, numInterceptors, pluginList, set
             }}
         >
             {
-                pluginList.map((plugin, index) => {
-                    return (
-                        <PluginOverview 
-                            key={index} 
-                            // plugin info
-                            uuid={plugin.uuid} 
-                            friendlyName={plugin.friendly_name} 
-                            description={plugin.description} 
-                            home={plugin.home} 
-                            modules={plugin.modules} 
-                            interceptPosition={ interceptorOrderDict[plugin.uuid] } 
-                            pluginState={pluginStates[plugin.uuid]}         // plugin state dict decoded into state for this individual plugin
-                            togglePlugin={togglePlugin}
-                            numInterceptors={numInterceptors}
-                            setPluginLists={setPluginLists}
-                        />
-                    )
-                })
+                pluginDict && Object.keys(pluginDict).map((key, index) => (
+                    <PluginOverview 
+                        key={index} 
+                        // plugin info
+                        uuid={key}
+                        friendlyName={pluginDict[key].friendly_name} 
+                        description={pluginDict[key].description} 
+                        home={pluginDict[key].home} 
+                        is_listener={pluginDict[key].is_listener}
+                        is_interceptor={pluginDict[key].is_interceptor}
+                        is_resolver={pluginDict[key].is_resolver}
+                        is_validator={pluginDict[key].is_validator}
+                        is_inspector={pluginDict[key].is_inspector}
+                        interceptPosition={ interceptorUuidOrder.includes(key) ? interceptorUuidOrder.indexOf(key) + 1 : null }
+                        setInterceptOrder={setInterceptOrder}
+                        numInterceptors={numInterceptors}
+                        pluginState={pluginsEnabledDict[key]}
+                        togglePlugin={togglePlugin}
+                    />
+                ))
             }
         </div>
     );
@@ -42,10 +44,10 @@ export default Overview;
 
 
 Overview.propTypes = {
-    togglePlugin: PropTypes.func.isRequired,            // function to enable / disable a plugin
-    pluginStates: PropTypes.object.isRequired,          // dictionary of enabled/disabled states of all plugins installed
-    numInterceptors: PropTypes.number,                  // total number of interceptor plugins installed
-    pluginList: PropTypes.array.isRequired,             // list of all plugins to display
-    setPluginLists: PropTypes.func.isRequired,          // reorder plugins that allow drag n drop
-    interceptorOrderDict: PropTypes.object.isRequired,  // dictionary of intercept orders based on uuid
+    pluginDict: PropTypes.object.isRequired,                // Dictionary of all Plugins by uuid
+    numInterceptors: PropTypes.number.isRequired,           // Total number of interceptors implemented
+    pluginsEnabledDict: PropTypes.object.isRequired,        // Dictionary of what plugins are enabled
+    togglePlugin: PropTypes.func.isRequired,                // Function to toggle a plugin
+    interceptorUuidOrder: PropTypes.array.isRequired,       // Array for ordering interceptor plugins by uuid
+    setInterceptOrder: PropTypes.func.isRequired,           // Change interceptor plugin order
 };

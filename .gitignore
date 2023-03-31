@@ -2,3 +2,4 @@
 Cargo.lock
 .vscode
 /backend_build
+/modns-data
