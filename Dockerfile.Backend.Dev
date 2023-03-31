@@ -1,7 +1,7 @@
 #Use cargo-chef to build dependencies separately from main binary
-FROM rust:1.67-alpine
+FROM rust:1.67
 
-RUN apk add --no-cache musl-dev
+# RUN apk add --no-cache musl-dev
 
 # create Rust-based backend server working directory
 WORKDIR /rust-server
