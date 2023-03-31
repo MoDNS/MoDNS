@@ -242,7 +242,7 @@ Error codes can be determined by plugin, or `404 Not Found` by default
 
 Endpoint: `POST /api/plugins/command?uuid=<plugin uuid>&command=<string>`
 
-CLI: `modns plugin command <name|uuid> <command>`
+CLI: `modns command <name|uuid> <command>`
 
 Pass a command to a plugin. Plugin must implement a handler function
 
