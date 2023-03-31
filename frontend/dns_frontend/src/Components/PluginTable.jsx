@@ -1,9 +1,9 @@
 import { Table, TableBody, TableContainer } from '@mui/material';
 import PluginTableRow from './PluginTableRow';
-import { PropTypes } from 'prop-types';
 import { useRef } from 'react';
+import { PropTypes } from 'prop-types';
 
-const PluginTable = ({ pluginStates, togglePlugin, dragNDrop, pluginList, setPluginLists, listType, numInterceptors, interceptorOrderDict }) => {
+const PluginTable = ({ dragNDrop, pluginDict, numInterceptors, pluginsEnabledDict, togglePlugin, interceptorUuidOrder, setInterceptOrder, module }) => {
 
     const dragItem = useRef();
     const dragOverItem = useRef();
@@ -11,17 +11,17 @@ const PluginTable = ({ pluginStates, togglePlugin, dragNDrop, pluginList, setPlu
     const dragStart = (event, position) => {
         event.dataTransfer.effectAllowed = 'move';
         dragItem.current = position;
-      };
-    
-      const dragEnter = (event, position) => {
+    };
+
+    const dragEnter = (event, position) => {
         event.preventDefault();
         dragOverItem.current = position;
-      };
-    
-      const dragDrop = (event) => {
+    };
+
+    const dragDrop = (event) => {
         event.preventDefault();
-        setPluginLists(listType, dragItem.current, dragOverItem.current);
-      };
+        setInterceptOrder(dragItem.current, dragOverItem.current);
+    };
 
     return (
         <div>
@@ -29,31 +29,36 @@ const PluginTable = ({ pluginStates, togglePlugin, dragNDrop, pluginList, setPlu
                 <Table >
                     <TableBody >
                         {
-                            pluginList && pluginList.map((plugin, index) => (
+                            (module === 'interceptor' ? interceptorUuidOrder : Object.keys(pluginDict)).map((key, index) => (
                                 <PluginTableRow 
                                     key={index} 
                                     // plugin elements
-                                    uuid={plugin.uuid} 
-                                    friendlyName={plugin.friendly_name} 
-                                    description={plugin.description} 
-                                    home={plugin.home} 
-                                    modules={plugin.modules} 
-                                    interceptPosition={ plugin.uuid in interceptorOrderDict ? interceptorOrderDict[plugin.uuid] : null}
-                                    numInterceptors={numInterceptors}
+                                    uuid={key} 
+                                    friendlyName={pluginDict[key].friendly_name} 
+                                    description={pluginDict[key].description} 
+                                    home={pluginDict[key].home} 
+                                    is_listener={pluginDict[key].is_listener}
+                                    is_interceptor={pluginDict[key].is_interceptor}
+                                    is_resolver={pluginDict[key].is_resolver}
+                                    is_validator={pluginDict[key].is_validator}
+                                    is_inspector={pluginDict[key].is_inspector}
                                     
-                                    pluginState={pluginStates[plugin.uuid]}         // plugin state dict decoded into state for this individual plugin
-                                    togglePlugin={togglePlugin}                     // toggle plugin function passed down
-
-                                    dragNDrop={dragNDrop}                           // enables dragging and dropping of rows
+                                    
+                                    pluginState={pluginsEnabledDict[key]}
+                                    togglePlugin={togglePlugin}
+                                    
+                                    interceptPosition={ interceptorUuidOrder.includes(key) ? interceptorUuidOrder.indexOf(key) + 1 : null }
+                                    numInterceptors={numInterceptors}
+                                    setInterceptOrder={setInterceptOrder}
+                                    
+                                    dragNDrop={dragNDrop}                   // enables dragging and dropping of rows
                                     index={index}
                                     dragStart={dragStart}
                                     dragEnter={dragEnter}
                                     dragDrop={dragDrop}
-
-                                    setPluginLists={setPluginLists}
-
-                                />
-                            ))
+                                    
+                                    />
+                                    ))
                         }
                     </TableBody>
                 </Table>
@@ -68,16 +73,16 @@ export default PluginTable;
 
 
 PluginTable.propTypes = {
-    pluginStates: PropTypes.object.isRequired,          // enabled / disabled state of plugin
-    togglePlugin: PropTypes.func.isRequired,            // function to enable / disable a plugin
-    dragNDrop: PropTypes.bool,                          // if table should implement Drag and Drop Features
-    pluginList: PropTypes.array.isRequired,             // list of plugins to display
-    setPluginLists: PropTypes.func.isRequired,          // function to change the order displayed in the table
-    listType: PropTypes.string.isRequired,              // what type of modules are in this table
-    numInterceptors: PropTypes.number,                  // total number of interceptor plugins installed
-    interceptorOrderDict: PropTypes.object.isRequired,  // dictionary of intercept order based on uuid
+    dragNDrop: PropTypes.bool,
+    pluginDict: PropTypes.object.isRequired,                // Dictionary of all Plugins by uuid
+    numInterceptors: PropTypes.number.isRequired,           // Total number of interceptors implemented
+    pluginsEnabledDict: PropTypes.object.isRequired,        // Dictionary of what plugins are enabled
+    togglePlugin: PropTypes.func.isRequired,                // Function to toggle a plugin
+    interceptorUuidOrder: PropTypes.array.isRequired,       // Array for ordering interceptor plugins by uuid
+    setInterceptOrder: PropTypes.func.isRequired,           // Change interceptor plugin order
+    module: PropTypes.string.isRequired,                    // What module the table is showing
 };
 
 PluginTable.defaultProps = {
-    dragNDrop: false,                                   // table allows drag n drop or not, default no
+    dragNDrop: false,                                       // Table allows drag n drop or not, default no
 };

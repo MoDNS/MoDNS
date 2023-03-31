@@ -1,15 +1,13 @@
 
-use modns_sdk::ffi;
+use modns_sdk::types::ffi;
 
 use anyhow::Result;
 use futures::future::try_join_all;
 use tokio::net::UdpSocket;
 use tokio::sync::{broadcast, RwLock};
-use std::ffi::c_char;
-use std::mem::ManuallyDrop;
 use std::sync::Arc;
 
-use crate::plugins::manager::{PluginManager};
+use crate::plugins::manager::PluginManager;
 use crate::plugins::plugin::PluginExecutorError;
 
 const MAX_DGRAM_SIZE: usize = 65_507;
@@ -115,7 +113,7 @@ async fn handle_request(encoded_req: Vec<u8>, pm_guard: Arc<RwLock<PluginManager
     }).await;
 
     let req_id = if let Ok(Ok(req_message)) = &req {
-        req_message.header.id
+        req_message.id
     } else {
         0
     };
@@ -150,15 +148,5 @@ async fn handle_request(encoded_req: Vec<u8>, pm_guard: Arc<RwLock<PluginManager
         encoder.encode(resp)
     }).await
     .unwrap_or_else(|e| Err(PluginExecutorError::ThreadJoinFailed(e.to_string())))
-    .and_then(|v| Ok(cchar_vec_to_u8(v)))
 }
 
-fn cchar_vec_to_u8(i8vec: Vec<c_char>) -> Vec<u8> {
-    let mut v = ManuallyDrop::new(i8vec);
-
-    let ptr = v.as_mut_ptr() as *mut u8;
-    let length = v.len();
-    let capacity = v.capacity();
-
-    unsafe { Vec::from_raw_parts(ptr, length, capacity) }
-}

@@ -4,7 +4,7 @@ import { PropTypes } from 'prop-types';
 import CloseIcon from '@mui/icons-material/Close';
 import { uninstallPlugin } from '../API/getsetAPI';
 
-const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interceptPosition, numInterceptors, dialogOpen, setDialogStatus, togglePlugin, pluginState, setPluginLists }) => {
+const SettingsDialog = ({ uuid, friendlyName, description, home, is_listener, is_interceptor, is_resolver, is_validator, is_inspector, interceptPosition, setInterceptOrder, numInterceptors, pluginState, togglePlugin, dialogOpen, setDialogStatus, }) => {
     const theme = useTheme();
 
     const [interceptPosState, setInterceptPositionState] = useState(interceptPosition);
@@ -21,7 +21,7 @@ const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interc
 
     const applyInterceptPosition = (e) => {
         if (interceptPosState) {
-            setPluginLists('interceptor', interceptPosition - 1, interceptPosState - 1);
+            setInterceptOrder(interceptPosition - 1, interceptPosState - 1);
             setDialogStatus(false);
         }
     }
@@ -74,7 +74,7 @@ const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interc
                                     <Switch 
                                         sx={{ marginLeft: 3, }}
                                         checked={pluginState}
-                                        onChange={() => togglePlugin(uuid, modules[0])}
+                                        onChange={() => togglePlugin(uuid)}
                                     />
                                 } 
                             />
@@ -114,16 +114,39 @@ const SettingsDialog = ({ uuid, friendlyName, description, home, modules, interc
                                 Modules
                             </Typography>
                             {
-                                modules && modules.map((implementation, index) => {
-                                    return (
-                                        <ListItem
-                                            key={index}
-                                            sx={{ display: 'list-item', paddingY: 0}}
-                                        >
-                                            {implementation.charAt(0).toUpperCase() + implementation.slice(1)}
-                                        </ListItem>
-                                    )
-                                })
+                                is_listener && <ListItem
+                                    sx={{ display: 'list-item', paddingY: 0}}
+                                >
+                                    Listener
+                                </ListItem>
+                            }
+                            {
+                                is_interceptor && <ListItem
+                                    sx={{ display: 'list-item', paddingY: 0}}
+                                >
+                                    Interceptor
+                                </ListItem>
+                            }
+                            {
+                                is_resolver && <ListItem
+                                    sx={{ display: 'list-item', paddingY: 0}}
+                                >
+                                    Resolver
+                                </ListItem>
+                            }
+                            {
+                                is_validator && <ListItem
+                                    sx={{ display: 'list-item', paddingY: 0}}
+                                >
+                                    Validator
+                                </ListItem>
+                            }
+                            {
+                                is_inspector && <ListItem
+                                    sx={{ display: 'list-item', paddingY: 0}}
+                                >
+                                    Inspector
+                                </ListItem>
                             }
                         </div>
                     </div>
@@ -213,16 +236,20 @@ export default SettingsDialog;
 
 
 SettingsDialog.propTypes = {
-    uuid: PropTypes.string.isRequired,                  // plugin attributes
+    uuid: PropTypes.string.isRequired,                  // Plugin info
     friendlyName: PropTypes.string.isRequired,          //
     description: PropTypes.string.isRequired,           //
     home: PropTypes.string.isRequired,                  //
-    modules: PropTypes.array.isRequired,                //
-    interceptPosition: PropTypes.number,                //
-    numInterceptors: PropTypes.number,                  // total number of interceptor plugins installed
-    dialogOpen: PropTypes.bool.isRequired,              // dialog open/close status
-    setDialogStatus: PropTypes.func.isRequired,         // open/close dialog
-    togglePlugin: PropTypes.func.isRequired,            // function to enable / disable a plugin
-    pluginState: PropTypes.bool.isRequired,             // enabled / disabled state of plugin
-    setPluginLists: PropTypes.func.isRequired,          // reorder plugins that allow drag n drop
+    is_listener: PropTypes.bool.isRequired,             //
+    is_interceptor: PropTypes.bool.isRequired,          //
+    is_resolver: PropTypes.bool.isRequired,             //
+    is_validator: PropTypes.bool.isRequired,            //
+    is_inspector: PropTypes.bool.isRequired,            //
+    interceptPosition: PropTypes.number,                // Intercept module position
+    setInterceptOrder: PropTypes.func.isRequired,       // Change interceptor plugin order
+    numInterceptors: PropTypes.number.isRequired,       // Total number of interceptors implemented
+    pluginState: PropTypes.bool.isRequired,             // Plugin enabled or disabled
+    togglePlugin: PropTypes.func.isRequired,            // Function to toggle a plugin
+    dialogOpen: PropTypes.bool.isRequired,              // Dialog open close status
+    setDialogStatus: PropTypes.func.isRequired,         // Function to open and close dialog
 };
