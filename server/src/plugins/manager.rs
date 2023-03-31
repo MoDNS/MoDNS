@@ -206,6 +206,8 @@ impl PluginManager {
             self.resolver = Arc::downgrade(plugin);
         };
 
+        log::trace!("Plugin Manager initialized with: {:#?}", self.list_metadata());
+
         Ok(())
     }
 

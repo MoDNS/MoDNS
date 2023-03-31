@@ -4,11 +4,14 @@ use routes::*;
 
 use warp::Filter;
 use tokio::net::{TcpListener, UnixListener};
-use tokio::sync::broadcast;
+use tokio::sync::{broadcast, RwLock};
 use tokio_stream::wrappers::{UnixListenerStream, TcpListenerStream};
 use futures::{future::join_all, FutureExt};
 use std::fmt::Display;
+use std::sync::Arc;
 use anyhow::Result;
+
+use crate::plugins::manager::PluginManager;
 
 #[derive(Debug)]
 pub enum ApiListener {
@@ -44,8 +47,13 @@ impl Display for ApiListener {
     }
 }
 
-pub async fn listen_api(listeners: Vec<ApiListener>, shutdown_channel: broadcast::Sender<()>) -> Result<()>{
-    let frontend_routes = root_redirect().or(frontend_filter()).with(warp::log("modnsd::listeners::api"));
+pub async fn listen_api(listeners: Vec<ApiListener>, shutdown_channel: broadcast::Sender<()>, pm: Arc<RwLock<PluginManager>>) -> Result<()>{
+    // let pm_arc = Arc::new(RwLock::new(PluginManager::new()));
+    
+    let api_filter = api_filter(pm);
+
+    let frontend_routes = root_redirect().or(frontend_filter()).or(api_filter).with(warp::log("modnsd::listeners::api"));
+
 
     join_all(listeners.into_iter().map(|l| {
         let server = warp::serve(frontend_routes.clone());
