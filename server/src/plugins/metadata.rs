@@ -42,6 +42,43 @@ pub struct PluginMetadata {
 }
 
 impl PluginMetadata {
+
+    pub fn friendly_name(&self) -> &str {
+        self.friendly_name.as_ref()
+    }
+
+    pub fn description(&self) -> &str {
+        self.description.as_ref()
+    }
+
+    pub fn home(&self) -> &PathBuf {
+        &self.home
+    }
+
+    pub fn is_listener(&self) -> bool {
+        self.is_listener
+    }
+
+    pub fn is_interceptor(&self) -> bool {
+        self.is_interceptor
+    }
+
+    pub fn is_resolver(&self) -> bool {
+        self.is_resolver
+    }
+
+    pub fn is_validator(&self) -> bool {
+        self.is_validator
+    }
+
+    pub fn is_inspector(&self) -> bool {
+        self.is_inspector
+    }
+
+    pub fn intercept_position(&self) -> Option<u16> {
+        self.intercept_position
+    }
+
     pub fn enabled(&self) -> bool {
         self.enabled
     }
