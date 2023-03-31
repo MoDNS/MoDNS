@@ -113,5 +113,5 @@ impl PluginManager {
             .context("Plugin with uuid {id} was not found")?
             .metadata())
     }
-    
+
 }
