@@ -8,7 +8,7 @@ const ProgressCircle = ({ progress = ".75", size = "40"}) => {
         <Box
         
             sx={{
-                background: `radial-gradient(red 55%, transparent 56%),
+                background: `radial-gradient(red 0%, transparent 0%),
                     conic-gradient(transparent 0deg ${angle}deg, green ${angle}deg 360deg),
                     blue`,
                 borderRadius : "50%",

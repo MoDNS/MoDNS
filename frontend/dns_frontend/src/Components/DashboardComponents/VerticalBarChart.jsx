@@ -1,7 +1,9 @@
 import { ResponsiveBar } from "@nivo/bar";
 // import { mockDataFruits as data } from "../../Tmp/TempData.js"
+import { useTheme } from "@mui/material";
 
 const VerticalBarchart = ({ data }) => {
+  const theme = useTheme();
   return (
     <ResponsiveBar
       data={data}
@@ -13,6 +15,7 @@ const VerticalBarchart = ({ data }) => {
       valueScale={{ type: "linear" }}
       indexScale={{ type: "band", round: true }}
       colors={{ scheme: "nivo" }}
+      enableLabel= {false}
       defs={[
         {
           id: "dots",
@@ -75,6 +78,7 @@ const VerticalBarchart = ({ data }) => {
         from: "color",
         modifiers: [["darker", 1.6]],
       }}
+      isInteractive={false}
       legends={[
         {
           dataFrom: "keys",
@@ -109,32 +113,32 @@ const VerticalBarchart = ({ data }) => {
         axis: {
           ticks: {
             line: {
-              stroke: "black"
+              stroke: theme.palette.background.default,
             },
             text: {
-              fill: "white",
-              fontSize: "8pt"
-            }
+              fill: theme.palette.text.primary,
+              fontSize: "10pt",
+            },
           },
           legend: {
             text: {
-              fill: "white",
-              fontSize: "8pt"
-            }
-          }
+              fill: theme.palette.text.primary,
+              fontSize: "10pt",
+            },
+          },
         },
         grid: {
           line: {
-            stroke: "black",
+            stroke: theme.palette.primary.dark,
             strokeWidth: 2,
-            strokeDasharray: "4 4"
-          }
+            strokeDasharray: "4 4",
+          },
         },
-        legends:{
+        legends: {
           text: {
-            fill: "white",
-            fontSize: "12pt"
-          }
+            fill: theme.palette.text.primary,
+            fontSize: "10pt",
+          },
         },
       }}
     />

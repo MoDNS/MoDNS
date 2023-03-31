@@ -1,7 +1,9 @@
 import { ResponsivePie } from "@nivo/pie";
 // import { mockDataFruits as data } from "../../Tmp/TempData.js"
+import { useTheme } from "@mui/material";
 
 const PieChart = ({ data }) => {
+  const theme = useTheme();
   return (
     <ResponsivePie
       data={data}
@@ -18,9 +20,10 @@ const PieChart = ({ data }) => {
       arcLinkLabelsSkipAngle={10}
       arcLinkLabelsTextColor="#ffffff"
       arcLinkLabelsThickness={2}
-      arcLinkLabelsColor="black"
+      arcLinkLabelsColor={theme.palette.background.default}
       arcLabelsSkipAngle={10}
       arcLabelsTextColor="black"
+      isInteractive={false}
       defs={[
         {
           id: "dots",
@@ -93,12 +96,12 @@ const PieChart = ({ data }) => {
       ]}
       legends={[
         {
-          anchor: "bottom",
-          direction: "row",
+          anchor: "right",
+          direction: "column",
           justify: false,
           translateX: 0,
           translateY: 56,
-          itemsSpacing: 0,
+          itemsSpacing: 6,
           itemWidth: 100,
           itemHeight: 18,
           itemTextColor: "#FFFFFF",
@@ -121,7 +124,7 @@ const PieChart = ({ data }) => {
         axis: {
           ticks: {
             line: {
-              stroke: "black"
+              stroke: theme.palette.background.default
             },
             text: {
               fill: "white",
@@ -137,7 +140,7 @@ const PieChart = ({ data }) => {
         },
         grid: {
           line: {
-            stroke: "black",
+            stroke: theme.palette.background.default,
             strokeWidth: 2,
             strokeDasharray: "4 4"
           }

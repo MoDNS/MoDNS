@@ -1,5 +1,5 @@
 import { ResponsiveLine } from "@nivo/line";
-import { useTheme } from '@mui/material';
+import { useTheme } from "@mui/material";
 
 const LineChart = ({ data }) => {
   const theme = useTheme();
@@ -28,7 +28,7 @@ const LineChart = ({ data }) => {
         legendOffset: 36,
         legendPosition: "middle",
         fill: "white",
-        fontSize: "12pt"
+        fontSize: "12pt",
       }}
       axisLeft={{
         orient: "left",
@@ -45,6 +45,21 @@ const LineChart = ({ data }) => {
       pointBorderColor={{ from: "serieColor" }}
       pointLabelYOffset={-12}
       useMesh={true}
+      tooltip={({ point }) => {
+        return (
+          <div
+            style={{
+              background: theme.palette.primary.dark,
+              padding: ".13rem .25rem",
+              border: theme.palette.primary.dark,
+              text: theme.palette.primary.text,
+            }}
+          >
+            <div>Time: {point.x}</div>
+            <div>Value: {point.y}</div>
+          </div>
+        );
+      }}
       legends={[
         {
           anchor: "bottom-right",
@@ -76,32 +91,32 @@ const LineChart = ({ data }) => {
         axis: {
           ticks: {
             line: {
-              stroke: "black"
+              stroke: theme.palette.background.default,
             },
             text: {
-              fill: "white",
-              fontSize: "8pt"
-            }
+              fill: theme.palette.text.primary,
+              fontSize: "10pt",
+            },
           },
           legend: {
             text: {
-              fill: "white",
-              fontSize: "8pt"
-            }
-          }
+              fill: theme.palette.text.primary,
+              fontSize: "10pt",
+            },
+          },
         },
         grid: {
           line: {
-            stroke: "black",
+            stroke: theme.palette.primary.dark,
             strokeWidth: 2,
-            strokeDasharray: "4 4"
-          }
+            strokeDasharray: "4 4",
+          },
         },
-        legends:{
+        legends: {
           text: {
-            fill: "white",
-            fontSize: "12pt"
-          }
+            fill: theme.palette.text.primary,
+            fontSize: "10pt",
+          },
         },
       }}
     />

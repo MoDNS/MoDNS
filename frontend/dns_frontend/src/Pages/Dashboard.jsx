@@ -2,7 +2,6 @@ import { Box } from "@mui/material";
 import { Button, IconButton, Typography } from "@mui/material";
 import React from "react";
 import MainBox from "../Components/MainBox";
-
 // import PieChart from "../Components/DashboardComponents/PieChart";
 
 // To be removed later
@@ -100,25 +99,7 @@ const Dashboard = () => {
             justifyContent="center"
             height="300px"
           >
-            <MarimekoChart data={mockBarData} />
-          </Box>
-          <Box
-            gridColumn="span 6"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            height="300px"
-          >
             <VerticalBarChart data={mockBarData} />
-          </Box>
-          <Box
-            gridColumn="span 6"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            height="300px"
-          >
-            <HorizontalBarChart data={mockBarData} />
           </Box>
         </Box>
       </div>

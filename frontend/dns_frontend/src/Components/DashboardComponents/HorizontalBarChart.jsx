@@ -1,9 +1,11 @@
 import { ResponsiveBar } from "@nivo/bar";
 // import { getThemeStorage } from './scripts/getsetLocalStorage';
-// import { useTheme } from '@mui/material';
+import { useTheme } from "@mui/material";
 // import { mockDataFruits as data } from "../../Tmp/TempData.js"
 
 const HorizontalBarChart = ({ data }) => {
+  const theme = useTheme();
+
   return (
     <ResponsiveBar
       data={data}
@@ -78,6 +80,21 @@ const HorizontalBarChart = ({ data }) => {
         from: "color",
         modifiers: [["darker", 1.6]],
       }}
+      // tooltip={({ point }) => {
+      //   return (
+      //     <div
+      //       style={{
+      //         background: theme.palette.background.default,
+      //         padding: ".13rem .25rem",
+      //         border: theme.palette.background,
+      //         text: theme.palette.primary.text,
+      //       }}
+      //     >
+      //       <div>Time: {point.x}</div>
+      //       <div>Value: {point.y}</div>
+      //     </div>
+      //   );
+      // }}
       legends={[
         {
           dataFrom: "keys",
@@ -112,32 +129,32 @@ const HorizontalBarChart = ({ data }) => {
         axis: {
           ticks: {
             line: {
-              stroke: "black"
+              stroke: "black",
             },
             text: {
               fill: "white",
-              fontSize: "8pt"
-            }
+              fontSize: "8pt",
+            },
           },
           legend: {
             text: {
               fill: "white",
-              fontSize: "8pt"
-            }
-          }
+              fontSize: "8pt",
+            },
+          },
         },
         grid: {
           line: {
             stroke: "black",
             strokeWidth: 2,
-            strokeDasharray: "4 4"
-          }
+            strokeDasharray: "4 4",
+          },
         },
-        legends:{
+        legends: {
           text: {
             fill: "white",
-            fontSize: "12pt"
-          }
+            fontSize: "12pt",
+          },
         },
       }}
     />
