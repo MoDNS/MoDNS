@@ -113,31 +113,5 @@ impl PluginManager {
             .context("Plugin with uuid {id} was not found")?
             .metadata())
     }
-
-    pub fn get_plugin_interceptor(&self, id: &Uuid) -> Option<bool>
-    {
-        self.plugins().get(id).and_then(|p| Some(p.metadata().is_interceptor))
-    }
-    
-    pub fn get_plugin_listener(&self, id: &Uuid) -> Option<bool>
-    {
-        self.plugins().get(id).and_then(|p| Some(p.metadata().is_listener))
-    }
-    
-    pub fn get_plugin_resolver(&self, id: &Uuid) -> Option<bool>
-    {
-        self.plugins().get(id).and_then(|p| Some(p.metadata().is_resolver))
-    }
-    
-    pub fn get_plugin_validator(&self, id: &Uuid) -> Option<bool>
-    {
-        self.plugins().get(id).and_then(|p| Some(p.metadata().is_validator))
-    }
-    
-    pub fn get_plugin_inspector(&self, id: &Uuid) -> Option<bool>
-    {
-        self.plugins().get(id).and_then(|p| Some(p.metadata().is_inspector))
-    }
-    
     
 }

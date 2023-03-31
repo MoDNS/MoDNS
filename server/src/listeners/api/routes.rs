@@ -17,6 +17,7 @@ use crate::plugins::manager::PluginManager;
 pub struct PluginQuery
 {
     module: Option<String>,
+    enabled: Option<bool>
 }
 
 pub fn root_redirect() -> BoxedFilter<(impl Reply,)> {
@@ -34,96 +35,35 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             .then(move |pq: PluginQuery| {
             let pm = metadata_pm.clone();
             log::trace!("Plugin metadata list requested");
-            get_metadata_list(pm, pq.module)
-            })
+            get_metadata_list(pm, pq)
+        })
         )
     .boxed()
 }
 
-pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, module: Option<String>) -> impl Reply {
+pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, query: PluginQuery) -> impl Reply {
     let metadata = pm.read().await.list_metadata();
-    let mut reply: BTreeMap<Uuid, PluginMetadata> = BTreeMap::new();
-    
-    for plugin in metadata
-    {
-        let uuid = plugin.0;
-        
-        match module.as_ref()
-        {
-            Some(word) =>
-            {
-                match module.as_ref().unwrap().as_str()
-                {
-                    "listener" =>
-                    {
-                        if pm.read().await.get_plugin_listener(&uuid).unwrap()
-                        {
-                            log::trace!("Found matching plugin");
-                            reply.insert(uuid, plugin.1);
-                        }
-                    }
 
-                    "interceptor" =>
-                    {
-                        if pm.read().await.get_plugin_interceptor(&uuid).unwrap()
-                        {
-                            log::trace!("Found matching plugin");
-                            reply.insert(uuid, plugin.1);
-                        }
-                    }
-
-                    "resolver" =>
-                    {
-                        if pm.read().await.get_plugin_resolver(&uuid).unwrap()
-                        {
-                            log::trace!("Found matching plugin");
-                            reply.insert(uuid, plugin.1);
-                        }
-                    }
-
-                    "validator" =>
-                    {
-                        if pm.read().await.get_plugin_validator(&uuid).unwrap()
-                        {
-                            log::trace!("Found matching plugin");
-                            reply.insert(uuid, plugin.1);
-                        }
-                    }
-
-                    "inspector" =>
-                    {
-                        if pm.read().await.get_plugin_inspector(&uuid).unwrap()
-                        {
-                            log::trace!("Found matching plugin");
-                            reply.insert(uuid, plugin.1);
-                        }
-                    }
-
-                    _ =>
-                    {
-                        log::trace!("Plugin not found\nProceeding...")
-                    }
-                }
+    let reply = metadata.iter().filter(|(_, plugin)| {
+        let matches_module = if let Some(mod_str) = &query.module {
+            match mod_str.as_ref() {
+                "listener" => plugin.is_listener(),
+                "interceptor" => plugin.is_interceptor(),
+                "resolver" => plugin.is_resolver(),
+                "validator" => plugin.is_validator(),
+                "inspector" => plugin.is_inspector(),
+                _ => true
             }
+        } else { true };
 
-            None =>
-            {
-                reply = pm.read().await.list_metadata();
-                break;
-            }
+        let matches_enabled = query.enabled
+        .and_then(|e| Some(e && plugin.enabled()))
+        .unwrap_or(true);
 
-        }
-    }
+        matches_module && matches_enabled
+    }).collect::<BTreeMap<_, _>>();
 
     let json = json(&reply);
 
     return json
-}
-
-
-
-fn get_plugins(q: PluginQuery) -> Result<Event, Infallible>
-{
-    let plug_list = String::from("Test");
-    Ok(warp::sse::Event::default().data(plug_list))
 }
