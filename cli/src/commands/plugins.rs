@@ -6,10 +6,10 @@ use hyper::{Method, StatusCode};
 use modnsd::plugins::metadata::PluginMetadata;
 use uuid::Uuid;
 
-use crate::CLI;
+use crate::CliOptions;
 use crate::util::make_request;
 
-pub fn list_plugins(config: &CLI) {
+pub fn list_plugins(config: &CliOptions) {
 
     let resp = make_request(Method::GET, "/api/plugins", config);
 

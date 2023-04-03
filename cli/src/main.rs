@@ -10,7 +10,7 @@ fn main() {
 
     let config = CLI::parse();
 
-    if config.verbose() > 2 {
+    if config.global_args().verbose() > 2 {
         println!("Parsed arguments: {config:#?}")
     }
 
@@ -35,8 +35,18 @@ pub struct CLI {
 
 }
 
+impl CLI {
+    pub fn command(&self) -> &CLICommand {
+        &self.command
+    }
+
+    pub fn global_args(&self) -> &CliOptions {
+        &self.global_args
+    }
+}
+
 #[derive(Debug, Args)]
-struct CliOptions {
+pub struct CliOptions {
 
     /// Unix domain socket to use for communication with the modns daemon
     #[arg(global = true)]
@@ -64,29 +74,26 @@ struct CliOptions {
 
 }
 
-impl CLI {
-    pub fn command(&self) -> &CLICommand {
-        &self.command
-    }
+impl CliOptions {
 
     pub fn unix_socket(&self) -> &Path {
-        &self.global_args.unix_socket.as_ref()
+        &self.unix_socket.as_ref()
     }
 
     pub fn verbose(&self) -> u8 {
-        self.global_args.verbose
+        self.verbose
     }
 
     pub fn remote_host(&self) -> Option<&str> {
-        self.global_args.remote_host.as_deref()
+        self.remote_host.as_deref()
     }
 
     pub fn remote_port(&self) -> Option<u16> {
-        self.global_args.remote_port
+        self.remote_port
     }
 
     pub fn https(&self) -> bool {
-        self.global_args.https
+        self.https
     }
 }
 
