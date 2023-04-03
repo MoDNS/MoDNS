@@ -1,5 +1,5 @@
 
-CFLAGS+= -Wall -Wno-pointer-sign -u_init_modns_sdk $(SDK_LINK_ARGS)
+CFLAGS+= -Wall -Wno-pointer-sign $(SDK_HEADER_ARGS)
 LDFLAGS=$(SDK_LINK_ARGS) -I../common
 SRC=$(wildcard *.go)
 
