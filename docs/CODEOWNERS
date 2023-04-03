@@ -1,0 +1,32 @@
+# This file defines the person or persons that "own" certain
+# portions of the repository. Ownership does not imply that
+# the owner is the only person allowed to make changes to a
+# file, only that they should be notified and provide approval
+# before the file is changed on main
+#
+# In cases where multiple people own a file, only one person
+# on that list is required to grant approval
+
+# Default rule, everyone owns files not explicitly mentioned
+* 	@aankitp @bpjordan @carterray31001 @sethajwarren @tchuhn
+
+# General rule for frontend
+/frontend/ 	@aankitp @carterray31001
+
+# General rule for backend
+/server/	@bpjordan @sethajwarren
+
+# Bronson handles the plugin API
+/modns-sdk/	@bpjordan
+/plugins/	@bpjordan
+
+# Seth handles the control API
+/server/src/listeners/api/		@sethajwarren
+/server/src/plugins/metadata.rs		@sethajwarren
+/cli/					@sethajwarren
+
+# Rules for DevOps
+/.github/		@tchuhn
+Dockerfile*		@tchuhn
+docker-compose.yaml	@tchuhn
+

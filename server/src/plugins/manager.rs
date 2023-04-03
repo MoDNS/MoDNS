@@ -247,6 +247,8 @@ impl PluginManager {
             self.inspectors.push(Arc::downgrade(plugin))
         }
 
+        log::trace!("Plugin Manager initialized with: {:#?}", self.list_metadata());
+
         Ok(())
     }
 
