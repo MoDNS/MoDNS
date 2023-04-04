@@ -53,16 +53,105 @@ asynchronous method once it is fully implemented.
 
 ### Resolver
 
-### 
+### Validator
+
+### Inspector
 
 ## Using Shared State
 
 ## Providing Plugin Settings
 
+### Key-Value settings
+
+### Plugin Commands
+
 ## Compiling Plugins
 
 ## Providing a Web Interface
 
+TODO: Frontend pls fill in
+
+### Dashboard Widgets
+
+### Settings Page
+
 ## Packaging Plugins
 
+Now that we have all of our plugin's artifacts, we need to package
+them into a form that can be installed and loaded into a running
+MoDNS server.
+
+### Plugin Manifest
+
+The first thing we need to do is provide the last few pieces of
+metadata for our plugin. Namely, this is the plugin's __friendly
+name__ and __description__. These two pieces of metadata are used
+by the frontend to provide a user-friendly interface for our plugin.
+
+These extra metadata are provided in the `manifest.yaml` file. A
+basic `manifest.yaml` file might look like this:
+
+```yaml
+
+friendly_name: Simple Logger
+
+description: |
+    This is a simple logger plugin. It logs all requests and
+    their responses.
+
+    This plugin is an example.
+
+```
+
+Note the `|` character at the beginning of the `description` field that
+allows for the description to be multiple lines.
+
+### Directory Structure
+
+TODO: Add information for frontend files
+
+On the MoDNS server, plugins are placed in a directory inside the server's
+plugin path. When loading plugins, the server searches that directory for
+subdirectories containing the required files (`plugin.so` and `manifest.yaml`).
+
+For example, on a MoDNS server which has `/opt/modns/plugins` on it's plugin
+path, that directory will look something like:
+
+```
+/opt/modns/plugins
+├── plugin-1
+│   ├── plugin.so
+│   └── manifest.yaml
+└── plugin-2
+    ├── plugin.so
+    └── manifest.yaml
+```
+
+When packaging our plugins, we compress them into `zip` or `tar.gz` archives
+which mimic this structure. This has the added benefit of allowing us to
+place multiple plugins in one package. For example, this might look like:
+
+```
+my-plugin-package.tar.gz
+├── my-plugin-1
+│   ├── plugin.so
+│   └── manifest.yaml
+└── my-plugin-2
+    ├── plugin.so
+    └── manifest.yaml
+```
+
+Please note that the server does use the directory names of each plugin
+to provide cli-friendly names and to determine which plugins have already
+been loaded. For this reason a few restrictions are imposed on plugin
+directory names:
+
+- The directory name must be unique. Use common sense to provide a name
+for the plugin that won't interfere with other plugins
+- The directory name must not contain spaces or other non-alphanumeric
+characters. Dashes `-` can be substituted for spaces.
+
+The server will refuse to load plugins which do not meet these requirements.
+
 ## Full example: A simple logger written in Go
+
