@@ -237,7 +237,7 @@ impl DnsPlugin {
 
     pub fn validate(&self, req: &Box<ffi::DnsMessage>, resp: &Box<ffi::DnsMessage>) -> Result<Option<Box<ffi::DnsMessage>>, PluginExecutorError> {
 
-        let f = check_sym::<ValidatorFn>(&self.lib, INTERCEPTOR_FN_NAME)?
+        let f = check_sym::<ValidatorFn>(&self.lib, VALIDATOR_FN_NAME)?
         .ok_or(PluginExecutorError::DoesNotImplement)?;
 
         let mut err_resp = Box::new(ffi::DnsMessage::default());
@@ -256,7 +256,7 @@ impl DnsPlugin {
 
     pub fn inspect(&self, req: &Box<ffi::DnsMessage>, resp: &Box<ffi::DnsMessage>, source: ResponseSource) -> Result<(), PluginExecutorError> {
 
-        let f = check_sym::<InspectorFn>(&self.lib, INTERCEPTOR_FN_NAME)?
+        let f = check_sym::<InspectorFn>(&self.lib, INSPECTOR_FN_NAME)?
         .ok_or(PluginExecutorError::DoesNotImplement)?;
 
         let rc = unsafe{
