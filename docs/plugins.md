@@ -146,10 +146,12 @@ to provide cli-friendly names and to determine which plugins have already
 been loaded. For this reason a few restrictions are imposed on plugin
 directory names:
 
-- The directory name must be unique. Use common sense to provide a name
-for the plugin that won't interfere with other plugins
 - The directory name must not contain spaces or other non-alphanumeric
-characters. Dashes `-` can be substituted for spaces.
+characters. Dashes (`-`) can be substituted for spaces.
+- The directory name must be unique. Use common sense to provide a name
+for the plugin that won't interfere with other plugins. Note that
+default plugins included with MoDNS begin with the `base-` prefix and
+are typically stored separately from user-installed plugins
 
 The server will refuse to load plugins which do not meet these requirements.
 
