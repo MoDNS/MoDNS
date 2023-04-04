@@ -24,7 +24,7 @@ typedef struct { const char *p; ptrdiff_t n; } _GoString_;
 #include "modns-sdk.h"
 #include <stdlib.h>
 
-typedef const struct DnsMessage bruh;
+typedef const struct DnsMessage constMessage;
 
 #line 1 "cgo-generated-wrapper"
 
@@ -82,7 +82,7 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern unsigned char impl_inspect_resp(bruh* req, bruh* resp, unsigned char source, void* state);
+extern unsigned char impl_inspect_resp(constMessage* req, constMessage* resp, unsigned char source, void* state);
 
 #ifdef __cplusplus
 }

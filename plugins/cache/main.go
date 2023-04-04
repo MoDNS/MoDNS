@@ -4,7 +4,7 @@ package main
 #include "modns-sdk.h"
 #include <stdlib.h>
 
-typedef const struct DnsMessage bruh;
+typedef const struct DnsMessage constMessage;
 */
 import "C"
 import "unsafe"
@@ -20,7 +20,7 @@ func log(level uint8, msg string) {
 }
 
 //export impl_inspect_resp
-func impl_inspect_resp(req *C.bruh, resp *C.bruh, source C.uchar, state unsafe.Pointer) C.uchar {
+func impl_inspect_resp(req *C.constMessage, resp *C.constMessage, source C.uchar, state unsafe.Pointer) C.uchar {
 
     log(2, "Inspector called")
 
