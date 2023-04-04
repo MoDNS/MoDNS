@@ -14,7 +14,7 @@ func main() {}
 func log(level uint8, msg string) {
     msg_cstr := C.CString(msg)
 
-    C.modns_log(C.uchar(level), msg_cstr)
+    C.modns_log_cstr(C.uchar(level), msg_cstr)
 
     C.free(unsafe.Pointer(msg_cstr))
 }
