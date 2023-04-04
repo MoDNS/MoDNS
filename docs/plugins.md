@@ -47,6 +47,36 @@ asynchronous method once it is fully implemented.
 
 #### Synchronous Method (Deprecated)
 
+Synchronous listeners are linked to a socket which is handled by the server. They
+recieve the complete bytestream from the socket and are responsible for deserializing
+it into a DNS message.
+
+Plugins implementing a synchronous listener must export the following C functions:
+
+```C
+// Decoder function
+extern uint8_t impl_listener_sync_decode_req(struct ByteVector req,
+                                             struct DnsMessage *message,
+                                             void *plugin_state);
+
+// Encoder function
+extern uint8_t impl_listener_sync_encode_resp(const struct DnsMessage *resp,
+                                              struct ByteVector *buf,
+                                              void *plugin_state);
+```
+
+The decoder function takes the byte stream encoded in `req` and deserializes it into
+the contents of `message`.
+
+The encoder function takes the DNS message struct contained in `resp` and encodes
+it into the byte stream at `buf`.
+
+See [below](## Interacting with provided types) for information about the provided
+structs
+
+Both functions also recieve a `plugin_state` argument, discussed
+[below](## Using Shared State)
+
 #### Asynchronous Method (Not Yet Implemented)
 
 ### Interceptor
@@ -56,6 +86,8 @@ asynchronous method once it is fully implemented.
 ### Validator
 
 ### Inspector
+
+## Interacting with provided types
 
 ## Using Shared State
 
