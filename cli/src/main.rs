@@ -16,7 +16,9 @@ fn main() {
 
     match config.command() {
         CLICommand::Plugin { command } => match command {
-            PluginCommand::List => commands::plugins::list_plugins(&config),
+            PluginCommand::List => commands::plugins::list_plugins(&config.global_args()),
+            PluginCommand::Enable { uuid } => commands::plugins::set_enabled(uuid, true, config.global_args()),
+            PluginCommand::Disable { uuid } => commands::plugins::set_enabled(uuid, false, config.global_args()),
             _ => eprintln!("Not implemented")
         },
         _ => eprintln!("Not implemented")

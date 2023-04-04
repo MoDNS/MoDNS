@@ -19,11 +19,19 @@ pub fn make_request(method: hyper::Method, path: &str, config: &CliOptions) -> R
             .into()
     };
 
+    if config.verbose() > 2 {
+        eprintln!("URI: {uri:#?}");
+    }
+
     let request = Request::builder()
         .method(method)
         .uri(uri)
         .body(Body::empty())
         .context("Couldn't construct request body")?;
+
+    if config.verbose() > 2 {
+        eprintln!("Sending request: {request:#?}");
+    }
 
     send_request(request, !config.remote_host().is_some())
 

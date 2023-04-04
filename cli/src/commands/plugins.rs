@@ -86,3 +86,9 @@ pub fn list_plugins(config: &CliOptions) {
         println!("=========================");
     }
 }
+
+pub fn set_enabled(uuid: &Uuid, enabled: bool, config: &CliOptions) {
+    let resp = make_request(Method::POST, &format!("/api/plugins/enable?uuid={}&enable={enabled}", uuid.as_simple()), config);
+
+    println!("{resp:#?}");
+}
