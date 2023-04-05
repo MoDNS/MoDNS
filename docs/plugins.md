@@ -68,7 +68,7 @@ uint8_t impl_listener_sync_encode_resp(const struct DnsMessage *resp,
 The decoder function takes the byte stream encoded in `req` and deserializes it into
 the contents of `message`.
 
-The encoder function takes the DNS message struct contained in `resp` and encodes
+The encoder function takes the DNS message struct contained in `*resp` and encodes
 it into the byte stream at `buf`.
 
 See [below](#interacting-with-provided-types) for information about the provided
@@ -121,7 +121,7 @@ uint8_t impl_listener_async_respond(const struct DnsMessage *resp,
 
 The poll function is called when the server polls the plugin for a request.
 If a request is not yet avaliable, this function returns 1; Once a message is available,
-the function should encode that message into the `message` pointer and return 0.
+the function should encode that message into `*message` and return 0.
 
 The responder function is used to respond to the request with the response message generated
 by the server.
@@ -134,11 +134,66 @@ the request originated from).
 
 ### Interceptor
 
+Io implement an Interceptor, your plugin must export the following C function:
+
+```C
+uint8_t impl_intercept_req(const struct DnsMessage *req,
+                           struct DnsMessage *resp,
+                           const void *plugin_state)
+```
+
+To ignore the request, return 0. To respond to the request, encode a response into `*resp` and
+return 1. Any other return code indicates an unrecoverable error.
+
 ### Resolver
+
+To implement a Resolver, your plugin must export the following C function:
+
+```C
+uint8_t impl_resolve_req(const struct DnsMessage *req,
+                         struct DnsMessage *resp,
+                         const void *plugin_state)
+```
+
+This function is called to generate a response to the request whenever no interceptor responds.
+On success, this function should encode the response into `*resp` and return 0. Return any other
+number to indicate an unrecoverable error.
 
 ### Validator
 
+To implement a Validator, your plugin must export the following C function:
+
+```C
+uint8_t impl_validate_resp(const struct DnsMessage *req,
+                           const struct DnsMessage *resp,
+                           struct DnsMessage *err_resp,
+                           const void *plugin_state)
+```
+
+This function is called to validate a response from the Resolver and possibly replace the response
+with one indicating an error. On a valid response, this function should return 0. On an invalid
+response, this function should encode a new response into `*err_resp` and return 1. Return any other
+number to indicate an unrecoverable error.
+
 ### Inspector
+
+To implement an Inspector, your plugin must export the following C function:
+
+```C
+uint8_t impl_inspect_resp(const struct DnsMessage *req,
+                          const struct DnsMessage *resp,
+                          uint8_t source,
+                          const void *plugin_state)
+```
+
+This function is called once a response has been returned from the other plugins. It does not affect
+the response.
+
+The `source` argument indicates the step of the resolution process which originated the provided
+response. A `0` indicates a response from an Interceptor, `1` indicates a Resolver, and `2`
+indicates the response was an error response from a Validator.
+
+This function should return 0 on success and any other number to indicate an unrecoverable error.
 
 ## Interacting with provided types
 
