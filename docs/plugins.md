@@ -312,10 +312,28 @@ that type.
 
 It is good practice, though not a guarantee, that plugins which create `DnsMessage`s
 should encode types which have enum variants as the corresponding enum variant. Plugins
-which consume `DnsMessage`s should expect either form of these types (i.e. the canonical
-variant or as `Other`).
+which consume `DnsMessage`s should expect either form of these types (i.e. the matching
+enum variant or as `Other`).
 
-### Allocating Vectorized Data
+### Working With Vectorized Data
+
+Data which involves Vectorized data is encoded as an FFI-safe version of Rust's `Vec<T>`
+type. The SDK provides the following types:
+
+- `QuestionVector` = `Vec<DnsQuestion>`
+- `RRVector` = `Vec<DnsResourceRecord>`
+- `ByteVector` = `Vec<u8>` or `String`
+- `BytePtrVector` = `Vec<Vec<u8>>` or `Vec<String>`
+
+For each of these types, A `resize` function is provided that should be used to add
+or remove elements from these vectors. For example, to resize `QuestionVector my_vec`
+to include 4 `DnsQuesion`s:
+
+```C
+uint8_t rc = resize_question_vec(&my_vec, 4);
+```
+
+A non-zero return code indicates an error.
 
 ## Using Shared State
 
