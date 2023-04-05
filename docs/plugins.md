@@ -197,6 +197,39 @@ This function should return 0 on success and any other number to indicate an unr
 
 ## Interacting with provided types
 
+The MoDNS server and SDK are written in Rust, and so all non-native data types used for programming
+plugins are FFI-safe versions of types written in Rust. Types which involve lists of objects use
+wrapper types for Rust `Vec<T>` types, and the SDK provides helper functions for resizing these
+arrays using the Rust allocator.
+
+To maintain memory safety, all data which originates from the MoDNS server (i.e., any data passed as
+an argument to one of the implementation functions) should be allocated by Rust rather than by the
+plugin's native allocator. This is discussed in more detail [below](#allocating-vectorized-data). 
+
+### Handling DNS Messages
+
+The `DnsMessage` struct encodes all fields of a DNS message as defined by
+[RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035). Its Rust definition looks like this:
+
+```Rust
+pub struct DnsMessage {
+    pub id: u16,
+    pub is_response: bool,
+    pub opcode: DnsOpcode,
+    pub authoritative_answer: bool,
+    pub truncation: bool,
+    pub recursion_desired: bool,
+    pub recursion_available: bool,
+    pub response_code: DnsResponseCode,
+    pub questions: Vec<DnsQuestion>,
+    pub answers: Vec<DnsResourceRecord>,
+    pub authorities: Vec<DnsResourceRecord>,
+    pub additional: Vec<DnsResourceRecord>
+}
+```
+
+### Allocating Vectorized Data
+
 ## Using Shared State
 
 ## Providing Plugin Settings
