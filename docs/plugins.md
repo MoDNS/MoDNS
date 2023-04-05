@@ -57,12 +57,12 @@ Plugins implementing a synchronous listener must export the following C function
 // Decoder function
 uint8_t impl_listener_sync_decode_req(struct ByteVector req,
                                       struct DnsMessage *message,
-                                      void *plugin_state);
+                                      const void *plugin_state);
 
 // Encoder function
 uint8_t impl_listener_sync_encode_resp(const struct DnsMessage *resp,
                                        struct ByteVector *buf,
-                                       void *plugin_state);
+                                       const void *plugin_state);
 ```
 
 The decoder function takes the byte stream encoded in `req` and deserializes it into
@@ -111,12 +111,12 @@ Plugins implementing an asynchronous listener must export the following C functi
 // Poll function
 uint8_t impl_listener_async_poll(struct DnsMessage *message,
                                  void *request_state,
-                                 void *plugin_state);
+                                 const void *plugin_state);
 
 // Responder function
 uint8_t impl_listener_async_respond(const struct DnsMessage *resp,
                                     void *request_state,
-                                    void *plugin_state);
+                                    const void *plugin_state);
 ```
 
 The poll function is called when the server polls the plugin for a request.
