@@ -228,6 +228,93 @@ pub struct DnsMessage {
 }
 ```
 
+#### Opcodes and Rcodes
+
+Currently, Opcodes and Rcodes are encoded as enums, with the following
+Rust declaration:
+
+```rust
+
+#[derive(Debug)]
+pub enum DnsOpcode {
+    Query,
+    InverseQuery,
+    Status,
+    Notify,
+    Update,
+    DSO
+}
+
+#[derive(Debug)]
+pub enum DnsResponseCode {
+    NoError,
+    FormatError,
+    ServerFailure,
+    NameError,
+    NotImplemented,
+    Refused
+}
+
+```
+
+This was written to match [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035),
+however it does not account for later changes to the DNS specification,
+specifically [EDNS](https://datatracker.ietf.org/doc/html/rfc6891). For this
+reason, later versions of the SDK will replace these fields with `u16` numbers.
+
+#### Questions and Resource Records
+
+The "meat" of DNS messages are Questions and Resource Records. These types are defined
+in Rust as follows:
+
+```Rust
+
+pub struct DnsQuestion {
+    pub name: Vec<String>,
+    pub type_code: u16,
+    pub class_code: u16
+}
+
+pub struct DnsResourceRecord {
+    pub name: Vec<String>,
+    pub type_code: u16,
+    pub class_code: u16,
+    pub ttl: i32,
+    pub rdlength: u16,
+    pub rdata: DnsResourceData
+}
+
+pub enum DnsResourceData {
+    A { address: Ipv4Addr },
+    AAAA { address: Ipv6Addr },
+    Ns { nsdname: Vec<String> },
+    Cname { cname: Vec<String> },
+    Ptr { ptrdname: Vec<String> },
+    Soa {
+        mname: Vec<String>,
+        rname: Vec<String>,
+        serial: u32,
+        refresh: u32,
+        retry: u32,
+        expire: u32,
+        minimum: u32
+    },
+    Txt { txt_data: Vec<String> },
+    Other { rdata: Vec<u8> }
+}
+
+```
+
+The `DnsResourceData` enum is also provided and includes types for some of the most
+common RR types. RR types not accounted for should be encoded as the `Other` variant
+with `rdata` as a byte vector which matches the standard over-the-wire encoding of
+that type.
+
+It is good practice, though not a guarantee, that plugins which create `DnsMessage`s
+should encode types which have enum variants as the corresponding enum variant. Plugins
+which consume `DnsMessage`s should expect either form of these types (i.e. the canonical
+variant or as `Other`).
+
 ### Allocating Vectorized Data
 
 ## Using Shared State
