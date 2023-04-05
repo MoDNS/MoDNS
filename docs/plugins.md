@@ -337,7 +337,37 @@ A non-zero return code indicates an error.
 
 ## Using Shared State
 
-## Providing Plugin Settings
+Most plugins will require sharing state between calls to the plugin's funcitons. For
+this purpose, all interface functions include a `void * plugin_state` argument. This
+argument is for the plugin to store any managed state between calls. Additionally,
+plugins can export the following functions to initialize their state:
+
+```C
+void * impl_plugin_setup();
+impl_plugin_teardown(void *);
+```
+
+These functions are called when the plugin is enabled and disabled, respectively.
+The return value of the `setup` function is passed as `plugin_state` to all further
+calls to the plugin, and should be freed by the `teardown` function.
+
+The server is unaware of the contents of the `plugin_state` pointer, meaning its memory
+should be managed by the plugin (i.e., it is safe to `malloc` and `free` data stored in
+this pointer, or to allow it to be managed by Go garbage collection).
+
+### Notes About Concurrency
+
+The MoDNS server uses an asynchronous, multi-threaded architecture. This means that
+your plugin may be called multiple times at once, on different threads. Care should
+be taken to ensure that any mutable state is properly guarded against concurrent
+writes, such as with mutex locks or atomic operations.
+
+Generally, a function signature where `plugin_state` is `const` is an indication that
+the function may be called concurrently. This is the case for all module implementation
+functions. Some API control functions, discussed [below](#providing-plugin-settings),
+are run with a global write lock, meaning it is safe to mutate state in these functions.
+
+## Providing Plugin Settings (Not Yet Implemented)
 
 ### Key-Value settings
 
