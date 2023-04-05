@@ -5,10 +5,10 @@ The plugin system is what makes MoDNS, MoDNS. The MoDNS server is really
 just a framework for running plugins. Any and all DNS functionality is
 provided by plugins.
 
-A _plugin_ is composed of one to five __modules__. These modules each
+A _plugin_ implements one to five __modules__. These modules each
 control a certain step in the DNS resolution process.
 
-These modules are:
+Modules which a plugin can implement are:
 
 - __Listeners__, which control how and when DNS requests are recieved
 - __Interceptors__, which can _intercept_ a request and provide a
@@ -71,13 +71,66 @@ the contents of `message`.
 The encoder function takes the DNS message struct contained in `resp` and encodes
 it into the byte stream at `buf`.
 
-See [below](## Interacting with provided types) for information about the provided
+See [below](#interacting-with-provided-types) for information about the provided
 structs
 
 Both functions also recieve a `plugin_state` argument, discussed
-[below](## Using Shared State)
+[below](#using-shared-state)
+
+##### Return Value
+
+Both functions return 0 on success and any other number on error. Error handling is not
+yet fully fleshed out, but generally an error code should only be returned in the case
+of an unrecoverable error that will likely propagate to further calls of the plugin.
+
+##### Reasons For Deprecation
+
+The synchronous method is planned for deprecation once the asynchronous method is
+implemented. This is for several reasons, namely:
+
+- Synchronous listeners are limited in ability, since the actual method for recieving
+requests must be handled by the server. For example, a plugin couldn't implement a
+DNS over HTTPS listener unless the server provided a significant amount of the infrastructure
+to do so.
+- Synchronous listeners must be paired with a single socket connection managed by the
+server. Configuring this socket pairing adds complexity to the user experience which
+goes against the goals of this project
 
 #### Asynchronous Method (Not Yet Implemented)
+
+NOTE: Asynchronous listeners are not yet supported, and the following documentation
+is subject to change as implementation details get fleshed out
+
+Asynchronous listeners are periodically polled for a DNS message. If they are not ready
+to provide one (i.e., one has not been recieved), the server will move on to poll other
+listeners.
+
+Plugins implementing an asynchronous listener must export the following C functions:
+
+```C
+// Poll function
+extern uint8_t impl_listener_async_poll(struct DnsMessage *message,
+                                        void *request_state,
+                                        void *plugin_state);
+
+// Responder function
+extern uint8_t impl_listener_async_respond(const struct DnsMessage *resp,
+                                           void *request_state,
+                                           void *plugin_state);
+```
+
+The poll function is called when the server polls the plugin for a request.
+If a request is not yet avaliable, this function returns 1; Once a message is available,
+the function should encode that message into the `message` pointer and return 0.
+
+The responder function is used to respond to the request with the response message generated
+by the server.
+
+A `request_state` pointer is also provided for the plugin to store ephemeral state specific
+to that request, such as the originating address. Similar to `plugin_state`, the contents of
+this pointer are unknown to the server, and should be used to provide any persistent state
+data to the responder function for responding to the request (ex. the socket address that
+the request originated from).
 
 ### Interceptor
 
