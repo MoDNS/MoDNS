@@ -367,13 +367,114 @@ the function may be called concurrently. This is the case for all module impleme
 functions. Some API control functions, discussed [below](#providing-plugin-settings),
 are run with a global write lock, meaning it is safe to mutate state in these functions.
 
-## Providing Plugin Settings (Not Yet Implemented)
+## Compiling Plugins
 
-### Key-Value settings
+## Plugin Configuration Options (Not Yet Implemented)
+
+NOTE: This feature is not yet implemented and details are subject to change
+
+Plugins can provide configuration options to the user which are accessible through the web
+interface or CLI. These can be either key-value pairs or commands, made available through
+the API.
+
+### Key-Value Configuration
+ 
+To provide key-value settings, your plugin should export the following C functions:
+
+```C
+
+// Set the value of a key-value parameter
+uint8_t impl_plugin_kv_set(const struct ByteVector *key,
+                           const struct ByteVector *value,
+                           struct ByteVector *resp,
+                           void *plugin_state);
+
+// Get the value of a key-value parameter
+uint8_t impl_plugin_kv_get(const struct ByteVector *key,
+                           struct ByteVector *resp,
+                           const void *plugin_state);
+
+```
+
+Implementing these functions exposes the following API endpoints:
+
+```
+POST /api/plugins/config?uuid=<your-plugin-uuid>&<key>=<value>
+GET /api/plugins/config?uuid=<your-plugin-uuid>&<key>[&<key>...]
+```
+
+#### Set Function
+
+The `kv_set` function is called whenever the above `POST` request is made. `key` and `value`
+are provided as `ByteVector`s, and a mutable `ByteVector` is provided to encode a response.
+
+The return code of each function is used to determine the return code of the API
+call. Available response codes are:
+
+| rc | API response |
+| -- | ------------- |
+| 0 | `200 OK` |
+| 1 | `201 Created` |
+| 2 | `400 Bad Request` |
+| 3 | `401 Unauthorized` |
+| 4 | `403 Forbidden` |
+| 5 | `404 Not Found` |
+
+Any other return code becomes `500 Internal Server Error`.
+
+#### Get Function
+
+The `kv_get` function is called whenever a `GET` request is recieved for one or more options.
+`key` is provided as a `ByteVector`, and a mutable `ByteVector` is provided to encode a response.
+
+On success, this function should return 0 and encode the value in `*resp`.
+
+On success, the API returns a JSON object where each key maps to the response provided in `*resp`.
+When multiple values are requested in a single API call, a single function call is made for each
+requested key.
+
+In the event of an error, the API will immediately return the appropriate return code and an error
+message encoded in `*resp`. Any values retrieved earlier in the API call are discarded. Error return
+codes and their associated API response codes are:
+
+| rc | API response |
+| -- | ------------- |
+| 1 | `400 Bad Request` |
+| 2 | `401 Unauthorized` |
+| 3 | `403 Forbidden` |
+| 4 | `404 Not Found` |
+
+Any other return code becomes `500 Internal Server Error`.
 
 ### Plugin Commands
 
-## Compiling Plugins
+Sometimes, a user will need to interact with your plugin without needing to set some key-value pair.
+For these cases, plugins can implement commands. A command is simply a string that is provided to
+your plugin to do with as it pleases.
+
+To expose commands as part of your plugin's interface, expose the following C function:
+
+```C
+uint8_t impl_plugin_command(const struct ByteVector *command,
+                            struct ByteVector *resp,
+                            void *plugin_state);
+```
+
+The API response code is determined by the return value of this function. Return codes and their
+associated API response codes are:
+
+| rc | API response |
+| -- | ------------- |
+| 0 | `200 OK` |
+| 1 | `201 Created` |
+| 2 | `400 Bad Request` |
+| 3 | `401 Unauthorized` |
+| 4 | `403 Forbidden` |
+| 5 | `404 Not Found` |
+
+Any other return code becomes `500 Internal Server Error`.
+
+In all cases, the contents of `*resp` are used as the body of the response.
 
 ## Providing a Web Interface
 
