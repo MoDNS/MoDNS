@@ -1,12 +1,8 @@
 
-<<<<<<< HEAD
 export SDK_HEADER_ARGS = -I${CURDIR}/modns-sdk/headers  
 export SDK_LINK_ARGS = -u_init_modns_sdk -L${CURDIR}/target/debug -lmodns_sdk
 
-all: sdk server plugins
-=======
 all: sdk server plugins cli
->>>>>>> main
 
 .PHONY: server
 server:
