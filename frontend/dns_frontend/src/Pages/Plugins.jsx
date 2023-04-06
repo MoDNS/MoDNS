@@ -5,7 +5,7 @@ import { Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/materi
 import { useState } from 'react';
 import SequentialView from '../Components/Plugins/SequentialView';
 import Overview from '../Components/Plugins/Overview';
-import { enabledisablePlugin, getPluginDict, setInterceptOrder } from '../API/getsetAPI';
+import { enabledisablePlugin, getPluginDict, setInterceptOrder, setInterceptOrderAPI } from '../API/getsetAPI';
 import { getPluginViewStorage, setPluginViewStorage } from '../scripts/getsetLocalStorage';
 
 
@@ -82,7 +82,7 @@ const Plugins = () => {
         uuidList.splice(new_pos, 0, uuid);
 
         setInterceptorUuidOrder([...uuidList]);
-        setInterceptorOrder(uuidList);
+        setInterceptOrderAPI(uuidList);
     }
 
     //////////////////////////////////////////////////////////// MAIN ///////////////////////////////////////////////////////////

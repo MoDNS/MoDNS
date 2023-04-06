@@ -1,7 +1,4 @@
 
-//////////////////////////////////////////////////////// VARIABLES ////////////////////////////////////////////////////////
-
-let serverAddress = 'modns';
 
 //////////////////////////////////////////////////////// SETTINGS ////////////////////////////////////////////////////////
 
@@ -9,30 +6,31 @@ let serverAddress = 'modns';
 /////////////////////////////// PLUGIN MANAGE ///////////////////////////////
 
 export const getPluginDict = async (filter) => {
-    const response = await fetch(`http://${serverAddress}.local/api/plugins${filter ? `?modules=${filter}` : ''}`);
+    const response = await fetch(`${window.location.origin}/api/plugins${filter ? `?modules=${filter}` : ''}`);
+    console.log(response);
     return response.json();
 }
 
-export const installPlugin = (file) => {
+export const installPlugin = async (file) => {
     const formData = new FormData();
     formData.append('fileName', file)
 
     if (false) {
-        fetch(`http://${serverAddress}.local/api/plugins/install`, {
+        fetch(`${window.location.origin}/api/plugins/install`, {
             headers: {
                 'Content-Type': 'application/zip'
             },
             body: formData,
         })
     } else if (false) {
-        fetch(`http://${serverAddress}.local/api/plugins/install`, {
+        fetch(`${window.location.origin}/api/plugins/install`, {
             headers: {
                 'Content-Type': 'application/gzip'
             },
             body: formData,
         })
     } else if (false) {
-        fetch(`http://${serverAddress}.local/api/plugins/install`, {
+        fetch(`${window.location.origin}/api/plugins/install`, {
             headers: {
                 'Content-Type': 'text/plain'
             },
@@ -42,11 +40,11 @@ export const installPlugin = (file) => {
 }
 
 export const uninstallPlugin = async (uuid) => {
-    await fetch(`http://${serverAddress}.local/api/plugins/uninstall?uuid=${uuid}`);
+    await fetch(`${window.location.origin}/api/plugins/${uuid}/uninstall`);
 }
 
-export const setInterceptOrder = async (uuidList) => {
-    await fetch(`http://${serverAddress}.local/api/plugins/interceptorder`, {
+export const setInterceptOrderAPI = async (uuidList) => {
+    await fetch(`${window.location.origin}/api/plugins/interceptorder`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -56,51 +54,62 @@ export const setInterceptOrder = async (uuidList) => {
 }
 
 export const enabledisablePlugin = async (uuid, enabled) => {
-    await fetch(`http://${serverAddress}.local/api/plugins/enable?uuid=${uuid}&enabled=${enabled}`);
+    await fetch(`${window.location.origin}/api/plugins/${uuid}/enable?enabled=${enabled}`, {
+        method: 'POST',
+    });
 }
 
 export const configurePlugin = async (uuid, key, value) => {
-    await fetch(`http://${serverAddress}.local/api/plugins/configure?uuid=${uuid}&${key}=${value}`);
+    await fetch(`${window.location.origin}/api/plugins/${uuid}/config?${key}=${value}`, {
+        method: 'POST',
+    });
 }
 
 export const getPluginConfig = async (uuid, key) => {
-    const response = await fetch(`http://${serverAddress}.local/api/plugins/configure?uuid=${uuid}&${key}`)
+    const response = await fetch(`${window.location.origin}/api/plugins/${uuid}/config?${key}`)
     return response;
 }
 
-export const passCommand = async (uuid, command) => {
-    await fetch(`http://${serverAddress}.local/api/plugins/configure?uuid=${uuid}&command=${command}`)
+export const executePluginCommand = async (uuid, command) => {
+    await fetch(`${window.location.origin}/api/plugins/${uuid}/config?command=${command}`, {
+        method: 'POST',
+    })
 }
 
 export const getPluginLogo = async (uuid) => {
-    const response = await fetch(`http://${serverAddress}.local/api/plugins/favicon?uuid=${uuid}`);
+    const response = await fetch(`${window.location.origin}/api/plugins/${uuid}/favicon`);
     return response;
 }
 
 /////////////////////////////// SERVER MANAGE ///////////////////////////////
 
 export const restartServer = async () => {
-    await fetch(`http://${serverAddress}.local/api/server/restart`);
+    await fetch(`${window.location.origin}/api/server/restart`, {
+        method: 'POST',
+    });
 }
 
 export const shutdownServer = async () => {
-    await fetch(`http://${serverAddress}.local/api/server/shutdown`);
+    await fetch(`${window.location.origin}/api/server/shutdown`, {
+        method: 'POST',
+    });
 }
 
 export const setServerConfig = async (key, value) => {
-    await fetch(`http://${serverAddress}.local/api/server/config?${key}=${value}`, {
+    await fetch(`${window.location.origin}/api/server/config?${key}=${value}`, {
         method: 'POST',
     });
 }
 
 export const getServerConfig = async (key) => {
-    const response = fetch(`http://${serverAddress}.local/api/config?${key}`);
+    const response = fetch(`${window.location.origin}/api/config?${key}`);
     return response;
 }
 
 ////////////////////////////// AUTHENTICATION ///////////////////////////////
 export const getAuthentication = (password) => {
-    const response = fetch(`http://${serverAddress}.local/api/auth`);
+    fetch(`${window.location.origin}/api/auth`);
+
 }
 
 export const setNewPassword = (oldPass, newPass) => {
