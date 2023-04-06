@@ -509,10 +509,8 @@ The following flags are required:
 | ---- | ----------- |
 | `-shared` | Produce a shared object that can be dynamically loaded at program runtime |
 | `-fPIC` | Produce [P]osition [I]ndependent [C]ode which can be referenced regardless of memory location |
-| `-I${MODNS_SDK_DIR}` | Add `$MODNS_SDK_DIR` to the C header search path, so that `#include "modns-sdk.h"` in the C source
-code finds the proper header file |
-| `-u_init_modns_sdk` | Always export the `_init_modns_sdk` function, even though it isn't in any header files. This function
-is used internally by the MoDNS server when your plugin is loaded. |
+| `-I${MODNS_SDK_DIR}` | Add `$MODNS_SDK_DIR` to the C header search path, so that `#include "modns-sdk.h"` in the C source code finds the proper header file |
+| `-u_init_modns_sdk` | Always export the `_init_modns_sdk` function, even though it isn't in any header files. This function is used internally by the MoDNS server when your plugin is loaded. |
 | `-L${MODNS_SDK_DIR}` | Add `$MODNS_SDK_DIR` to the linker search path, so that the linker is able to find the SDK library |
 | `-lmodns_sdk` | Link against the `libmodns-sdk.a` file found in `$MODNS_SDK_DIR` |
 
