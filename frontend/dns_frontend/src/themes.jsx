@@ -226,6 +226,16 @@ const themeOne = createTheme({
         },
       },
     },
+    MuiCheckbox: {
+      styleOverrides: {
+        root: {
+          color: t1_tp,
+          '&.Mui-checked': {
+            color: t1_tp,
+          }
+        }
+      }
+    },
     MuiRadio: {
       styleOverrides: {
         root: {

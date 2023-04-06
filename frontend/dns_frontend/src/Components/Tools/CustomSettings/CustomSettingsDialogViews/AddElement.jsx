@@ -6,7 +6,9 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
     
 
     const [text, setText] = useState("");
+    const [list, setList] = useState("");
     const [key, setKey] = useState("");
+    const [command, setCommand] = useState("");
     const [wide, setWide] = useState(false);
  
     const elementForm = {
@@ -95,6 +97,74 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                     setJsonPage([...newJson]);
                     setShowDialog(false);
                     setText("");
+                    setWide(false);
+                    setElement(["", false])
+                }}
+            >
+                Submit
+            </Button>
+        </>,
+        'button': <>
+            <Typography
+                fontSize={20}
+            >
+                What should the Button's label say?
+            </Typography>
+            <TextField
+                value={text}
+                variant='standard'
+                multiline
+                onChange={ (e) => setText(e.target.value) }
+            />
+            <Typography
+                marginTop={4}
+                fontSize={20}
+            >
+                What plugin command should this button execute?
+            </Typography>
+            <TextField
+                value={command}
+                variant='standard'
+                onChange={ (e) => setCommand(e.target.value) }
+            />
+            <Typography
+                marginTop={4}
+                fontSize={20}
+            >
+                Is this a wide element?
+            </Typography>
+
+            <Select
+                value={wide}
+                onChange={ (e) => {
+                    setWide(e.target.value);
+                }
+            }
+            >
+                <MenuItem value={true} > True </MenuItem>
+                <MenuItem value={false} > False</MenuItem>
+            </Select>
+            <Button
+                variant='contained'
+                sx={{ marginTop: 2 }}
+                onClick={ () => {
+                    if (text === "" || command === "") {
+                        alert("Input must not be empty");
+                        return
+                    }
+                    let newJson = jsonPage;
+                    newJson.push(
+                        {
+                            "type": "button",
+                            "command": command,
+                            "display_text": text,
+                            "wide": wide
+                        }
+                    );
+                    setJsonPage([...newJson]);
+                    setShowDialog(false);
+                    setText("");
+                    setCommand("");
                     setWide(false);
                     setElement(["", false])
                 }}
@@ -247,11 +317,11 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 Submit
             </Button>
         </>,
-        'pie': <>
+        'checkbox': <>
             <Typography
                 fontSize={20}
             >
-                What should the pie chart's label say?
+                What should the checkbox's label say?
             </Typography>
             <TextField
                 value={text}
@@ -259,7 +329,45 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                 multiline
                 onChange={ (e) => setText(e.target.value) }
             />
-            
+            <Typography
+                fontSize={20}
+                marginTop={4}
+                noWrap={false}
+            >
+                Insert the Checkbox List items in a comma-separated list.
+            </Typography>
+            <TextField
+                value={list}
+                variant='standard'
+                multiline
+                onChange={ (e) => setList(e.target.value) }
+            />
+            <Typography
+                noWrap={false}
+            >
+                { list.split(",").map((item, index) => {
+                    if (index + 1 === list.split(",").length) {
+                        return "[" + item.trim() + "]";
+                    }
+                    return "[" + item.trim() + "], ";
+                }) }
+            </Typography>
+            <Typography
+                marginTop={4}
+                fontSize={20}
+            >
+                What should the key for this setting be?
+            </Typography>
+            <TextField
+                value={key}
+                variant='standard'
+                multiline
+                onChange={ (e) => setKey(e.target.value) }
+            />
+            <Typography
+            >
+                Note: Do not reuse this value for any other settings.
+            </Typography>
             <Typography
                 marginTop={4}
                 fontSize={20}
@@ -285,68 +393,16 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                         return
                     }
                     let newJson = jsonPage;
+                    let check_list = list.split(",");
+                    check_list.forEach(element => {
+                        element = element.trim();
+                    });
                     newJson.push(
                         {
-                            "type": "pie",
+                            "type": "checkbox",
                             "key_name": key,
                             "display_text": text,
-                            "wide": wide
-                        }
-                    );
-                    setJsonPage([...newJson]);
-                    setShowDialog(false);
-                    setKey("");
-                    setText("");
-                    setWide(false);
-                    setElement(["", false])
-                }}
-            >
-                Submit
-            </Button>
-        </>,
-        'table': <>
-            <Typography
-                fontSize={20}
-            >
-                What should the table's label say?
-            </Typography>
-            <TextField
-                value={text}
-                variant='standard'
-                multiline
-                onChange={ (e) => setText(e.target.value) }
-            />
-            
-            <Typography
-                marginTop={4}
-                fontSize={20}
-            >
-                Is this a wide element?
-            </Typography>
-            <Select
-                value={wide}
-                onChange={ (e) => {
-                    setWide(e.target.value);
-                }
-            }
-            >
-                <MenuItem value={true} > True </MenuItem>
-                <MenuItem value={false} > False</MenuItem>
-            </Select>
-            <Button
-                variant='contained'
-                sx={{ marginTop: 2 }}
-                onClick={ () => {
-                    if (text === "" || key === "") {
-                        alert("Input must not be empty");
-                        return
-                    }
-                    let newJson = jsonPage;
-                    newJson.push(
-                        {
-                            "type": "table",
-                            "key_name": key,
-                            "display_text": text,
+                            "list": check_list,
                             "wide": wide
                         }
                     );
@@ -410,10 +466,10 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                     >
                         <MenuItem value={'title'} > Title </MenuItem>
                         <MenuItem value={'text'} > Text </MenuItem>
-                        <MenuItem value={'switch'} > Switch </MenuItem>
+                        <MenuItem value={'button'} > Button </MenuItem>
+                        <MenuItem value={'checkbox'} > Checkboxes </MenuItem>
                         <MenuItem value={'input'} > Input </MenuItem>
-                        <MenuItem value={'pie'} > Pie </MenuItem>
-                        <MenuItem value={'table'} > Table </MenuItem>
+                        <MenuItem value={'switch'} > Switch </MenuItem>
                         <MenuItem value={'placeholder'} > Placeholder </MenuItem>
 
                     </Select>
