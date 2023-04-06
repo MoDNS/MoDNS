@@ -44,7 +44,7 @@ async fn main() -> anyhow::Result<()> {
             }
         })?;
 
-        pm.validate(!config.always_init())
+        pm.is_valid_state(!config.always_init())
         .context("Server refused to start because it does not have enough plugins enabled to resolve DNS requests.
         To ignore this case and start anyway, run with `--ignore-init-errors always`")?;
 

@@ -37,7 +37,7 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
     let metadata_pm = pm.clone();
     let enable_pm = pm.clone();
     warp::path("api")
-    .and(warp::path!("plugins").and(warp::query::<PluginQuery>())
+        .and(warp::path!("plugins").and(warp::query::<PluginQuery>())
         .then(move |pq: PluginQuery| {
             let pm = metadata_pm.clone();
             log::trace!("Plugin metadata list requested");
