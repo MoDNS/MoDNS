@@ -21,8 +21,8 @@ cli: $(wildcard $(CURDIR)/cli/src/*)
 
 .PHONY: plugins
 plugins: sdk
-	$(MAKE) -C plugins/base_listener/
-	$(MAKE) -C plugins/base_resolver/
+	$(MAKE) -C plugins/base-listener/
+	$(MAKE) -C plugins/base-resolver/
 	$(MAKE) -C plugins/cache/
 
 .PHONY: test-plugins
@@ -40,6 +40,6 @@ cargo-clean:
 	cargo clean
 
 plugin-clean:
-	$(MAKE) -C plugins/base_listener/ clean
-	$(MAKE) -C plugins/base_resolver/ clean
+	$(MAKE) -C plugins/base-listener/ clean
+	$(MAKE) -C plugins/base-resolver/ clean
 	$(MAKE) -C plugins/cache/ clean
