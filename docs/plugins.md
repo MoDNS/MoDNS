@@ -23,7 +23,9 @@ compiled programming languages can be used to write MoDNS plugins,
 albeit with some coercsion.
 
 The `modns-sdk` Rust crate is used to provide functions and headers for
-interfacing with the MoDNS server.
+interfacing with the MoDNS server. A archive file is available on the
+GitHub releases page for MoDNS with the required header and library
+files to link to `modns-sdk`. (TODO: release a zip file of the SDK)
 
 ## Implementing Modules
 
@@ -367,8 +369,6 @@ the function may be called concurrently. This is the case for all module impleme
 functions. Some API control functions, discussed [below](#providing-plugin-settings),
 are run with a global write lock, meaning it is safe to mutate state in these functions.
 
-## Compiling Plugins
-
 ## Plugin Configuration Options (Not Yet Implemented)
 
 NOTE: This feature is not yet implemented and details are subject to change
@@ -483,6 +483,27 @@ TODO: Frontend pls fill in
 ### Dashboard Widgets
 
 ### Settings Page
+
+## Compiling Plugins
+
+As mentioned above, plugins must be compiled into a shared object file named `plugin.so`.
+
+A simple example of compiling a C plugin would look like this:
+
+```bash
+gcc -shared -fPIC -I<sdk-dir> -u_init_modns_sdk -L<sdk-dir> -lmodns_sdk my-plugin.c -o plugin.so
+```
+
+To compile a Go program:
+
+```bash
+export CGO_CFLAGS=-I<sdk-dir>
+export CGO_LDFLAGS=-u_init_modns_sdk -L<sdk-dir> -lmodns_sdk
+go build -buildmode c-shared -o plugin.so my-plugin-module/my-plugin
+```
+
+NOTE: the `-u_init_modns_sdk` argument is required to ensure that the internal SDK initialization
+function is exposed as part of the plugin's public API.
 
 ## Packaging Plugins
 
