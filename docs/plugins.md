@@ -400,8 +400,8 @@ uint8_t impl_plugin_kv_get(const struct ByteVector *key,
 Implementing these functions exposes the following API endpoints:
 
 ```
-POST /api/plugins/config?uuid=<your-plugin-uuid>&<key>=<value>
-GET /api/plugins/config?uuid=<your-plugin-uuid>&<key>[&<key>...]
+POST /api/<your-plugin-uuid>/plugins/config?<key>=<value>
+GET /api/plugins/<your-plugin-uuid>/config?<key>[&<key>...]
 ```
 
 #### Set Function
@@ -479,11 +479,85 @@ In all cases, the contents of `*resp` are used as the body of the response.
 
 ## Providing a Web Interface
 
-TODO: Frontend pls fill in
-
+MoDNS hosts a webpage for ease of maneagement.
 ### Dashboard Widgets
 
+TODO
+
 ### Settings Page
+
+To create a settings page for your plugin, you can simply use the Plugin Settings Page creation tool
+located under the `Tools` tab on the webserver.
+
+
+You can add elements and link them to your plugin's configuration settings or send your plugin commands.
+
+Note: You do not need to add an enabled settings, the server will provide this one for you.
+
+
+Alternatively, you can use this JSON structure to write it manually. 
+Keep in mind the page will display your settings in the order you list them.
+There are two elements per row (unless one element is wide or  placeholder is used).
+
+```json
+[
+  ////////////////////////////////////////////// Title
+  {
+    "type": "title",                          // Specifies the type of element. All elements detailed below.
+    "display_text": "<title>",                // text to display as the title
+    "wide": true                              // LEAVE AS TRUE FOR TITLE ONLY
+  },
+  ////////////////////////////////////////////// Displays some text
+  {
+    "type": "text",                           // Type of element
+    "display_text": "<label>",                // Text to display as text
+    "wide": false                             // True or False
+  },
+  ////////////////////////////////////////////// Executes a specified Command on click
+  {
+    "type": "button",                         // Type of element
+    "command": "<command>",                   // Command to send to the plugin
+    "display_text": "<label>",                // Text to display as label
+    "wide": false                             // True or False
+  },
+  ////////////////////////////////////////////// Checkbox List, sent as Key, Value pair to your plugin
+  {
+    "type": "checkbox",                       // Type of element
+    "key_name": "<unique key>",               // Key name in your plugin. Upon change, sends the key, value pair to your plugin
+    "display_text": "<label>",                // Text to display as label
+    "list": [                                 // List of checkbox items
+      "<item 1>",
+      "<item 2>",
+      "<...>",
+      "<item n>",
+    ],
+    "wide": true                              // True or False
+  },
+  ////////////////////////////////////////////// Text input, sent as Key, Value pair to your plugin
+  {
+    "type": "input",                          // Type of item
+    "key_name": "input_key",                  // Key name in your plugin. Upon change, sends the key, value pair to your plugin
+    "display_text": "Input label",            // Text to display as label
+    "wide": false                             // True or False
+  },
+  ////////////////////////////////////////////// Switch
+  {
+    "type": "switch",                         // Type of item
+    "key_name": "<unique key>",               // Key name in your plugin. Upon change, sends the key, value pair to your plugin
+    "display_text": "<label>",                // Text to display as label
+    "wide": false                             // True or False
+  },
+  ////////////////////////////////////////////// If previos element on row is not wide, this will move the next element to the next row if it is not wide.
+  {
+    "type": "placeholder",                    // Empty item
+    "wide": false                             // LEAVE AS FALSE FOR PLACEHOLDDER ONLY
+  }
+]
+```
+
+Place the downloaded or created file into your plugin folder and reference it in the `manifest.yaml`
+
+This exposes the `/api/plugins/<your-plugin-uuid>/settingspage` API endpoint.
 
 ### Providing a Logo
 
@@ -492,7 +566,7 @@ include a `favicon.*` file in the plugin's directory.
 
 Supported formats are `png`, `ico`, and `webp`.
 
-This exposes the `/api/plugins/favicon?uuid=<your-plugin-uuid>` API endpoint.
+This exposes the `/api/plugins/<your-plugin-uuid>/favicon` API endpoint.
 
 ## Compiling Plugins
 

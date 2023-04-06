@@ -248,6 +248,16 @@ Pass a command to a plugin. Plugin must implement a handler function
 
 Return code determined by plugin
 
+#### Get a plugin's custom settings page
+
+Endpoint : `GET /api/plugins/<uuid>/settingspage`
+
+Get the setting's page specified in a plugin's `manifest.yaml` file
+
+Returns:
+    - `200 OK` with the JSON object as the body
+    - `404 Not Found` if the plugin does not have a custom settings page
+
 #### Get a plugin's icon
 
 Endpoint: `GET /api/plugins/<uuid>/favicon`
