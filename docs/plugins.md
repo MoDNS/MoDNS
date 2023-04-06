@@ -491,19 +491,30 @@ As mentioned above, plugins must be compiled into a shared object file named `pl
 A simple example of compiling a C plugin would look like this:
 
 ```bash
-gcc -shared -fPIC -I<sdk-dir> -u_init_modns_sdk -L<sdk-dir> -lmodns_sdk my-plugin.c -o plugin.so
+gcc -shared -fPIC -I${MODNS_SDK_DIR} -u_init_modns_sdk -L${MODNS_SDK_DIR} -lmodns_sdk my-plugin.c -o plugin.so
 ```
 
 To compile a Go program:
 
 ```bash
-export CGO_CFLAGS=-I<sdk-dir>
-export CGO_LDFLAGS=-u_init_modns_sdk -L<sdk-dir> -lmodns_sdk
+export CGO_CFLAGS=-I${MODNS_SDK_DIR}
+export CGO_LDFLAGS=-u_init_modns_sdk -L${MODNS_SDK_DIR} -lmodns_sdk
+
 go build -buildmode c-shared -o plugin.so my-plugin-module/my-plugin
 ```
 
-NOTE: the `-u_init_modns_sdk` argument is required to ensure that the internal SDK initialization
-function is exposed as part of the plugin's public API.
+The following flags are required:
+
+| Flag | Description |
+| ---- | ----------- |
+| `-shared` | Produce a shared object that can be dynamically loaded at program runtime |
+| `-fPIC` | Produce [P]osition [I]ndependent [C]ode which can be referenced regardless of memory location |
+| `-I${MODNS_SDK_DIR}` | Add `$MODNS_SDK_DIR` to the C header search path, so that `#include "modns-sdk.h"` in the C source
+code finds the proper header file |
+| `-u_init_modns_sdk` | Always export the `_init_modns_sdk` function, even though it isn't in any header files. This function
+is used internally by the MoDNS server when your plugin is loaded. |
+| `-L${MODNS_SDK_DIR}` | Add `$MODNS_SDK_DIR` to the linker search path, so that the linker is able to find the SDK library |
+| `-lmodns_sdk` | Link against the `libmodns-sdk.a` file found in `$MODNS_SDK_DIR` |
 
 ## Packaging Plugins
 
@@ -586,4 +597,6 @@ are typically stored separately from user-installed plugins
 The server will refuse to load plugins which do not meet these requirements.
 
 ## Full example: A simple logger written in Go
+
+TODO
 
