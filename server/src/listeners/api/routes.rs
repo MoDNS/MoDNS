@@ -1,17 +1,14 @@
 
 use std::collections::BTreeMap;
-use std::convert::Infallible;
 use std::sync::Arc;
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 use warp::hyper::StatusCode;
 use warp::reply::json;
-use warp::sse::Event;
-use warp::{Filter, filters::BoxedFilter, Reply, Rejection, reject};
+use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
 
-use crate::plugins::metadata::PluginMetadata;
 use crate::plugins::manager::PluginManager;
 
 #[derive(Deserialize)]
@@ -47,10 +44,10 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             get_metadata_list(pm, pq)
         })
         .or(warp::path!("plugins" / "enable").and(warp::query::<EnableQuery>())
-        .then(move |eq: EnableQuery| {
-            let pm = enable_pm.clone();
-            log::trace!("Plugin enabled status change requested");
-            set_plugin_stat(pm, eq)
+            .then(move |eq: EnableQuery| {
+                    let pm = enable_pm.clone();
+                    log::trace!("Plugin enabled status change requested");
+                    set_plugin_stat(pm, eq)
             })
         )
     ).boxed()
@@ -89,11 +86,11 @@ pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, query: EnableQuery)
 
     if query.enable.unwrap_or(false) {
         let _ = manager.enable_plugin(&query.uuid);
-        let reply = "{&query.uuid#?} set to enabled";
+        let reply = format!("Enabled {:#?}", query.uuid);
         Ok(warp::reply::with_status(reply, StatusCode::OK))
     } else {
         let _ = manager.disable_plugin(&query.uuid);
-        let reply = "{&query.uuid#?} set to disabled";
+        let reply = format!("Disabled {:#?}", query.uuid);
         Ok(warp::reply::with_status(reply, StatusCode::OK))
     }
 }

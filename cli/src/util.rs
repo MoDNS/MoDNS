@@ -3,9 +3,9 @@ use anyhow::{Context, Result};
 use hyper::{Body, Request, Response, Client, body::HttpBody};
 use hyperlocal::UnixClientExt;
 
-use crate::CLI;
+use crate::CliOptions;
 
-pub fn make_request(method: hyper::Method, path: &str, config: &CLI) -> Result<Response<String>> {
+pub fn make_request(method: hyper::Method, path: &str, config: &CliOptions) -> Result<Response<String>> {
 
     let uri = if let Some(host) = config.remote_host() {
         hyper::Uri::builder()
@@ -19,11 +19,19 @@ pub fn make_request(method: hyper::Method, path: &str, config: &CLI) -> Result<R
             .into()
     };
 
+    if config.verbose() > 2 {
+        eprintln!("URI: {uri:#?}");
+    }
+
     let request = Request::builder()
         .method(method)
         .uri(uri)
         .body(Body::empty())
         .context("Couldn't construct request body")?;
+
+    if config.verbose() > 2 {
+        eprintln!("Sending request: {request:#?}");
+    }
 
     send_request(request, !config.remote_host().is_some())
 
