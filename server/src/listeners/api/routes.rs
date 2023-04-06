@@ -1,17 +1,14 @@
 
 use std::collections::BTreeMap;
-use std::convert::Infallible;
 use std::sync::Arc;
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 use warp::hyper::StatusCode;
 use warp::reply::json;
-use warp::sse::Event;
-use warp::{Filter, filters::BoxedFilter, Reply, Rejection, reject};
+use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
 
-use crate::plugins::metadata::PluginMetadata;
 use crate::plugins::manager::PluginManager;
 
 #[derive(Deserialize)]
@@ -50,6 +47,7 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             let pm = enable_pm.clone();
             log::trace!("Plugin enabled status change requested");
             set_plugin_stat(pm, uuid, eq)
+       
             })
         )
     ).boxed()
@@ -93,6 +91,7 @@ pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, query: 
     } else {
         let _ = manager.disable_plugin(&uuid);
         let reply = "{&query.uuid#?} set to disabled";
+
         Ok(warp::reply::with_status(reply, StatusCode::OK))
     }
 }

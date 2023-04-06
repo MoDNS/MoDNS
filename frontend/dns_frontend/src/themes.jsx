@@ -135,6 +135,37 @@ const themeOne = createTheme({
         },
       },
     },
+    MuiMenu: {
+      styleOverrides: {
+        list: {
+          backgroundColor: t1_b,
+          borderRadius: 0,
+        }
+      },
+    },
+    MuiSelect: {
+      defaultProps: {
+        variant: 'standard',
+      },
+      styleOverrides: {
+        root: {
+          "&.Mui-focused": {
+            color: t1_tp,
+          },
+        },
+        underline: {
+          '&:after': {
+            borderBottomColor: t1_tp,
+          },
+          '&:before': {
+            borderBottomColor: t1_tp,
+          },
+        },
+        icon: {
+          fill: t1_tp,
+        }
+      },
+    },
     MuiTextField: {
       defaultProps: {
         variant: 'standard',
@@ -194,6 +225,16 @@ const themeOne = createTheme({
           },
         },
       },
+    },
+    MuiCheckbox: {
+      styleOverrides: {
+        root: {
+          color: t1_tp,
+          '&.Mui-checked': {
+            color: t1_tp,
+          }
+        }
+      }
     },
     MuiRadio: {
       styleOverrides: {
@@ -438,12 +479,43 @@ const themeTwo = createTheme({
         },
       },
     },
-    MuiTextField:{
+    MuiMenu: {
+      styleOverrides: {
+        list: {
+          backgroundColor: t2_b,
+          borderRadius: 0,
+        }
+      },
+    },
+    MuiSelect: {
       defaultProps: {
         variant: 'standard',
         margin: 'dense',
         size: 'small',
         color: 'text',
+      },
+      styleOverrides: {
+        root: {
+          "&.Mui-focused": {
+            color: t2_tp,
+          },
+        },
+        underline: {
+          '&:after': {
+            borderBottomColor: t2_tp,
+          },
+          '&:before': {
+            borderBottomColor: t2_tp,
+          },
+        },
+        icon: {
+          fill: t1_tp,
+        }
+      },
+    },
+    MuiTextField:{
+      defaultProps: {
+        variant: 'standard',
       },
       styleOverrides: {
         root: {
