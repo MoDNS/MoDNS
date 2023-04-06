@@ -3,6 +3,7 @@
 
 //////////////////////////////////////////////////////// SETTINGS ////////////////////////////////////////////////////////
 
+
 /////////////////////////////// SERVER MANAGE ///////////////////////////////
 export const setServerConfig = (key, value) => {
     console.log(key, value);
@@ -302,6 +303,11 @@ export const getPluginLogo = (uuid) => {
     return null;
 }
 
+export const getPluginCustomSettings = (uuid) => {
+    return null;
+    // return customSettings;
+}
+
 export const setPluginOrder = (uuidList) => {
     console.log(uuidList);
 }
@@ -311,10 +317,14 @@ export const enabledisablePlugin = (uuid, enabled) => {
 }
 
 export const configurePlugin = (uuid, key, value) => {
-
+    console.log(key + ": " + value);
 }
 
-export const getPluginConfig = (uuid, key, value) => {
+export const executePluginCommand = (uuid, command) => {
+    console.log(command);
+}
+
+export const getPluginConfig = (uuid, key) => {
     return null;
 }
 

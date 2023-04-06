@@ -121,8 +121,8 @@ fn listener_plugin_decoder_failure() {
     let test_response = pm.decode(&SAMPLE_REQUEST[..20]);
 
     assert_eq!(
-        test_response.unwrap_err(),
-        modnsd::plugins::plugin::PluginExecutorError::ErrorCode(1),
+        test_response.unwrap_err().error_code(),
+        Some(1),
         "decoder did not error on an invalid request"
     );
 }
