@@ -76,6 +76,10 @@ export const executePluginCommand = async (uuid, command) => {
     })
 }
 
+export const getPluginCustomSettings = async (uuid) => {
+    await fetch(`${window.location.origin}/api/plugins/${uuid}/settingspage`);
+}
+
 export const getPluginLogo = async (uuid) => {
     const response = await fetch(`${window.location.origin}/api/plugins/${uuid}/favicon`);
     return response;
