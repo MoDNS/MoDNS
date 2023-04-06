@@ -4,7 +4,6 @@ use anyhow::Context;
 use modnsd::plugins::manager::PluginManager;
 use modnsd::listeners::{ApiListener, DnsListener, self};
 
-use clap::Parser;
 use tokio::{net::{TcpListener, UnixListener, UdpSocket}, sync::RwLock};
 
 mod config;
@@ -12,7 +11,7 @@ mod config;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
 
-    let config = config::ServerConfig::parse();
+    let config = config::init()?;
 
     env_logger::Builder::from_env(
         env_logger::Env::new()
@@ -21,6 +20,8 @@ async fn main() -> anyhow::Result<()> {
     )
     .parse_filters(config.log())
     .init();
+
+    log::trace!("Starting server with configuration: {:#?}", config);
 
     let pm_arc = Arc::new(RwLock::new(PluginManager::new()));
 

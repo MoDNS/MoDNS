@@ -1,5 +1,5 @@
 
-all: sdk server plugins
+all: sdk server plugins cli
 
 .PHONY: server
 server:
@@ -11,6 +11,10 @@ debug: export CFLAGS+= -DDEBUG
 .PHONY: sdk
 sdk: $(wildcard $(CURDIR)/modns-sdk/src/*)
 	cargo build -p modns-sdk
+
+.PHONY: cli
+cli: $(wildcard $(CURDIR)/cli/src/*)
+	cargo build -p modns
 
 .PHONY: plugins
 export SDK_LINK_ARGS = -I${CURDIR}/modns-sdk/headers -L${CURDIR}/target/debug -lmodns_sdk

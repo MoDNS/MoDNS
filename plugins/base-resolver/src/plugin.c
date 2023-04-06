@@ -6,7 +6,7 @@
 
 #define MAX_DNS_DGRAM_SIZE 512
 
-extern uint8_t impl_resolve_req(const struct DnsMessage *req, struct DnsMessage *resp) {
+extern uint8_t impl_resolver_sync_resolve_req(const struct DnsMessage *req, struct DnsMessage *resp, void *state) {
 
 #ifdef DEBUG
     printf("Starting resolver\n");

@@ -10,9 +10,7 @@ uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
 
     if (req.size < 12) {return 1;} // Message must be at least 12 bytes long to fit header
 
-#ifdef DEBUG
-    printf("req has size %ld\n", req.size);
-#endif
+    modns_log(4, 30, "req has size %ld", req.size);
 
     uint16_t req_id = ntohs(*(uint16_t *)req.ptr);
 
@@ -48,10 +46,7 @@ uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
             opcode = DSO;
             break;
         default:
-
-#ifdef DEBUG
-            printf("didn't recognize opcode %d\n", opcode_char);
-#endif
+            modns_log(1, 30, "didn't recognize opcode %d", opcode_char);
             return 1;
     }
 
@@ -80,21 +75,19 @@ uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
             rcode = Refused;
             break;
         default:
-#ifdef DEBUG
-            printf("didnt recognize rcode %d\n", rcode_char);
-#endif
+            modns_log(1, 30, "didn't recognize rcode %d", rcode_char);
             return 1;
     }
 
     // Update header struct fields
-    message->header.id = req_id;
-    message->header.is_response = qr;
-    message->header.authoritative_answer = aa;
-    message->header.truncation = tc;
-    message->header.recursion_desired = rd;
-    message->header.recursion_available = ra;
-    message->header.opcode = opcode;
-    message->header.response_code = rcode;
+    message->id = req_id;
+    message->is_response = qr;
+    message->authoritative_answer = aa;
+    message->truncation = tc;
+    message->recursion_desired = rd;
+    message->recursion_available = ra;
+    message->opcode = opcode;
+    message->response_code = rcode;
 
     // Get the number of each field from the header
     uint16_t qdcount = ntohs(*(uint16_t *)(req.ptr + 4));
@@ -102,73 +95,56 @@ uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
     uint16_t nscount = ntohs(*(uint16_t *)(req.ptr + 8));
     uint16_t arcount = ntohs(*(uint16_t *)(req.ptr + 10));
 
-    if (qdcount > 0) { resize_field(message, qdcount, Query);}
-    if (ancount > 0) { resize_field(message, ancount, Answer);}
-    if (nscount > 0) { resize_field(message, nscount, Authority);}
-    if (arcount > 0) { resize_field(message, arcount, Additional);}
+    if (qdcount > 0) { resize_question_field(&message->questions, qdcount);}
+    if (ancount > 0) { resize_rr_field(&message->answers, ancount);}
+    if (nscount > 0) { resize_rr_field(&message->authorities, nscount);}
+    if (arcount > 0) { resize_rr_field(&message->additional, arcount);}
 
     uintptr_t cursor = 12; // Start a cursor at the end of the header
 
     for (uint16_t i = 0; i < qdcount; i++) {
 
-#ifdef DEBUG
-        printf("Decoding question %d, cursor at %ld\n", i, cursor);
-#endif
+        modns_log(4, 45, "Decoding question %d, cursor at %ld", i, cursor);
 
-        cursor = decode_question(req, cursor, message->question + i);
+        cursor = decode_question(req, cursor, message->questions.ptr + i);
 
-#ifdef DEBUG
-        printf("Decoded, cursor at %ld\n", cursor);
-#endif
+        modns_log(4, 30, "Decoded, cursor at %ld", cursor);
+
         if (cursor == 0) {return 1;}
     }
 
     for (uint16_t i = 0; i < ancount; i++) {
 
-#ifdef DEBUG
-        printf("Decoding answer %d, cursor at %ld\n", i, cursor);
-#endif
+        modns_log(4, 45, "Decoding answer %d, cursor at %ld", i, cursor);
 
-        cursor = decode_rr(req, cursor, message->answer + i);
+        cursor = decode_rr(req, cursor, message->answers.ptr + i);
 
-#ifdef DEBUG
-        printf("Decoded, cursor at %ld\n", cursor);
-#endif
+        modns_log(4, 30, "Decoded, cursor at %ld", cursor);
         if (cursor == 0) {return 1;}
     }
 
     for (uint16_t i = 0; i < nscount; i++) {
 
-#ifdef DEBUG
-        printf("Decoding authority %d, cursor at %ld\n", i, cursor);
-#endif
+        modns_log(4, 50, "Decoding authority %d, cursor at %ld", i, cursor);
 
-        cursor = decode_rr(req, cursor, message->authority + i);
+        cursor = decode_rr(req, cursor, message->authorities.ptr + i);
 
-#ifdef DEBUG
-        printf("Decoded, cursor at %ld\n", cursor);
-#endif
+        modns_log(4, 30, "Decoded, cursor at %ld", cursor);
 
         if (cursor == 0) {return 1;}
     }
 
     for (uint16_t i = 0; i < arcount; i++) {
 
-#ifdef DEBUG
-        printf("Decoding additional %d, cursor at %ld\n", i, cursor);
-#endif
-        cursor = decode_rr(req, cursor, message->additional + i);
+        modns_log(4, 45, "Decoding additional %d, cursor at %ld", i, cursor);
+        cursor = decode_rr(req, cursor, message->additional.ptr + i);
 
-#ifdef DEBUG
-        printf("Decoded, cursor at %ld\n", cursor);
-#endif
+        modns_log(4, 35, "Decoded, cursor at %ld", cursor);
 
         if (cursor == 0) {return 1;}
     }
 
-#ifdef DEBUG
-    printf("Cursor position: %ld, vector size: %ld\n", cursor, req.size);
-#endif
+    modns_log(4, 50, "Cursor position: %ld, vector size: %ld", cursor, req.size);
 
     return 0;
 }
@@ -196,18 +172,14 @@ uintptr_t decode_question(struct ByteVector req, uintptr_t initial_offset, struc
 uintptr_t decode_rr(struct ByteVector req, uintptr_t initial_offset, struct DnsResourceRecord *rr) {
     uintptr_t cursor = initial_offset;
 
-#ifdef DEBUG
-    printf("decoding labels, cursor at %ld\n", cursor);
-#endif
+    modns_log(4, 40, "decoding labels, cursor at %ld", cursor);
 
     cursor = decode_label_list(req, cursor, &(rr->name));
     if (cursor == 0) {return 0;}
 
     if (req.size < cursor + 10) {return 0;}
 
-#ifdef DEBUG
-    printf("decoding header\n");
-#endif
+    modns_log(4, 20, "decoding header");
 
     rr->type_code = ntohs(*(uint16_t *)(req.ptr + cursor));
     cursor += 2;
@@ -226,9 +198,7 @@ uintptr_t decode_rr(struct ByteVector req, uintptr_t initial_offset, struct DnsR
     struct ByteVector rdata = {NULL, 0, 0};
     rdata = extend_char_vec(rdata, rr->rdlength);
 
-#ifdef DEBUG
-    printf("copying bytes\n");
-#endif
+    modns_log(4, 20, "copying bytes");
 
     for(uint16_t i = 0; i < rr->rdlength; i++) {
         rdata.ptr[i] = req.ptr[cursor++];
@@ -247,9 +217,7 @@ uintptr_t decode_label_list(struct ByteVector req, uintptr_t initial_offset, str
 
     uint8_t label_len = req.ptr[cursor++];
 
-#ifdef DEBUG
-    printf("Starting to decode label list, first label has length %d\n", label_len);
-#endif
+    modns_log(4, 65, "Starting to decode label list, first label has length %d", label_len);
 
     struct BytePtrVector qname = *vec;
     for (uint8_t label_num = qname.size; label_len > 0; label_num++) {
@@ -279,9 +247,7 @@ uintptr_t decode_label_list(struct ByteVector req, uintptr_t initial_offset, str
 
         label_len = req.ptr[cursor++];
 
-    #ifdef DEBUG
-        printf("Decoded %s, cursor at %ld, next label has length %d\n", label.ptr, cursor, label_len);
-    #endif
+        modns_log(4, 75, "Decoded %s, cursor at %ld, next label has length %d", label.ptr, cursor, label_len);
 
     };
 
