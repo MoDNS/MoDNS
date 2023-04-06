@@ -71,7 +71,7 @@ export const getPluginConfig = async (uuid, key) => {
 }
 
 export const executePluginCommand = async (uuid, command) => {
-    await fetch(`${window.location.origin}/api/plugins/${uuid}/config?command=${command}`, {
+    await fetch(`${window.location.origin}/api/plugins/${uuid}/command/${command}`, {
         method: 'POST',
     })
 }
