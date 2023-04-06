@@ -484,6 +484,15 @@ TODO: Frontend pls fill in
 
 ### Settings Page
 
+### Providing a Logo
+
+If you would like to provide a logo to your plugin to be included on pages related to your plugin,
+include a `favicon.*` file in the plugin's directory.
+
+Supported formats are `png`, `ico`, and `webp`.
+
+This exposes the `/api/plugins/favicon?uuid=<your-plugin-uuid>` API endpoint.
+
 ## Compiling Plugins
 
 As mentioned above, plugins must be compiled into a shared object file named `plugin.so`.
@@ -563,6 +572,7 @@ path, that directory will look something like:
 │   └── manifest.yaml
 └── plugin-2
     ├── plugin.so
+    ├── favicon.ico
     └── manifest.yaml
 ```
 
