@@ -47,7 +47,6 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             let pm = enable_pm.clone();
             log::trace!("Plugin enabled status change requested");
             set_plugin_stat(pm, uuid, eq)
-       
             })
         )
     ).boxed()
@@ -86,11 +85,11 @@ pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, query: 
 
     if query.enable.unwrap_or(false) {
         let _ = manager.enable_plugin(&uuid);
-        let reply = "{&query.uuid#?} set to enabled";
+        let reply = format!("{:#?} set to enabled", uuid);
         Ok(warp::reply::with_status(reply, StatusCode::OK))
     } else {
         let _ = manager.disable_plugin(&uuid);
-        let reply = "{&query.uuid#?} set to disabled";
+        let reply = format!("{:#?} set to disabled", uuid);
 
         Ok(warp::reply::with_status(reply, StatusCode::OK))
     }
