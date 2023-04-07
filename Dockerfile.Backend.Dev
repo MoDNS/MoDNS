@@ -10,7 +10,9 @@ RUN cargo install cargo-watch
 
 COPY . .
 
+RUN make
+
 EXPOSE 8080 
 EXPOSE 5300/udp
 
-ENTRYPOINT make && cargo watch --poll -w server -x run --why || tail -f /dev/null
+ENTRYPOINT cargo watch --poll -w server -x run --why || tail -f /dev/null
