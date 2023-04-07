@@ -1,0 +1,18 @@
+#Use cargo-chef to build dependencies separately from main binary
+FROM rust:1.67
+
+# create Rust-based backend server working directory
+WORKDIR /rust-server
+
+RUN cargo install cargo-watch
+
+COPY . .
+
+# Make needs Go
+COPY --from=golang:1.20 /usr/local/go/ /usr/local/go/
+ENV PATH="/usr/local/go/bin:${PATH}"
+
+EXPOSE 8080 
+EXPOSE 5300/udp
+
+ENTRYPOINT make && cargo watch --poll -w server -x run --why || tail -f /dev/null
