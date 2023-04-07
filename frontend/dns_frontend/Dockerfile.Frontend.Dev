@@ -19,4 +19,4 @@ EXPOSE 3000
 
 # start npm-watch
 ## NOTE: package.json needs watch srcipt for this to work
-ENTRYPOINT [ "npm", "run", "watch"]
+ENTRYPOINT npm run watch || tail -f /dev/null

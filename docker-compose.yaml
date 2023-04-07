@@ -41,5 +41,3 @@ services:
 
 volumes:
   frontend_build:
-  # backend_build:
-  #   external: true
