@@ -6,4 +6,4 @@ Inside 'backend_build' should be an empty directory called 'target' and an empty
 ## DockerDevMode Commands
 Initial Start: docker compose up --build
 Subsequent Starts/Resume: docker compose up
-Stop Everything: docker compose down
+Stop & Remove: docker compose down
