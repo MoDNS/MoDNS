@@ -5,7 +5,7 @@ import { Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/materi
 import { useState } from 'react';
 import SequentialView from '../Components/Plugins/SequentialView';
 import Overview from '../Components/Plugins/Overview';
-import { enabledisablePlugin, getPluginDict, setInterceptOrder, setInterceptOrderAPI } from '../API/getsetAPI';
+import { enabledisablePlugin, getPluginDict, setInterceptOrderAPI } from '../API/getsetAPI';
 import { getPluginViewStorage, setPluginViewStorage } from '../scripts/getsetLocalStorage';
 
 
@@ -31,6 +31,7 @@ const Plugins = () => {
         'validator': false,
         'inspector': false,
     }
+
 
     ////////////////////// Plugin Lists //////////////////////
     const pluginDicts = {

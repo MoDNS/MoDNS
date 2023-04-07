@@ -6,9 +6,9 @@
 /////////////////////////////// PLUGIN MANAGE ///////////////////////////////
 
 export const getPluginDict = async (filter) => {
-    const response = await fetch(`${window.location.origin}/api/plugins${filter ? `?modules=${filter}` : ''}`);
+    const response = await (await fetch(`${window.location.origin}/api/plugins${filter ? `?modules=${filter}` : ''}`)).json();
     console.log(response);
-    return response.json();
+    return response;
 }
 
 export const installPlugin = async (file) => {
@@ -112,7 +112,8 @@ export const getServerConfig = async (key) => {
 
 ////////////////////////////// AUTHENTICATION ///////////////////////////////
 export const getAuthentication = (password) => {
-    fetch(`${window.location.origin}/api/auth`);
+    return true
+    // fetch(`${window.location.origin}/api/auth`);
 
 }
 
