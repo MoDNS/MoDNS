@@ -269,8 +269,10 @@ impl ServerConfig {
         if unix_socket.as_ref().try_exists()
             .with_context(|| format!("Unable to check if unix socket {} exists", unix_socket.as_ref().display()))?
         {
-            anyhow::bail!("Can't create a Unix socket at {} because an object already exists there", unix_socket.as_ref().display())
+            std::fs::remove_file(unix_socket.as_ref())
+                .with_context(|| format!("Unix socket {} already exists and couldn't be removed", unix_socket.as_ref().display()))?;
         }
+
 
         let unix_socket_dir = unix_socket.as_ref().parent().unwrap_or(Path::new("."));
         let unix_socket_file = unix_socket.as_ref().file_name().with_context(|| format!("Unix socket path {} does not appear to be a name for a file", unix_socket.as_ref().display()))?;
