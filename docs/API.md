@@ -180,7 +180,7 @@ Returns:
 
 #### Uninstall a plugin
 
-Endpoint `POST /api/plugins/uninstall?uuid=<plugin uuid>`
+Endpoint `POST /api/plugins/<uuid>/uninstall`
 
 CLI: `modns plugin uninstall <name|uuid>`
 
@@ -207,7 +207,7 @@ Returns `200 OK` on success
 
 #### Enable or disable a plugin
 
-Endpoint: `POST /api/plugins/enable?uuid=<plugin uuid>&enabled=<bool>`
+Endpoint: `POST /api/plugins/<uuid>/enable?enabled=<bool>`
 
 CLI: `modns plugin (enable|disable) <name|uuid>`
 
@@ -219,7 +219,7 @@ Returns `200 OK` on success
 
 #### Configure a plugin
 
-Endpoint: `POST /api/plugins/configure?uuid=<plugin uuid>&<key>=<value>...`
+Endpoint: `POST /api/plugins/<uuid>/config?<key>=<value>...`
 
 CLI: `modns plugin set-config <name|uuid> <key> <value>`
 
@@ -230,7 +230,7 @@ Return code determined by plugin
 
 #### Get a plugin's configuration
 
-Endpoint: `GET /api/plugins/configure?uuid=<plugin uuid>&<key>...`
+Endpoint: `GET /api/plugins/<uuid>/config?<key>...`
 
 CLI: `modns plugin get-config <name|uuid> <key> [<key>]...`
 
@@ -250,7 +250,7 @@ Return code determined by plugin
 
 #### Get a plugin's icon
 
-Endpoint: `GET /api/plugins/favicon?uuid=<plugin uuid>`
+Endpoint: `GET /api/plugins/<uuid>/favicon`
 
 Get the logo icon specified in a plugin's `manifest.yaml` file
 
@@ -284,7 +284,7 @@ Returns `200 OK` before server attempts to shut down
 
 #### Set a server configuration parameter
 
-Endpoint: POST `/api/server/configure?<key>=<value>`
+Endpoint: POST `/api/server/config?<key>=<value>`
 
 CLI: `modns config set <key> <value>`
 

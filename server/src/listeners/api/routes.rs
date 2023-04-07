@@ -1,16 +1,14 @@
 
 use std::collections::BTreeMap;
-use std::convert::Infallible;
 use std::sync::Arc;
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use uuid::Uuid;
+use warp::hyper::StatusCode;
 use warp::reply::json;
-use warp::sse::Event;
-use warp::{Filter, filters::BoxedFilter, Reply, Rejection, reject};
+use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
 
-use crate::plugins::metadata::PluginMetadata;
 use crate::plugins::manager::PluginManager;
 
 #[derive(Deserialize)]
@@ -18,6 +16,12 @@ pub struct PluginQuery
 {
     module: Option<String>,
     enabled: Option<bool>
+}
+
+#[derive(Deserialize)]
+pub struct EnableQuery
+{
+    enable: Option<bool>
 }
 
 pub fn root_redirect() -> BoxedFilter<(impl Reply,)> {
@@ -30,18 +34,26 @@ pub fn frontend_filter() -> BoxedFilter<(impl Reply,)> {
 
 pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> {
     let metadata_pm = pm.clone();
+    let enable_pm = pm.clone();
     warp::path("api")
         .and(warp::path!("plugins").and(warp::query::<PluginQuery>())
-            .then(move |pq: PluginQuery| {
+        .then(move |pq: PluginQuery| {
             let pm = metadata_pm.clone();
             log::trace!("Plugin metadata list requested");
             get_metadata_list(pm, pq)
         })
+        .or(warp::path!("plugins" / Uuid / "enable").and(warp::query::<EnableQuery>())
+        .then(move |uuid: Uuid, eq: EnableQuery| {
+            let pm = enable_pm.clone();
+            log::trace!("Plugin enabled status change requested");
+            set_plugin_stat(pm, uuid, eq)
+       
+            })
         )
-    .boxed()
+    ).boxed()
 }
 
-pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, query: PluginQuery) -> impl Reply {
+pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, query: PluginQuery) -> Box<dyn Reply> {
     let metadata = pm.read().await.list_metadata();
 
     let reply = metadata.iter().filter(|(_, plugin)| {
@@ -65,5 +77,21 @@ pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, query: PluginQuer
 
     let json = json(&reply);
 
-    return json
+    Box::new(json)
+}
+
+pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, query: EnableQuery) -> impl Reply {
+
+    let mut manager = pm.write().await;
+
+    if query.enable.unwrap_or(false) {
+        let _ = manager.enable_plugin(&uuid);
+        let reply = "{&query.uuid#?} set to enabled";
+        Ok(warp::reply::with_status(reply, StatusCode::OK))
+    } else {
+        let _ = manager.disable_plugin(&uuid);
+        let reply = "{&query.uuid#?} set to disabled";
+
+        Ok(warp::reply::with_status(reply, StatusCode::OK))
+    }
 }

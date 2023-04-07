@@ -24,17 +24,17 @@ fn plugins_init() {
 
     assert!(pm.get_metadata(&listener).unwrap().enabled(), "Listener is disabled after Pluginmanager::init()");
     assert!(pm.get_metadata(&resolver).unwrap().enabled(), "Resolver is disabled after Pluginmanager::init()");
-    pm.validate(true).expect("PluginManager is reporting an invalid state even though it should be valid");
+    pm.is_valid_state(true).expect("PluginManager is reporting an invalid state even though it should be valid");
 
     pm.disable_plugin(&resolver).expect("Failed to disable resolver");
 
     assert!(!pm.get_metadata(&resolver).unwrap().enabled(), "Resolver is enabled after user attempted to disable it");
-    pm.validate(true).expect_err("PluginManager is reporting a valid state even though no resolvers are enabled");
+    pm.is_valid_state(true).expect_err("PluginManager is reporting a valid state even though no resolvers are enabled");
 
     pm.enable_plugin(&resolver).expect("Failed to enable resolver");
 
     assert!(pm.get_metadata(&resolver).unwrap().enabled(), "Resolver is disabled after user attempted to enable it");
-    pm.validate(true).expect("PluginManager is reporting an invalid state even though it should be valid");
+    pm.is_valid_state(true).expect("PluginManager is reporting an invalid state even though it should be valid");
 
     let listener2 = pm.load(
         PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_listener"),
@@ -48,6 +48,6 @@ fn plugins_init() {
 
     assert!(pm.get_metadata(&listener2).unwrap().enabled(), "Second listener is disabled after user attempter to enable it");
     assert!(!pm.get_metadata(&listener).unwrap().enabled(), "First listener is enabled after enabling second listener");
-    pm.validate(true).expect("PluginManager is reporting an invalid state even though it should be valid");
+    pm.is_valid_state(true).expect("PluginManager is reporting an invalid state even though it should be valid");
 
 }
