@@ -13,4 +13,4 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 EXPOSE 8080 
 EXPOSE 5300/udp
 
-ENTRYPOINT make && cargo watch --poll -w server -x check -x test -x run --why || tail -f /dev/null
+ENTRYPOINT make all test-plugins && cargo watch --poll -w server -x check -x run --why || tail -f /dev/null
