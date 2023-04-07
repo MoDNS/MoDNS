@@ -37,7 +37,9 @@ services:
       - ./Makefile:/rust-server/Makefile
       - frontend_build:/rust-server/web:ro
       - ./backend_build/target:/rust-server/target
-      - ./backend_build/Cargo.lock:/rust-server/Cargo.lock
+      - type: bind
+        source: ./backend_build/Cargo.lock
+        target: /rust-server/Cargo.lock
 
 volumes:
   frontend_build:
