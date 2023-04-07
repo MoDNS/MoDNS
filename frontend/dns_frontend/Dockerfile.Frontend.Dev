@@ -1,0 +1,22 @@
+FROM node:19-alpine
+
+# create the reactJS app directory
+WORKDIR /react-app
+
+# copy necessary files
+COPY package*.json ./
+COPY . .
+
+# install npm dependencies
+RUN npm install
+
+# install npm-watch to watch for file changes
+# this is needed for rebuilding the build folder
+RUN npm install npm-watch
+
+# expose port 3000 for npm
+EXPOSE 3000
+
+# start npm-watch
+## NOTE: package.json needs watch srcipt for this to work
+ENTRYPOINT npm run watch || tail -f /dev/null
