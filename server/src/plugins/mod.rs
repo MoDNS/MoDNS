@@ -7,6 +7,7 @@ pub mod manager;
 pub mod plugin;
 pub mod metadata;
 pub mod handler;
+pub mod response;
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
