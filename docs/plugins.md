@@ -400,7 +400,7 @@ uint8_t impl_plugin_kv_get(const struct ByteVector *key,
 Implementing these functions exposes the following API endpoints:
 
 ```
-POST /api/<your-plugin-uuid>/plugins/config?<key>=<value>
+POST /api/plugins/<your-plugin-uuid>/config?<key>=<value>
 GET /api/plugins/<your-plugin-uuid>/config?<key>[&<key>...]
 ```
 
