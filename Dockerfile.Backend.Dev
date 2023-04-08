@@ -8,9 +8,9 @@ RUN cargo install cargo-watch
 
 # Make needs Go
 COPY --from=golang:1.20 /usr/local/go/ /usr/local/go/
-ENV PATH="/usr/local/go/bin:${PATH}"
+ENV PATH="/rust-server/target/debug:/usr/local/go/bin:${PATH}"
 
 EXPOSE 8080 
 EXPOSE 5300/udp
 
-ENTRYPOINT make all test-plugins && cargo watch --poll -w server -x check -x run --why || tail -f /dev/null
+CMD make all test-plugins && cargo watch --poll -w server -x check -x run --why || tail -f /dev/null
