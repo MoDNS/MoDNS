@@ -11,7 +11,7 @@ const ServerSettings = () => {
         return /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/.test(ip)
     }
 
-    const [webAddress, setWebAddress] = useState('modns');
+    const [webAddress, setWebAddress] = useState( getServerConfig('web_address') );
     const [staticIP, setStaticIP] = useState( getServerConfig('static_ip') );
     const [errorStaticIP, setErrorStaticIP] = useState( staticIP ? !checkStaticIP(staticIP) : true );
     const [useStaticIP, setUseStaticIP] = useState( getServerConfig('use_static_ip') );

@@ -4,12 +4,11 @@ import { FormControlLabel, Icon, IconButton, Switch, TableCell, TableRow, Typogr
 import SettingsIcon from '@mui/icons-material/Settings';
 import SettingsDialog from './SettingsDialog';
 
-import defaultPluginLogo from '../images/default_plugin_logo.svg';
 
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 
-const PluginTableRow = ({ uuid, friendlyName, description, home, is_listener, is_interceptor, is_resolver, is_validator, is_inspector, pluginState, togglePlugin, interceptPosition, numInterceptors, setInterceptOrder, index, dragNDrop, dragStart, dragEnter, dragDrop, }) => {
+const PluginTableRow = ({ uuid, friendlyName, description, home, is_listener, is_interceptor, is_resolver, is_validator, is_inspector, pluginState, togglePlugin, interceptPosition, numInterceptors, setInterceptOrder, index, dragNDrop, dragStart, dragEnter, dragDrop, settingsPage }) => {
     const [dialogOpen, setDialogStatus] = useState(false);
 
     const [drag, startDrag] = useState(false);
@@ -39,7 +38,7 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, is_listener, is
                 align='left'
                 
                 >
-                <img src={defaultPluginLogo} alt="No Logo Found" width={65} height={65} style={{ margin: 10 }} draggable={false}/>    { /* dummy logo */ }
+                <img alt="No Logo Found" width={65} height={65} style={{ margin: 10 }} draggable={false}/>    { /* dummy logo */ }
             </TableCell>
             <TableCell
                 align='left'
@@ -102,6 +101,7 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, is_listener, is
                 togglePlugin={togglePlugin}                             // pass the toggle plugin function to the settings dialog box
                 pluginState={pluginState}                               // pass the plugin state to the dialog box
                 setInterceptOrder={setInterceptOrder}                   // set order of rows
+                settingsPage={settingsPage}
 
             />
 

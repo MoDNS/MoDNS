@@ -6,9 +6,18 @@
 /////////////////////////////// PLUGIN MANAGE ///////////////////////////////
 
 export const getPluginDict = async (filter) => {
-    const response = await (await fetch(`${window.location.origin}/api/plugins${filter ? `?modules=${filter}` : ''}`)).json();
-    console.log(response);
-    return response;
+    return await fetch(`${window.location.origin}/api/plugins${filter ? `?modules=${filter}` : ''}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        }
+    }).then(response => {
+        if(response.ok) {
+            return response.json();
+        } else {
+            return {};
+        }
+    });
 }
 
 export const installPlugin = async (file) => {
@@ -66,8 +75,15 @@ export const configurePlugin = async (uuid, key, value) => {
 }
 
 export const getPluginConfig = async (uuid, key) => {
-    const response = await fetch(`${window.location.origin}/api/plugins/${uuid}/config?${key}`)
-    return response;
+    return await fetch(`${window.location.origin}/api/plugins/${uuid}/config?${key}`, {
+        method: 'GET',
+    }).then(response => {
+        if (response.ok) {
+            return response;
+        } else {
+            return null;
+        }
+    });
 }
 
 export const executePluginCommand = async (uuid, command) => {
@@ -77,12 +93,29 @@ export const executePluginCommand = async (uuid, command) => {
 }
 
 export const getPluginCustomSettings = async (uuid) => {
-    await fetch(`${window.location.origin}/api/plugins/${uuid}/settingspage`);
+    return await fetch(`${window.location.origin}/api/plugins/${uuid}/settingspage`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(response => {
+        if (response.ok) {
+            return response.json();
+        } else {
+            return [];
+        }
+    });
 }
 
 export const getPluginLogo = async (uuid) => {
-    const response = await fetch(`${window.location.origin}/api/plugins/${uuid}/favicon`);
-    return response;
+    return await fetch(`${window.location.origin}/api/plugins/${uuid}/favicon`).then(response => {
+        if (response.ok) {
+            return response;
+        } else {
+            return null;
+        }
+    });
+
 }
 
 /////////////////////////////// SERVER MANAGE ///////////////////////////////
@@ -106,8 +139,13 @@ export const setServerConfig = async (key, value) => {
 }
 
 export const getServerConfig = async (key) => {
-    const response = fetch(`${window.location.origin}/api/config?${key}`);
-    return response;
+    return await fetch(`${window.location.origin}/api/config?${key}`).then(response => {
+        if (response.ok) {
+            return response;
+        } else {
+            return null;
+        }
+    })
 }
 
 ////////////////////////////// AUTHENTICATION ///////////////////////////////
