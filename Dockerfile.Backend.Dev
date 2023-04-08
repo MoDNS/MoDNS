@@ -13,4 +13,4 @@ ENV PATH="/rust-server/target/debug:/usr/local/go/bin:${PATH}"
 EXPOSE 8080 
 EXPOSE 5300/udp
 
-CMD make all test-plugins && cargo watch --poll -w server -x check -x run --why || tail -f /dev/null
+CMD make all test-plugins && cargo watch --poll -w server -x check -x test -x run --why || tail -f /dev/null
