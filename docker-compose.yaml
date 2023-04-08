@@ -18,16 +18,12 @@ services:
 
   backend:
     container_name: rust-server
-    environment:
-      CHOKIDAR_USEPOLLING: "true"
-      WATCHPACK_POLLING: "true"
-      RUST_LOG: debug
     build:
       context: .
       dockerfile: Dockerfile.Backend.Dev
     ports:
-      - "54321:8080"
-      - "54322:5300/udp"
+      - "8080:80"
+      - "5300:53/udp"
     volumes:
       - ./server:/rust-server/server
       - ./cli:/rust-server/cli
