@@ -36,10 +36,8 @@ services:
       - ./Cargo.toml:/rust-server/Cargo.toml
       - ./Makefile:/rust-server/Makefile
       - frontend_build:/rust-server/web:ro
-      - ./backend_build/target:/rust-server/target
-      - type: bind
-        source: ./backend_build/Cargo.lock
-        target: /rust-server/Cargo.lock
+      - backend_build:/rust-server/target
 
 volumes:
   frontend_build:
+  backend_build:
