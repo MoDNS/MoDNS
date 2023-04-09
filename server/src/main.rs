@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
 use anyhow::Context;
+
+use modnsd::config;
 use modnsd::plugins::manager::PluginManager;
 use modnsd::listeners::{ApiListener, DnsListener, self};
 
 use tokio::{net::{TcpListener, UnixListener, UdpSocket}, sync::RwLock};
-
-mod config;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -69,7 +69,7 @@ async fn main() -> anyhow::Result<()> {
         DnsListener::Udp(UdpSocket::bind(("0.0.0.0", 5300)).await.context("Failed to bind DNS listener on port 5300/udp")?)
     ];
 
-    listeners::listen(apiaddrs, dnsaddrs, pm_arc).await;
+    listeners::listen(apiaddrs, dnsaddrs, pm_arc, &config).await;
 
     std::fs::remove_file(config.unix_socket())
     .with_context(|| format!("Failed to remove unix socket at {}", config.unix_socket().display()))?;
