@@ -1,18 +1,43 @@
 version: '3.8'
 
 services:
-  dns_frontend:
+  frontend:
     container_name: react-app
     environment:
       CHOKIDAR_USEPOLLING: "true"
       WATCHPACK_POLLING: "true"
     build: 
       context: frontend/dns_frontend
-      dockerfile: Dockerfile
-    ports: 
-      - 3000:3000
+      dockerfile: Dockerfile.Frontend.Dev
     volumes:
       - ./frontend/dns_frontend/src:/react-app/src
       - ./frontend/dns_frontend/public:/react-app/public
       - ./frontend/dns_frontend/package.json:/react-app/package.json
       - ./frontend/dns_frontend/package-lock.json:/react-app/package-lock.json
+      - frontend_build:/react-app/build
+
+  backend:
+    container_name: rust-server
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+      RUST_LOG: debug
+    build:
+      context: .
+      dockerfile: Dockerfile.Backend.Dev
+    ports:
+      - "54321:8080"
+      - "54322:5300/udp"
+    volumes:
+      - ./server:/rust-server/server
+      - ./cli:/rust-server/cli
+      - ./plugins:/rust-server/plugins
+      - ./modns-sdk:/rust-server/modns-sdk
+      - ./Cargo.toml:/rust-server/Cargo.toml
+      - ./Makefile:/rust-server/Makefile
+      - frontend_build:/rust-server/web:ro
+      - ./backend_build/target:/rust-server/target
+      - ./backend_build/Cargo.lock:/rust-server/Cargo.lock
+
+volumes:
+  frontend_build:

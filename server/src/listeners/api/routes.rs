@@ -93,5 +93,6 @@ pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, query: 
     match resp {
         Ok(_) => ApiResponse::new(200, format!("Plugin {uuid} {word}")),
         Err(e) => ApiResponse::from(e),
+
     }
 }

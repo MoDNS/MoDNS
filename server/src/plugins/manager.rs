@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use super::ResponseSource;
 use super::response::ApiResponse;
+
 use super::plugin::{DnsPlugin, PluginExecutorError};
 
 pub struct PluginManager {
@@ -45,6 +46,7 @@ impl PluginManager {
         log::info!("Loaded plugin `{name}` from directory {}", dir.display());
 
         log::trace!("Metadata for `{name}`:\n{:#?}", plugin.metadata());
+
 
         self.plugins.insert(id, plugin);
 

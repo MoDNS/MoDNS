@@ -1,6 +1,7 @@
 
 export SDK_HEADER_ARGS = -I${CURDIR}/modns-sdk/headers  
-export SDK_LINK_ARGS = -u_init_modns_sdk -L${CURDIR}/target/debug -lmodns_sdk
+
+export SDK_LINK_ARGS = -u_init_modns_sdk -L${CURDIR}/target/debug -lmodns_sdk -ldl
 
 all: sdk server plugins cli
 
