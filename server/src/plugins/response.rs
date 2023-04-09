@@ -25,6 +25,15 @@ impl<S: Display + Debug + Send + Sync> ApiResponse<S> {
     }
 }
 
+impl From<anyhow::Error> for ApiResponse<String> {
+    fn from(value: anyhow::Error) -> Self {
+        match value.downcast::<Self>() {
+            Ok(r) => r,
+            Err(e) => Self::from(e.to_string()),
+        }
+    }
+}
+
 impl<S: Display + Debug + Send + Sync> From<S> for ApiResponse<S> {
     fn from(msg: S) -> Self {
         Self::new(500, msg)
