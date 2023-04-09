@@ -73,6 +73,9 @@ pub struct ServerConfigBuilder {
     data_dir: Option<PathBuf>,
 
     /// Path to the frontend root directory
+    ///
+    /// If a relative path is given, it will be expanded to that path relative to the persistent
+    /// data directory (specified with --data-dir)
     #[arg(long, env=FRONTEND_DIR_ENV)]
     frontend_dir: Option<PathBuf>,
 
@@ -108,21 +111,7 @@ pub struct ServerConfigBuilder {
 }
 
 impl ServerConfigBuilder {
-    pub fn new() -> Self {
-        Self {
-            plugin_path: Vec::new(),
-            unix_socket: None,
-            ignore_init_errors: None,
-            data_dir: None,
-            log: None,
-            frontend_dir: None,
-            database: None,
-            sqlite_db_path: None,
-            db_addr: None,
-            db_port: None,
 
-        }
-    }
     pub fn from_args() -> anyhow::Result<Self> {
         Self::try_parse().context("Failed to parse configuration from arguments")
     }
@@ -414,6 +403,14 @@ impl ServerConfig {
 
     pub fn log(&self) -> &str {
         self.log.as_ref()
+    }
+
+    pub fn frontend_dir(&self) -> &Path{
+        &self.frontend_dir.as_path()
+    }
+
+    pub fn db_info(&self) -> &DatabaseConfig {
+        &self.db_info
     }
 }
 
