@@ -14,7 +14,7 @@ const IGNORE_ERRS_ENV: &str = "MODNS_IGNORE_INIT_ERRORS";
 const DATA_DIR_ENV: &str = "MODNS_DATA_DIR";
 const FRONTEND_DIR_ENV: &str = "MODNS_FRONTEND_DIR";
 const DB_TYPE_ENV: &str = "MODNS_DB_TYPE";
-const SQLITE_PATH: &str = "MODNS_DB_SQLITE_PATH";
+const SQLITE_PATH_ENV: &str = "MODNS_DB_SQLITE_PATH";
 const DB_ADDR_ENV: &str = "MODNS_DB_ADDR";
 const DB_PORT_ENV: &str = "MODNS_DB_PORT";
 const LOG_ENV: &str = "MODNS_LOG";
@@ -158,6 +158,26 @@ impl ServerConfigBuilder {
             .and_then(|s| Some(PathBuf::from(s)));
 
         cfg.log = env::var(LOG_ENV).ok();
+
+        cfg.frontend_dir = env::var(FRONTEND_DIR_ENV)
+            .ok()
+            .and_then(|s| Some(PathBuf::from(s)));
+
+        cfg.database = env::var(DB_TYPE_ENV)
+            .ok()
+            .and_then(|s| DatabaseArg::from_str(&s, true).ok());
+
+        cfg.sqlite_db_path = env::var(SQLITE_PATH_ENV)
+            .ok()
+            .and_then(|s| Some(PathBuf::from(s)));
+
+        cfg.db_addr = env::var(DB_ADDR_ENV)
+            .ok()
+            .and_then(|s| s.parse().ok());
+
+        cfg.db_port = env::var(DB_PORT_ENV)
+            .ok()
+            .and_then(|s| s.parse().ok());
 
         cfg
     }
