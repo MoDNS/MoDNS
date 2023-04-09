@@ -1,6 +1,7 @@
 use std::env;
 use std::fmt::Debug;
 use std::fs;
+use std::net::{SocketAddr, IpAddr, Ipv4Addr};
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
@@ -11,11 +12,20 @@ const PLUGIN_PATH_ENV: &str = "MODNS_PATH";
 const UNIX_SOCKET_ENV: &str = "MODNS_UNIX_SOCKET";
 const IGNORE_ERRS_ENV: &str = "MODNS_IGNORE_INIT_ERRORS";
 const DATA_DIR_ENV: &str = "MODNS_DATA_DIR";
+const FRONTEND_DIR_ENV: &str = "MODNS_FRONTEND_DIR";
+const DB_TYPE_ENV: &str = "MODNS_DB_TYPE";
+const SQLITE_PATH: &str = "MODNS_DB_SQLITE_PATH";
+const DB_ADDR_ENV: &str = "MODNS_DB_ADDR";
+const DB_PORT_ENV: &str = "MODNS_DB_PORT";
 const LOG_ENV: &str = "MODNS_LOG";
 
 const DEFAULT_PLUGIN_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../plugins");
 const DEFAULT_UNIX_SOCKET: &str = "/tmp/modnsd.sock";
 const DEFAULT_DATA_DIR: &str = "modns-data";
+const DEFAULT_FRONTEND_DIR: &str = "web";
+const DEFAULT_SQLITE_PATH: &str = "modns.sqlite";
+const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
+const DEFAULT_DB_PORT: u16 = 3306;
 
 #[cfg(debug_assertions)]
 const DEFAULT_LOG_FILTER: &str = "modnsd=trace,info";
@@ -62,6 +72,33 @@ pub struct ServerConfigBuilder {
     #[arg(short, long)]
     data_dir: Option<PathBuf>,
 
+    /// Path to the frontend root directory
+    #[arg(long)]
+    frontend_dir: Option<PathBuf>,
+
+    /// Database backend to use, either SQLite (default) or MySql.
+    #[arg(short='D', long)]
+    database: Option<DatabaseArg>,
+
+    /// If using SQLite as the database, the path to the database file
+    ///
+    /// If a relative path is given, it will be expanded to that path relative to the data
+    /// directory (specified with --data-dir)
+    #[arg(long)]
+    sqlite_db_path: Option<PathBuf>,
+
+    /// Address for the MySQL database
+    ///
+    /// Only applies if --databse=mysql argument is used
+    #[arg(long)]
+    db_addr: Option<IpAddr>,
+
+    /// Port for the MySQL database
+    ///
+    /// Only applies if --database=mysql argument is used
+    #[arg(long)]
+    db_port: Option<u16>,
+
     /// Log level to output. Can be `error` (most severe), `warn`, `info`, `debug`, or `trace` (least severe).
     ///
     /// You can also specify filters per module, like `modnsd::listeners=debug,info` which sets the filter to
@@ -78,6 +115,12 @@ impl ServerConfigBuilder {
             ignore_init_errors: None,
             data_dir: None,
             log: None,
+            frontend_dir: None,
+            database: None,
+            sqlite_db_path: None,
+            db_addr: None,
+            db_port: None,
+
         }
     }
     pub fn from_args() -> anyhow::Result<Self> {
@@ -165,6 +208,11 @@ impl ServerConfigBuilder {
             ignore_init_errors,
             data_dir,
             log,
+            frontend_dir,
+            database,
+            sqlite_db_path,
+            db_addr,
+            db_port
         } = self;
 
         // Clean up the plugin path and ensure that there is at least one entry
@@ -191,14 +239,45 @@ impl ServerConfigBuilder {
 
         let log = log.unwrap_or(String::from(DEFAULT_LOG_FILTER));
 
+        let frontend_dir = frontend_dir.unwrap_or(PathBuf::from(DEFAULT_FRONTEND_DIR));
+
+        let sqlite_db_path = sqlite_db_path.unwrap_or(PathBuf::from(DEFAULT_SQLITE_PATH));
+
+        let db_addr = db_addr.unwrap_or(DEFAULT_DB_ADDR);
+
+        let db_port = db_port.unwrap_or(DEFAULT_DB_PORT);
+
+        let db_info = match database {
+            Some(DatabaseArg::Sqlite) | None => {
+                DatabaseConfig::Sqlite(sqlite_db_path)
+            },
+            Some(_) => {
+                DatabaseConfig::MySql(
+                    SocketAddr::from((db_addr, db_port))
+                )
+            },
+        };
+
         // Build the configuration
-        let conf = ServerConfig::new(plugin_path, unix_socket, ignore_init_errors, data_dir, log)?;
+        let conf = ServerConfig::new(plugin_path, unix_socket, ignore_init_errors, data_dir, log, frontend_dir, db_info)?;
 
         // Create a lockfile
         conf.dump_to_file(conf.data_dir().join(CONFIG_LOCKFILE_NAME))?;
 
         Ok(conf)
     }
+}
+
+#[derive(Debug, Default, ValueEnum, Clone, Copy, Deserialize)]
+enum DatabaseArg {
+    #[default] Sqlite,
+    Mysql,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DatabaseConfig {
+    Sqlite(PathBuf),
+    MySql(SocketAddr)
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum, Default, Serialize, Deserialize)]
@@ -234,20 +313,22 @@ pub struct ServerConfig {
 
     /// Filter to pass to logging crate
     log: String,
+
+    frontend_dir: PathBuf,
+
+    db_info: DatabaseConfig,
 }
 
 impl ServerConfig {
-    pub fn new<P, U, D>(
-        plugin_path: Vec<P>,
-        unix_socket: U,
+    pub fn new(
+        plugin_path: Vec<impl AsRef<Path>>,
+        unix_socket: impl AsRef<Path>,
         ignore_init_errors: IgnoreErrorsConfig,
-        data_dir: D,
+        data_dir: impl AsRef<Path>,
         log: String,
-    ) -> Result<Self> where
-        P: AsRef<Path> + Debug,
-        U: AsRef<Path> + Debug,
-        D: AsRef<Path> + Debug,
-    {
+        frontend_dir: impl AsRef<Path>,
+        db_info: DatabaseConfig,
+    ) -> Result<Self> {
 
         // Get canonical paths for all plugin directories, creating any directories that don't exist
         let mut plugin_path = plugin_path.into_iter().map(|p| {
@@ -292,12 +373,37 @@ impl ServerConfig {
         let data_dir = data_dir.as_ref().canonicalize()
             .with_context(|| format!("Data directory {} was not found", data_dir.as_ref().display()))?;
 
+        let join_data_dir = |p: &Path| {
+            if p.is_absolute() {
+                p.canonicalize()
+                    .with_context(|| format!("Directory {} was not found", p.display()))
+            } else {
+                let relative_path = data_dir.join(frontend_dir.as_ref());
+
+            relative_path.canonicalize()
+                .with_context(|| format!("Frontend directory {} was not found", relative_path.display()))
+            }
+        };
+
+        let frontend_dir = join_data_dir(frontend_dir.as_ref())?;
+
+        let db_info = match db_info {
+            DatabaseConfig::Sqlite(p) => {
+                DatabaseConfig::Sqlite(join_data_dir(p.as_ref())?)
+            },
+            DatabaseConfig::MySql(a) => {
+                DatabaseConfig::MySql(a)
+            },
+        };
+
         let new_conf = Self {
             plugin_path,
             unix_socket,
             ignore_init_errors,
             data_dir,
             log,
+            frontend_dir,
+            db_info
         };
 
         let lockfile = new_conf.data_dir.join(CONFIG_LOCKFILE_NAME);
