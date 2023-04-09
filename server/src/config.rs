@@ -52,11 +52,11 @@ pub struct ServerConfigBuilder {
     /// as plugins
     ///
     /// Multiple directories can be specified by using -p multiple times
-    #[arg(short, long, action=clap::ArgAction::Append)]
+    #[arg(short, long, action=clap::ArgAction::Append, env=PLUGIN_PATH_ENV)]
     plugin_path: Vec<PathBuf>,
 
     /// Path for the Unix Domain socket that is used by the CLI
-    #[arg(short, long)]
+    #[arg(short, long, env=UNIX_SOCKET_ENV)]
     unix_socket: Option<PathBuf>,
 
     /// Ignore some, all, or no errors when initially loading plugins
@@ -65,45 +65,45 @@ pub struct ServerConfigBuilder {
     /// load, but if all plugins are loaded and the server is unable to handle
     /// DNS requests (most likely because there isn't a Resolver or Listener
     /// enabled), server will immediately exit with an error code
-    #[arg(short, long, value_enum)]
+    #[arg(short, long, value_enum, env=IGNORE_ERRS_ENV)]
     ignore_init_errors: Option<IgnoreErrorsConfig>,
 
     /// Path to the data directory
-    #[arg(short, long)]
+    #[arg(short, long, env=DATA_DIR_ENV)]
     data_dir: Option<PathBuf>,
 
     /// Path to the frontend root directory
-    #[arg(long)]
+    #[arg(long, env=FRONTEND_DIR_ENV)]
     frontend_dir: Option<PathBuf>,
 
     /// Database backend to use, either SQLite (default) or MySql.
-    #[arg(short='D', long)]
+    #[arg(short='D', long, env=DB_TYPE_ENV)]
     database: Option<DatabaseArg>,
 
     /// If using SQLite as the database, the path to the database file
     ///
     /// If a relative path is given, it will be expanded to that path relative to the data
     /// directory (specified with --data-dir)
-    #[arg(long)]
+    #[arg(long, env=SQLITE_PATH_ENV)]
     sqlite_db_path: Option<PathBuf>,
 
     /// Address for the MySQL database
     ///
     /// Only applies if --databse=mysql argument is used
-    #[arg(long)]
+    #[arg(long, env=DB_ADDR_ENV)]
     db_addr: Option<IpAddr>,
 
     /// Port for the MySQL database
     ///
     /// Only applies if --database=mysql argument is used
-    #[arg(long)]
+    #[arg(long, env=DB_PORT_ENV)]
     db_port: Option<u16>,
 
     /// Log level to output. Can be `error` (most severe), `warn`, `info`, `debug`, or `trace` (least severe).
     ///
     /// You can also specify filters per module, like `modnsd::listeners=debug,info` which sets the filter to
     /// `info` for all modules except `modnsd::listeners`. See documentation for the Rust `log` crate for more info.
-    #[arg(short, long)]
+    #[arg(short, long, env=LOG_ENV)]
     log: Option<String>,
 }
 
@@ -132,54 +132,6 @@ impl ServerConfigBuilder {
             .context("Failed to read configuration file")?;
         serde_yaml::from_str(&f)
             .context("Failed to parse configuration file")
-    }
-
-    pub fn from_env() -> Self {
-        let mut cfg = Self::new();
-
-        cfg.plugin_path.extend(
-            env::var(PLUGIN_PATH_ENV)
-                .ok()
-                .unwrap_or_default()
-                .split_terminator(":")
-                .filter_map(|s| Some(PathBuf::from(s)))
-        );
-
-        cfg.unix_socket = env::var(UNIX_SOCKET_ENV)
-            .ok()
-            .and_then(|s| Some(PathBuf::from(s)));
-
-        cfg.ignore_init_errors = env::var(IGNORE_ERRS_ENV)
-            .ok()
-            .and_then(|s| IgnoreErrorsConfig::from_str(&s, true).ok());
-
-        cfg.data_dir = env::var(DATA_DIR_ENV)
-            .ok()
-            .and_then(|s| Some(PathBuf::from(s)));
-
-        cfg.log = env::var(LOG_ENV).ok();
-
-        cfg.frontend_dir = env::var(FRONTEND_DIR_ENV)
-            .ok()
-            .and_then(|s| Some(PathBuf::from(s)));
-
-        cfg.database = env::var(DB_TYPE_ENV)
-            .ok()
-            .and_then(|s| DatabaseArg::from_str(&s, true).ok());
-
-        cfg.sqlite_db_path = env::var(SQLITE_PATH_ENV)
-            .ok()
-            .and_then(|s| Some(PathBuf::from(s)));
-
-        cfg.db_addr = env::var(DB_ADDR_ENV)
-            .ok()
-            .and_then(|s| s.parse().ok());
-
-        cfg.db_port = env::var(DB_PORT_ENV)
-            .ok()
-            .and_then(|s| s.parse().ok());
-
-        cfg
     }
 
     pub fn merge(mut self, other: Self) -> Self {
@@ -466,7 +418,6 @@ impl ServerConfig {
 }
 
 pub fn init() -> Result<ServerConfig> {
-    ServerConfigBuilder::from_env()
-        .merge(ServerConfigBuilder::from_args()?)
+    ServerConfigBuilder::from_args()?
         .build()
 }
