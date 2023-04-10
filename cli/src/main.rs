@@ -52,7 +52,7 @@ pub struct CliOptions {
 
     /// Unix domain socket to use for communication with the modns daemon
     #[arg(global = true)]
-    #[arg(short, long, default_value = "/tmp/modnsd.sock")]
+    #[arg(short, long, default_value = "/run/modnsd.sock")]
     unix_socket: PathBuf,
 
     /// Show extra information in output
