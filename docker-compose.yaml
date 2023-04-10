@@ -34,7 +34,7 @@ services:
       - ./modns-sdk:/rust-server/modns-sdk
       - ./Cargo.toml:/rust-server/Cargo.toml
       - ./Makefile:/rust-server/Makefile
-      - frontend_build:/rust-server/web:ro
+      - frontend_build:/usr/share/modnsd/web:ro
       - backend_build:/rust-server/target
 
 volumes:

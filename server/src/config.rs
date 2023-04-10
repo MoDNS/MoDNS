@@ -19,10 +19,10 @@ const DB_ADDR_ENV: &str = "MODNS_DB_ADDR";
 const DB_PORT_ENV: &str = "MODNS_DB_PORT";
 const LOG_ENV: &str = "MODNS_LOG";
 
-const DEFAULT_PLUGIN_PATH: &str = "/var/lib/modnsd/default-plugins";
+const DEFAULT_PLUGIN_PATH: &str = "/usr/share/modnsd/default-plugins";
 const DEFAULT_UNIX_SOCKET: &str = "/run/modnsd.sock";
 const DEFAULT_DATA_DIR: &str = "/var/lib/modnsd";
-const DEFAULT_FRONTEND_DIR: &str = "web";
+const DEFAULT_FRONTEND_DIR: &str = "/usr/share/modnsd/web";
 const DEFAULT_SQLITE_PATH: &str = "modns.sqlite";
 const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const DEFAULT_DB_PORT: u16 = 3306;
