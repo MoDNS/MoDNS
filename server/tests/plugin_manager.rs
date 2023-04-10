@@ -8,12 +8,12 @@ fn plugins_init() {
     let mut pm = PluginManager::new();
 
     let listener = pm.load(
-        PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_listener"),
+        PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base-listener"),
         false
     ).expect("Failed to load listener");
 
     let resolver = pm.load(
-        PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_resolver"),
+        PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base-resolver"),
         false
     ).expect("Failed to load resolver");
 
@@ -37,7 +37,7 @@ fn plugins_init() {
     pm.is_valid_state(true).expect("PluginManager is reporting an invalid state even though it should be valid");
 
     let listener2 = pm.load(
-        PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base_listener"),
+        PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base-listener"),
         false
     ).expect("Failed to load listener");
 

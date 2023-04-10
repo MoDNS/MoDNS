@@ -23,3 +23,18 @@ The MoDNS server provides a web interface for easy management.
 # Project Status
 
 This project is under development as a Senior Design project for the Cyber Engineering program at Louisiana Tech.
+
+# Development Environment
+
+A `docker-compose.yaml` configuration file is provided for setting up a development environment
+
+The development environment will watch for changes to frontend or backend source code and recompile
+and re-start the server as needed.
+
+The development environment also caches compiled dependencies between sessions to lower start-up times.
+
+To use, run:
+
+- `docker compose build` to build Docker images
+- `docker compose up` to start the dev environment
+- `docker compose down` to remove the dev environment
