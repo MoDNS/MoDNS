@@ -5,12 +5,12 @@ use std::sync::Arc;
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use warp::hyper::StatusCode;
 use warp::reply::json;
 use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
 
 use crate::plugins::manager::PluginManager;
+use crate::plugins::response::ApiResponse;
 
 #[derive(Deserialize)]
 pub struct PluginQuery
@@ -85,14 +85,15 @@ pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, query: 
 
     let mut manager = pm.write().await;
 
-    if query.enable.unwrap_or(false) {
-        let _ = manager.enable_plugin(&uuid);
-        let reply = "{&query.uuid#?} set to enabled";
-        Ok(warp::reply::with_status(reply, StatusCode::OK))
+    let (resp, word) = if query.enable.unwrap_or(true) {
+        (manager.enable_plugin(&uuid), "enabled")
     } else {
-        let _ = manager.disable_plugin(&uuid);
-        let reply = "{&query.uuid#?} set to disabled";
+        (manager.disable_plugin(&uuid), "disabled")
+    };
 
-        Ok(warp::reply::with_status(reply, StatusCode::OK))
+    match resp {
+        Ok(_) => ApiResponse::new(200, format!("Plugin {uuid} {word}")),
+        Err(e) => ApiResponse::from(e),
+
     }
 }

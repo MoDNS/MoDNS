@@ -480,6 +480,7 @@ In all cases, the contents of `*resp` are used as the body of the response.
 ## Providing a Web Interface
 
 MoDNS hosts a webpage for ease of maneagement.
+
 ### Dashboard Widgets
 
 TODO
@@ -565,6 +566,7 @@ If you would like to provide a logo to your plugin to be included on pages relat
 include a `favicon.*` file in the plugin's directory.
 
 Supported formats are `png`, `ico`, and `webp`.
+
 
 This exposes the `/api/plugins/<your-plugin-uuid>/favicon` API endpoint.
 

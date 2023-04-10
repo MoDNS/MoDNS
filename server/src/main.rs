@@ -54,7 +54,7 @@ async fn main() -> anyhow::Result<()> {
     log::info!("Binding API listeners");
     let apiaddrs = vec![
         ApiListener::Tcp(
-            TcpListener::bind(("0.0.0.0", 8080)).await
+            TcpListener::bind(("0.0.0.0", 80)).await
             .context("Failed to bind TCP listener on port 8080")?
         ),
 
@@ -66,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
 
     log::info!("Binding DNS listener");
     let dnsaddrs = vec![
-        DnsListener::Udp(UdpSocket::bind(("0.0.0.0", 5300)).await.context("Failed to bind DNS listener on port 5300/udp")?)
+        DnsListener::Udp(UdpSocket::bind(("0.0.0.0", 53)).await.context("Failed to bind DNS listener on port 5300/udp")?)
     ];
 
     listeners::listen(apiaddrs, dnsaddrs, pm_arc, &config).await;

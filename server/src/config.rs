@@ -19,18 +19,13 @@ const DB_ADDR_ENV: &str = "MODNS_DB_ADDR";
 const DB_PORT_ENV: &str = "MODNS_DB_PORT";
 const LOG_ENV: &str = "MODNS_LOG";
 
-const DEFAULT_PLUGIN_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../plugins");
-const DEFAULT_UNIX_SOCKET: &str = "/tmp/modnsd.sock";
-const DEFAULT_DATA_DIR: &str = "modns-data";
+const DEFAULT_PLUGIN_PATH: &str = "/var/lib/modnsd/default-plugins";
+const DEFAULT_UNIX_SOCKET: &str = "/run/modnsd.sock";
+const DEFAULT_DATA_DIR: &str = "/var/lib/modnsd";
 const DEFAULT_FRONTEND_DIR: &str = "web";
 const DEFAULT_SQLITE_PATH: &str = "modns.sqlite";
 const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const DEFAULT_DB_PORT: u16 = 3306;
-
-#[cfg(debug_assertions)]
-const DEFAULT_LOG_FILTER: &str = "modnsd=trace,info";
-
-#[cfg(not(debug_assertions))]
 const DEFAULT_LOG_FILTER: &str = "info";
 
 const DATA_DIR_FALLBACK_PARENT: &str = "/tmp";
@@ -311,8 +306,10 @@ impl ServerConfig {
         if unix_socket.as_ref().try_exists()
             .with_context(|| format!("Unable to check if unix socket {} exists", unix_socket.as_ref().display()))?
         {
-            anyhow::bail!("Can't create a Unix socket at {} because an object already exists there", unix_socket.as_ref().display())
+            std::fs::remove_file(unix_socket.as_ref())
+                .with_context(|| format!("Unix socket {} already exists and couldn't be removed", unix_socket.as_ref().display()))?;
         }
+
 
         let unix_socket_dir = unix_socket.as_ref().parent().unwrap_or(Path::new("."));
         let unix_socket_file = unix_socket.as_ref().file_name().with_context(|| format!("Unix socket path {} does not appear to be a name for a file", unix_socket.as_ref().display()))?;

@@ -7,7 +7,10 @@ use anyhow::{Context, Result, bail};
 use modns_sdk::types::ffi;
 use uuid::Uuid;
 
+
 use super::ResponseSource;
+use super::response::ApiResponse;
+
 use super::plugin::{DnsPlugin, PluginExecutorError};
 
 pub struct PluginManager {
@@ -43,6 +46,7 @@ impl PluginManager {
         log::info!("Loaded plugin `{name}` from directory {}", dir.display());
 
         log::trace!("Metadata for `{name}`:\n{:#?}", plugin.metadata());
+
 
         self.plugins.insert(id, plugin);
 
@@ -135,23 +139,24 @@ impl PluginManager {
 
     pub fn enable_plugin(&mut self, uuid: &Uuid) -> Result<()> {
 
-        let plugin = self.plugins().get(uuid).context("Failed to get plugin with uuid {uuid}")?;
+        let plugin = self.plugins().get(uuid)
+            .with_context(|| ApiResponse::new(404, format!("Failed to get plugin with uuid {uuid}")))?;
 
         if plugin.enabled() {
-            bail!("Plugin is already enabled")
+            bail!(ApiResponse::new(200, "Plugin already enabled".to_string()))
         }
 
         if plugin.is_listener() && self.has_listener() {
             self.disable_listener()?;
         }
 
-        let plugin = self.plugins().get(uuid).context("Failed to get plugin with uuid {uuid}")?;
+        let plugin = self.plugins().get(uuid).context("Plugin went missing during execution")?;
 
         if plugin.is_resolver() && self.has_resolver() {
             self.disable_resolver()?;
         }
 
-        let plugin_mut = self.plugins.get_mut(uuid).context("Failed to get plugin with uuid {uuid}")?;
+        let plugin_mut = self.plugins.get_mut(uuid).context("Plugin went missing during execution")?;
 
         Arc::get_mut(plugin_mut)
             .context("Couldn't get mutable reference to plugin because it has more than one reference")?
@@ -164,7 +169,8 @@ impl PluginManager {
     }
 
     pub fn disable_plugin(&mut self, uuid: &Uuid) -> Result<()> {
-        let plugin = self.plugins.get_mut(&uuid).context("plugin was not found")?;
+        let plugin = self.plugins.get_mut(&uuid)
+            .with_context(|| ApiResponse::new(404, format!("Failed to get plugin with uuid {uuid}")))?;
 
         if self.listener.as_ptr() == Arc::as_ptr(plugin) {
             self.listener = Weak::new();
