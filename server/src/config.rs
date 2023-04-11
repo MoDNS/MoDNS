@@ -405,6 +405,8 @@ impl MutableServerConfig {
     }
 }
 
+/// The server's configuration. Composed of immutable options which must be set when starting
+/// the server, and immutable options which can be set at any time through the API.
 #[derive(Debug)]
 pub struct ServerConfig {
 
@@ -474,11 +476,19 @@ impl ServerConfig {
 impl ServerConfig {
 
     pub fn plugin_path(&self) -> Vec<PathBuf> {
-        if self.override_plugin_path.len() > 0 {
-            self.override_plugin_path.clone()
-        } else {
-            self.settings.plugin_path().unwrap_or_default()
-        }
+        let mut path = Vec::with_capacity(
+            self.override_plugin_path.len() +
+            self.settings.plugin_path().map(|v| v.len()).unwrap_or(0) +
+            1
+        );
+
+        path.push(PathBuf::from(DEFAULT_PLUGIN_PATH));
+
+        path.extend_from_slice(&self.override_plugin_path);
+
+        path.extend_from_slice(&self.settings.plugin_path().unwrap_or_default());
+
+        path
     }
 
     pub fn unix_socket(&self) -> &Path {
