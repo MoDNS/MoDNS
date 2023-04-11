@@ -295,36 +295,41 @@ pub enum IgnoreErrorsConfig {
 ///
 /// Values are kept in a lockfile which is read at startup
 #[derive(Debug)]
-struct MutableServerConfig (Map<String, Value>);
-
-impl Default for MutableServerConfig {
-    fn default() -> Self {
-        Self(Map::new())
-    }
-}
+struct MutableServerConfig (Map<String, Value>, PathBuf);
 
 impl MutableServerConfig {
 
-    fn read_lockfile(lockfile: impl AsRef<Path>) -> Result<Self> {
+    pub fn new(lockfile: impl AsRef<Path>) -> Result<Self> {
+        let mut r = Self(Map::new(), lockfile.as_ref().to_path_buf());
 
-        if !lockfile.as_ref().exists() {
-            return Ok(Self::default())
-        }
+        r.read_lockfile()?;
 
-        let f = fs::read_to_string(lockfile)
-            .context("Failed to read configuration lockfile")?;
-
-        Ok(Self(
-            serde_json::from_str(&f)
-                .context("Failed to parse configuration lockfile")?
-        ))
+        Ok(r)
     }
 
-    pub fn write_lockfile(&self, lockfile: impl AsRef<Path>) -> Result<()> {
+    pub fn read_lockfile(&mut self) -> Result<()> {
+
+        if !self.1.exists() {
+            return Ok(())
+        }
+
+        let file_str = fs::read_to_string(&self.1)
+            .context("Failed to read configuration lockfile")?;
+
+        let mut lockfile_val = serde_json::from_str(&file_str)
+            .context("Failed to parse configuration lockfile")?;
+
+        self.0.append(&mut lockfile_val);
+
+        Ok(())
+
+    }
+
+    pub fn write_lockfile(&self) -> Result<()> {
         let obj = serde_json::to_string(&self.0)
             .context("Failed to serialize configuration")?;
 
-        fs::write(lockfile, obj)
+        fs::write(&self.1, obj)
             .context("Failed to write configuration lockfile")
     }
 
@@ -340,6 +345,8 @@ impl MutableServerConfig {
         let value = serde_json::to_value(value)?;
 
         self.0.insert(key.into(), value);
+
+        self.write_lockfile()?;
 
         Ok(())
     }
@@ -435,10 +442,9 @@ impl ServerConfig {
         let overrides = ImmutableServerConfig::parse()
             .canonicalize_paths()?;
 
-        let mutable = MutableServerConfig::read_lockfile(
+        let mutable = MutableServerConfig::new(
             overrides.data_dir.join(CONFIG_LOCKFILE_NAME)
-        )
-        .unwrap_or_default();
+        )?;
 
         Ok(Self::new(overrides, mutable))
     }
@@ -459,8 +465,8 @@ impl ServerConfig {
         }
     }
 
-    pub fn write_lockfile(&self, lockfile: impl AsRef<Path>) -> Result<()> {
-        self.settings.write_lockfile(lockfile)
+    pub fn write_lockfile(&self) -> Result<()> {
+        self.settings.write_lockfile()
     }
 
 }
