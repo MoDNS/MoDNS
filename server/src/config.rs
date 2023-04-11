@@ -23,7 +23,7 @@ const DEFAULT_PLUGIN_PATH: &str = "/usr/share/modnsd/default-plugins";
 const DEFAULT_UNIX_SOCKET: &str = "/run/modnsd.sock";
 const DEFAULT_DATA_DIR: &str = "/var/lib/modnsd";
 const DEFAULT_FRONTEND_DIR: &str = "/usr/share/modnsd/web";
-const DEFAULT_SQLITE_PATH: &str = "modns.sqlite";
+const DEFAULT_SQLITE_FILE: &str = "modns.sqlite";
 const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const DEFAULT_DB_PORT: u16 = 3306;
 const DEFAULT_LOG_FILTER: &str = "info";
@@ -39,7 +39,7 @@ const CONFIG_LOCKFILE_NAME: &str = "config-lock.yaml";
 /// This program is the server daemon. If you want to control an already running server, use `modns` instead
 #[derive(Default, Debug, Parser, Clone, Deserialize)]
 #[command(name = "modnsd")]
-pub struct ServerConfigBuilder {
+pub struct ImmutableServerConfig {
     /// Directory to search for plugins.
     ///
     /// On initialization, server will search this directory for
@@ -105,61 +105,16 @@ pub struct ServerConfigBuilder {
     log: Option<String>,
 }
 
-impl ServerConfigBuilder {
+impl ImmutableServerConfig {
 
-    pub fn from_args() -> anyhow::Result<Self> {
+    fn from_args() -> anyhow::Result<Self> {
         Self::try_parse().context("Failed to parse configuration from arguments")
     }
 
-    pub fn from_yaml_file<P: AsRef<Path>>(config_file_path: P) -> anyhow::Result<Self> {
-        let f = fs::read_to_string(config_file_path)
-            .context("Failed to read configuration file")?;
-        serde_yaml::from_str(&f)
-            .context("Failed to parse configuration file")
-    }
-
-    pub fn merge(mut self, other: Self) -> Self {
-        self.plugin_path.extend(other.plugin_path);
-
-        if let (None, Some(p)) = (&self.unix_socket, other.unix_socket) {
-            self.unix_socket = Some(p)
-        }
-
-        if let (None, Some(p)) = (&self.ignore_init_errors, other.ignore_init_errors) {
-            self.ignore_init_errors = Some(p)
-        }
-
-        if let (None, Some(p)) = (&self.data_dir, other.data_dir) {
-            self.data_dir = Some(p)
-        }
-
-        if let (None, Some(p)) = (&self.log, other.log) {
-            self.log = Some(p)
-        }
-
-        self
-    }
-
-    fn reverse_merge(self, other: Self) -> Self {
-        Self::merge(other, self)
-    }
-
-    fn build(mut self) -> Result<ServerConfig> {
-
-        // Get any unset configuration options from the lockfile
-        if let Some(dir) = &self.data_dir {
-            let lockfile = dir.join(CONFIG_LOCKFILE_NAME);
-
-            if lockfile.exists() {
-                self = self.reverse_merge(
-                    ServerConfigBuilder::from_yaml_file(lockfile)
-                        .context("Failed to parse configuration lockfile")?,
-                );
-            }
-        }
+    fn build(self) -> Result<ServerConfig> {
 
         let Self {
-            mut plugin_path,
+            plugin_path,
             unix_socket,
             ignore_init_errors,
             data_dir,
@@ -170,17 +125,6 @@ impl ServerConfigBuilder {
             db_addr,
             db_port
         } = self;
-
-        // Clean up the plugin path and ensure that there is at least one entry
-        plugin_path.sort_unstable();
-        plugin_path.dedup();
-
-        if plugin_path.len() == 0 {
-            plugin_path.push(
-                PathBuf::from(DEFAULT_PLUGIN_PATH).canonicalize()
-                .context("The plugin path was empty and the default plugin path was not found on this system")?
-            )
-        }
 
         // Get default values for any empty config values
         let unix_socket = unix_socket.unwrap_or(PathBuf::from(DEFAULT_UNIX_SOCKET));
@@ -197,28 +141,26 @@ impl ServerConfigBuilder {
 
         let frontend_dir = frontend_dir.unwrap_or(PathBuf::from(DEFAULT_FRONTEND_DIR));
 
-        let sqlite_db_path = sqlite_db_path.unwrap_or(PathBuf::from(DEFAULT_SQLITE_PATH));
+        let sqlite_db_path = sqlite_db_path.unwrap_or(PathBuf::from(DEFAULT_SQLITE_FILE));
 
         let db_addr = db_addr.unwrap_or(DEFAULT_DB_ADDR);
 
         let db_port = db_port.unwrap_or(DEFAULT_DB_PORT);
 
         let db_info = match database {
-            Some(DatabaseArg::Sqlite) | None => {
-                DatabaseConfig::Sqlite(sqlite_db_path)
+            Some(DatabaseArg::Sqlite) => {
+                Some(DatabaseConfig::Sqlite(sqlite_db_path))
             },
             Some(_) => {
-                DatabaseConfig::MySql(
+                Some(DatabaseConfig::MySql(
                     SocketAddr::from((db_addr, db_port))
-                )
+                ))
             },
+            None => None
         };
 
         // Build the configuration
         let conf = ServerConfig::new(plugin_path, unix_socket, ignore_init_errors, data_dir, log, frontend_dir, db_info)?;
-
-        // Create a lockfile
-        conf.dump_to_file(conf.data_dir().join(CONFIG_LOCKFILE_NAME))?;
 
         Ok(conf)
     }
@@ -253,8 +195,55 @@ pub enum IgnoreErrorsConfig {
     Never,
 }
 
+/// Configuration settings which can be modified at runtime, by the API.
+///
+/// Values are kept in a lockfile which is read at startup
+#[derive(Debug, Serialize, Deserialize)]
+struct MutableServerConfig {
+
+    plugin_path: Vec<PathBuf>,
+
+    db_info: DatabaseConfig,
+}
+
+impl MutableServerConfig {
+
+    fn new(data_dir: impl AsRef<Path>) -> Self {
+        Self {
+            plugin_path: Vec::new(),
+            db_info: DatabaseConfig::Sqlite(data_dir.as_ref().join(DEFAULT_SQLITE_FILE)),
+        }
+    }
+
+    fn read_lockfile(lockfile: impl AsRef<Path>) -> Result<Self> {
+        let f = fs::read_to_string(lockfile)
+            .context("Failed to read configuration lockfile")?;
+        serde_json::from_str(&f)
+            .context("Failed to parse configuration lockfile")
+    }
+
+    fn write_lockfile(&self, lockfile: impl AsRef<Path>) -> Result<()> {
+        let obj = serde_json::to_string(self)
+            .context("Failed to serialize configuration")?;
+
+        fs::write(lockfile, obj)
+            .context("Failed to write configuration lockfile")
+    }
+
+    fn plugin_path(&self) -> &[PathBuf] {
+        self.plugin_path.as_ref()
+    }
+
+    fn db_info(&self) -> &DatabaseConfig {
+        &self.db_info
+    }
+}
+
 #[derive(Debug, Serialize)]
 pub struct ServerConfig {
+
+    settings: MutableServerConfig,
+
     /// Directories to search for plugin directories
     plugin_path: Vec<PathBuf>,
 
@@ -272,18 +261,18 @@ pub struct ServerConfig {
 
     frontend_dir: PathBuf,
 
-    db_info: DatabaseConfig,
+    db_info: Option<DatabaseConfig>,
 }
 
 impl ServerConfig {
-    pub fn new(
+    fn new(
         plugin_path: Vec<impl AsRef<Path>>,
         unix_socket: impl AsRef<Path>,
         ignore_init_errors: IgnoreErrorsConfig,
         data_dir: impl AsRef<Path>,
         log: String,
         frontend_dir: impl AsRef<Path>,
-        db_info: DatabaseConfig,
+        db_info: Option<DatabaseConfig>,
     ) -> Result<Self> {
 
         // Get canonical paths for all plugin directories, creating any directories that don't exist
@@ -346,40 +335,46 @@ impl ServerConfig {
         let frontend_dir = join_data_dir(frontend_dir.as_ref())?;
 
         let db_info = match db_info {
-            DatabaseConfig::Sqlite(p) => {
-                DatabaseConfig::Sqlite(join_data_dir(p.as_ref())?)
+            Some(DatabaseConfig::Sqlite(p)) => {
+                Some(DatabaseConfig::Sqlite(join_data_dir(p.as_ref())?))
             },
-            DatabaseConfig::MySql(a) => {
-                DatabaseConfig::MySql(a)
+            Some(DatabaseConfig::MySql(a)) => {
+                Some(DatabaseConfig::MySql(a))
             },
+            None => None
         };
 
+        let settings = MutableServerConfig::read_lockfile(data_dir.join(CONFIG_LOCKFILE_NAME))
+            .unwrap_or_else(|e| {
+                log::warn!("Failed to read configuration lockfile in {}, falling back to default options", data_dir.display());
+                log::debug!("Error: {e:#?}");
+                MutableServerConfig::new(&data_dir)
+            });
+
         let new_conf = Self {
+            settings,
             plugin_path,
             unix_socket,
             ignore_init_errors,
             data_dir,
             log,
             frontend_dir,
-            db_info
+            db_info,
         };
-
-        let lockfile = new_conf.data_dir.join(CONFIG_LOCKFILE_NAME);
-        new_conf.dump_to_file(&lockfile)
-            .with_context(|| format!("Failed to write configuration to lockfile {}", lockfile.display()))?;
 
         Ok(new_conf)
     }
 
-    pub fn dump_to_file<P: AsRef<Path>>(&self, file_path: P) -> Result<()> {
-        let yaml_str = serde_yaml::to_string(self).context("Failed to serialize configuration")?;
+}
 
-        fs::write(file_path.as_ref(), yaml_str)
-            .with_context(|| format!("Failed to write to {}", file_path.as_ref().display()))
-    }
+impl ServerConfig {
 
     pub fn plugin_path(&self) -> &[PathBuf] {
-        self.plugin_path.as_ref()
+        if self.plugin_path.len() > 0 {
+            self.plugin_path.as_ref()
+        } else {
+            self.settings.plugin_path()
+        }
     }
 
     pub fn unix_socket(&self) -> &Path {
@@ -407,11 +402,13 @@ impl ServerConfig {
     }
 
     pub fn db_info(&self) -> &DatabaseConfig {
-        &self.db_info
+        self.db_info
+            .as_ref()
+            .unwrap_or(self.settings.db_info())
     }
 }
 
 pub fn init() -> Result<ServerConfig> {
-    ServerConfigBuilder::from_args()?
+    ImmutableServerConfig::from_args()?
         .build()
 }
