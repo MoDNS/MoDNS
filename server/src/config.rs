@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, Map};
 
 const PLUGIN_PATH_ENV: &str = "MODNS_PATH";
+const NO_DEFAULT_PLUGINS_ENV: &str = "MODNS_NO_DEFAULT_PLUGINS";
 const UNIX_SOCKET_ENV: &str = "MODNS_UNIX_SOCKET";
 const IGNORE_ERRS_ENV: &str = "MODNS_IGNORE_INIT_ERRORS";
 const DATA_DIR_ENV: &str = "MODNS_DATA_DIR";
@@ -57,6 +58,13 @@ pub struct ImmutableServerConfig {
     /// Multiple directories can be specified by using -p multiple times
     #[arg(short, long, action=clap::ArgAction::Append, env=PLUGIN_PATH_ENV)]
     plugin_path: Vec<PathBuf>,
+
+    /// Disable default plugins
+    ///
+    /// Normally, default plugins (those distributed with MoDNS) are always included in the plugin
+    /// path, regardless of settings provided by the user
+    #[arg(long, action=clap::ArgAction::SetTrue, env=NO_DEFAULT_PLUGINS_ENV)]
+    no_default_plugins: bool,
 
     /// Path for the Unix Domain socket that is used by the CLI
     #[arg(short, long, env=UNIX_SOCKET_ENV, default_value=DEFAULT_UNIX_SOCKET)]
@@ -119,6 +127,7 @@ impl ImmutableServerConfig {
 
         let Self {
             plugin_path,
+            no_default_plugins,
             mut unix_socket,
             ignore_init_errors,
             data_dir,
@@ -192,6 +201,7 @@ impl ImmutableServerConfig {
 
         Ok(Self {
             plugin_path,
+            no_default_plugins,
             unix_socket,
             ignore_init_errors,
             data_dir,
@@ -415,6 +425,8 @@ pub struct ServerConfig {
     /// Directories to search for plugin directories
     override_plugin_path: Vec<PathBuf>,
 
+    no_default_plugins: bool,
+
     /// Path to the API's unix socket
     unix_socket: PathBuf,
 
@@ -455,6 +467,7 @@ impl ServerConfig {
         Self {
             settings: mu,
             override_plugin_path: im.plugin_path,
+            no_default_plugins: im.no_default_plugins,
             unix_socket: im.unix_socket,
             ignore_init_errors: im.ignore_init_errors,
             data_dir: im.data_dir,
@@ -482,7 +495,9 @@ impl ServerConfig {
             1
         );
 
-        path.push(PathBuf::from(DEFAULT_PLUGIN_PATH));
+        if !self.no_default_plugins {
+            path.push(PathBuf::from(DEFAULT_PLUGIN_PATH));
+        }
 
         path.extend_from_slice(&self.override_plugin_path);
 
