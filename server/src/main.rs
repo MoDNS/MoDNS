@@ -11,7 +11,7 @@ use tokio::{net::{TcpListener, UnixListener, UdpSocket}, sync::RwLock};
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
 
-    let config = config::init()?;
+    let config = config::ServerConfig::parse()?;
 
     env_logger::Builder::from_env(
         env_logger::Env::new()
