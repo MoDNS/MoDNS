@@ -1,11 +1,15 @@
+use std::borrow::Borrow;
 use std::fmt::Debug;
 use std::fs;
+use std::hash::Hash;
 use std::net::{SocketAddr, IpAddr, Ipv4Addr};
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use serde_json::{Value, Map};
 
 const PLUGIN_PATH_ENV: &str = "MODNS_PATH";
 const UNIX_SOCKET_ENV: &str = "MODNS_UNIX_SOCKET";
@@ -18,6 +22,13 @@ const DB_ADDR_ENV: &str = "MODNS_DB_ADDR";
 const DB_PORT_ENV: &str = "MODNS_DB_PORT";
 const LOG_ENV: &str = "MODNS_LOG";
 
+const PLUGIN_PATH_KEY: &str = "plugin_path";
+const DB_TYPE_KEY: &str = "db_type";
+const DB_PATH_KEY: &str = "db_path";
+const DB_ADDR_KEY: &str = "db_addr";
+const DB_PORT_KEY: &str = "db_port";
+const LOG_KEY: &str = "log_filter";
+
 const DEFAULT_PLUGIN_PATH: &str = "/usr/share/modnsd/default-plugins";
 const DEFAULT_UNIX_SOCKET: &str = "/run/modnsd.sock";
 const DEFAULT_DATA_DIR: &str = "/var/lib/modnsd";
@@ -27,7 +38,7 @@ const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const DEFAULT_MYSQL_PORT: u16 = 3306;
 const DEFAULT_LOG_FILTER: &str = "info";
 
-const CONFIG_LOCKFILE_NAME: &str = "config-lock.yaml";
+const CONFIG_LOCKFILE_NAME: &str = "config-lock.json";
 
 /// A modular DNS resolver
 ///
@@ -283,102 +294,111 @@ pub enum IgnoreErrorsConfig {
 /// Configuration settings which can be modified at runtime, by the API.
 ///
 /// Values are kept in a lockfile which is read at startup
-#[derive(Debug, Serialize, Deserialize)]
-struct MutableServerConfig {
-
-    plugin_path: Vec<PathBuf>,
-
-    db_type: DatabaseBackend,
-
-    db_path: PathBuf,
-
-    db_addr: IpAddr,
-
-    db_port: Option<u16>,
-    
-    log: String
-}
+#[derive(Debug)]
+struct MutableServerConfig (Map<String, Value>);
 
 impl Default for MutableServerConfig {
     fn default() -> Self {
-        Self {
-            plugin_path: Vec::new(),
-            db_type: DatabaseBackend::default(),
-            db_path: Path::new(DEFAULT_DATA_DIR).join(DEFAULT_SQLITE_FILE),
-            db_addr: DEFAULT_DB_ADDR,
-            db_port: None,
-            log: String::from(DEFAULT_LOG_FILTER)
-        }
+        Self(Map::new())
     }
 }
 
 impl MutableServerConfig {
 
     fn read_lockfile(lockfile: impl AsRef<Path>) -> Result<Self> {
+
+        if !lockfile.as_ref().exists() {
+            return Ok(Self::default())
+        }
+
         let f = fs::read_to_string(lockfile)
             .context("Failed to read configuration lockfile")?;
-        serde_json::from_str(&f)
-            .context("Failed to parse configuration lockfile")
+
+        Ok(Self(
+            serde_json::from_str(&f)
+                .context("Failed to parse configuration lockfile")?
+        ))
     }
 
-    fn write_lockfile(&self, lockfile: impl AsRef<Path>) -> Result<()> {
-        let obj = serde_json::to_string(self)
+    pub fn write_lockfile(&self, lockfile: impl AsRef<Path>) -> Result<()> {
+        let obj = serde_json::to_string(&self.0)
             .context("Failed to serialize configuration")?;
 
         fs::write(lockfile, obj)
             .context("Failed to write configuration lockfile")
     }
 
-    fn plugin_path(&self) -> &[PathBuf] {
-        self.plugin_path.as_ref()
+    fn get_config_obj<P: DeserializeOwned, Q>(&self, key: &Q) -> Option<P> where
+        String: Borrow<Q>,
+        Q: ?Sized + Ord + Eq + Hash
+    {
+        self.0.get(&key)
+            .and_then(|v| serde_json::from_value(v.clone()).ok())
     }
 
-    fn log(&self) -> &str {
-        self.log.as_ref()
+    fn set_config_obj(&mut self, key: impl Into<String>, value: impl Serialize) -> Result<()> {
+        let value = serde_json::to_value(value)?;
+
+        self.0.insert(key.into(), value);
+
+        Ok(())
     }
 
-    fn db_type(&self) -> DatabaseBackend {
-        self.db_type
+}
+
+/// Getters & Setters
+impl MutableServerConfig {
+
+    fn plugin_path(&self) -> Option<Vec<PathBuf>> {
+        self.get_config_obj(PLUGIN_PATH_KEY)
     }
 
-    fn db_path(&self) -> &PathBuf {
-        &self.db_path
+    fn log(&self) -> Option<String> {
+        self.get_config_obj(LOG_KEY)
     }
 
-    fn db_addr(&self) -> IpAddr {
-        self.db_addr
+    fn db_type(&self) -> Option<DatabaseBackend> {
+        self.get_config_obj(DB_TYPE_KEY)
+    }
+
+    fn db_path(&self) -> Option<PathBuf> {
+        self.get_config_obj(DB_PATH_KEY)
+    }
+
+    fn db_addr(&self) -> Option<IpAddr> {
+        self.get_config_obj(DB_ADDR_KEY)
     }
 
     fn db_port(&self) -> Option<u16> {
-        self.db_port
+        self.get_config_obj(DB_PORT_KEY)
     }
 
-    fn set_plugin_path(&mut self, plugin_path: Vec<PathBuf>) {
-        self.plugin_path = plugin_path;
+    pub fn set_plugin_path(&mut self, plugin_path: Vec<PathBuf>) -> Result<()> {
+        self.set_config_obj(PLUGIN_PATH_KEY, plugin_path)
     }
 
-    fn set_db_type(&mut self, db_type: DatabaseBackend) {
-        self.db_type = db_type;
+    pub fn set_db_type(&mut self, db_type: DatabaseBackend) -> Result<()>{
+        self.set_config_obj(DB_TYPE_KEY, db_type)
     }
 
-    fn set_db_path(&mut self, db_path: PathBuf) {
-        self.db_path = db_path;
+    pub fn set_db_path(&mut self, db_path: PathBuf) -> Result<()> {
+        self.set_config_obj(DB_PATH_KEY, db_path)
     }
 
-    fn set_db_addr(&mut self, db_addr: IpAddr) {
-        self.db_addr = db_addr;
+    pub fn set_db_addr(&mut self, db_addr: IpAddr) -> Result <()> {
+        self.set_config_obj(DB_ADDR_KEY, db_addr)
     }
 
-    fn set_db_port(&mut self, db_port: Option<u16>) {
-        self.db_port = db_port;
+    pub fn set_db_port(&mut self, db_port: Option<u16>) -> Result<()> {
+        self.set_config_obj(DB_PORT_KEY, db_port)
     }
 
-    fn set_log(&mut self, log: String) {
-        self.log = log;
+    pub fn set_log(&mut self, log: String) -> Result<()> {
+        self.set_config_obj(LOG_KEY, log)
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct ServerConfig {
 
     settings: MutableServerConfig,
@@ -417,7 +437,8 @@ impl ServerConfig {
 
         let mutable = MutableServerConfig::read_lockfile(
             overrides.data_dir.join(CONFIG_LOCKFILE_NAME)
-        )?;
+        )
+        .unwrap_or_default();
 
         Ok(Self::new(overrides, mutable))
     }
@@ -438,15 +459,19 @@ impl ServerConfig {
         }
     }
 
+    pub fn write_lockfile(&self, lockfile: impl AsRef<Path>) -> Result<()> {
+        self.settings.write_lockfile(lockfile)
+    }
+
 }
 
 impl ServerConfig {
 
-    pub fn plugin_path(&self) -> &[PathBuf] {
+    pub fn plugin_path(&self) -> Vec<PathBuf> {
         if self.override_plugin_path.len() > 0 {
-            self.override_plugin_path.as_ref()
+            self.override_plugin_path.clone()
         } else {
-            self.settings.plugin_path()
+            self.settings.plugin_path().unwrap_or_default()
         }
     }
 
@@ -466,12 +491,10 @@ impl ServerConfig {
         &self.data_dir.as_ref()
     }
 
-    pub fn log(&self) -> &str {
-        if let Some(s) = &self.override_log {
-            s
-        } else {
-            self.settings.log()
-        }
+    pub fn log(&self) -> String {
+        self.override_log.clone()
+            .or(self.settings.log())
+            .unwrap_or(DEFAULT_LOG_FILTER.to_string())
     }
 
     pub fn frontend_dir(&self) -> &Path{
@@ -480,18 +503,20 @@ impl ServerConfig {
 
     pub fn db_type(&self) -> DatabaseBackend {
         self.override_db_type
-            .unwrap_or(self.settings.db_type())
+            .or(self.settings.db_type())
+            .unwrap_or_default()
     }
 
-    pub fn db_path(&self) -> &Path {
-        self.override_db_path
-            .as_ref()
-            .unwrap_or(self.settings.db_path())
+    pub fn db_path(&self) -> PathBuf {
+        self.override_db_path.clone()
+            .or(self.settings.db_path())
+            .unwrap_or(PathBuf::from(DEFAULT_SQLITE_FILE))
     }
 
     pub fn db_addr(&self) -> IpAddr {
         self.override_db_addr
-            .unwrap_or(self.settings.db_addr())
+            .or(self.settings.db_addr())
+            .unwrap_or(DEFAULT_DB_ADDR)
     }
 
     pub fn db_port(&self) -> Option<u16> {
@@ -512,27 +537,27 @@ impl ServerConfig {
 }
 
 impl ServerConfig {
-    fn set_plugin_path(&mut self, plugin_path: Vec<PathBuf>) {
+    pub fn set_plugin_path(&mut self, plugin_path: Vec<PathBuf>) -> Result<()> {
         self.settings.set_plugin_path(plugin_path)
     }
 
-    fn set_db_type(&mut self, db_type: DatabaseBackend) {
+    pub fn set_db_type(&mut self, db_type: DatabaseBackend) -> Result<()> {
         self.settings.set_db_type(db_type)
     }
 
-    fn set_db_path(&mut self, db_path: PathBuf) {
+    pub fn set_db_path(&mut self, db_path: PathBuf) -> Result<()> {
         self.settings.set_db_path(db_path)
     }
 
-    fn set_db_addr(&mut self, db_addr: IpAddr) {
+    pub fn set_db_addr(&mut self, db_addr: IpAddr) -> Result<()> {
         self.settings.set_db_addr(db_addr)
     }
 
-    fn set_db_port(&mut self, db_port: Option<u16>) {
+    pub fn set_db_port(&mut self, db_port: Option<u16>) -> Result<()> {
         self.settings.set_db_port(db_port)
     }
 
-    fn set_log(&mut self, log: String) {
+    pub fn set_log(&mut self, log: String) -> Result<()> {
         self.settings.set_log(log)
     }
 }

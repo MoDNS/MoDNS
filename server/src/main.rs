@@ -18,7 +18,7 @@ async fn main() -> anyhow::Result<()> {
         .filter("MODNS_LOG")
         .write_style("MODNS_LOG_STYLE")
     )
-    .parse_filters(config.log())
+    .parse_filters(&config.log())
     .init();
 
     log::trace!("Starting server with configuration: {:#?}", config);
@@ -29,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
         log::info!("Initializing plugins...");
         let mut pm = pm_arc.write().await;
 
-        pm.search(config.plugin_path())
+        pm.search(&config.plugin_path())
         .or_else(|e| {
 
             log::error!("Got an error during initial plugin search: {e}");
