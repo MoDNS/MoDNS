@@ -27,8 +27,6 @@ const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const DEFAULT_MYSQL_PORT: u16 = 3306;
 const DEFAULT_LOG_FILTER: &str = "info";
 
-const DATA_DIR_FALLBACK_PARENT: &str = "/tmp";
-
 const CONFIG_LOCKFILE_NAME: &str = "config-lock.yaml";
 
 /// A modular DNS resolver
@@ -316,43 +314,6 @@ impl Default for MutableServerConfig {
 
 impl MutableServerConfig {
 
-    fn new(data_path: impl AsRef<Path>,
-        plugin_path: impl Into<Vec<PathBuf>>,
-        db_info: DatabaseConfig,
-        log: impl Into<String>) -> Self
-    {
-        Self {
-            plugin_path: plugin_path.into(),
-            db_type: db_info.backend(),
-            db_path: db_info.path().unwrap_or(&data_path.as_ref().join(DEFAULT_SQLITE_FILE)).to_path_buf(),
-            db_addr: db_info.ip().unwrap_or(DEFAULT_DB_ADDR),
-            db_port: db_info.nonstandard_port(),
-            log: log.into(),
-        }
-    }
-
-    fn default_with_overrides(ov: &ImmutableServerConfig) -> Self {
-        let mut rv = Self::default();
-
-        rv.plugin_path = ov.plugin_path.clone();
-
-        if let Some(t) = ov.database {
-            rv.db_type = t;
-        }
-
-        if let Some(t) = &ov.sqlite_db_path {
-            rv.db_path = t.clone();
-        }
-
-        if let Some(t) = ov.db_addr {
-            rv.db_addr = t;
-        }
-
-        rv.db_port = ov.db_port;
-
-        rv
-    }
-
     fn read_lockfile(lockfile: impl AsRef<Path>) -> Result<Self> {
         let f = fs::read_to_string(lockfile)
             .context("Failed to read configuration lockfile")?;
@@ -390,6 +351,30 @@ impl MutableServerConfig {
 
     fn db_port(&self) -> Option<u16> {
         self.db_port
+    }
+
+    fn set_plugin_path(&mut self, plugin_path: Vec<PathBuf>) {
+        self.plugin_path = plugin_path;
+    }
+
+    fn set_db_type(&mut self, db_type: DatabaseBackend) {
+        self.db_type = db_type;
+    }
+
+    fn set_db_path(&mut self, db_path: PathBuf) {
+        self.db_path = db_path;
+    }
+
+    fn set_db_addr(&mut self, db_addr: IpAddr) {
+        self.db_addr = db_addr;
+    }
+
+    fn set_db_port(&mut self, db_port: Option<u16>) {
+        self.db_port = db_port;
+    }
+
+    fn set_log(&mut self, log: String) {
+        self.log = log;
     }
 }
 
@@ -452,6 +437,7 @@ impl ServerConfig {
             override_db_port: im.db_port,
         }
     }
+
 }
 
 impl ServerConfig {
@@ -510,7 +496,7 @@ impl ServerConfig {
 
     pub fn db_port(&self) -> Option<u16> {
         self.override_db_port
-            .or(self.settings.db_port)
+            .or(self.settings.db_port())
     }
 
     pub fn db_info(&self) -> DatabaseConfig {
@@ -522,5 +508,31 @@ impl ServerConfig {
                 SocketAddr::from((self.db_addr(), self.db_port().unwrap_or(DEFAULT_MYSQL_PORT)))
             ),
         }
+    }
+}
+
+impl ServerConfig {
+    fn set_plugin_path(&mut self, plugin_path: Vec<PathBuf>) {
+        self.settings.set_plugin_path(plugin_path)
+    }
+
+    fn set_db_type(&mut self, db_type: DatabaseBackend) {
+        self.settings.set_db_type(db_type)
+    }
+
+    fn set_db_path(&mut self, db_path: PathBuf) {
+        self.settings.set_db_path(db_path)
+    }
+
+    fn set_db_addr(&mut self, db_addr: IpAddr) {
+        self.settings.set_db_addr(db_addr)
+    }
+
+    fn set_db_port(&mut self, db_port: Option<u16>) {
+        self.settings.set_db_port(db_port)
+    }
+
+    fn set_log(&mut self, log: String) {
+        self.settings.set_log(log)
     }
 }
