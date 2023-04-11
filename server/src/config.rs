@@ -1,4 +1,3 @@
-use std::env;
 use std::fmt::Debug;
 use std::fs;
 use std::net::{SocketAddr, IpAddr, Ipv4Addr};
@@ -25,7 +24,7 @@ const DEFAULT_DATA_DIR: &str = "/var/lib/modnsd";
 const DEFAULT_FRONTEND_DIR: &str = "/usr/share/modnsd/web";
 const DEFAULT_SQLITE_FILE: &str = "modns.sqlite";
 const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-const DEFAULT_DB_PORT: u16 = 3306;
+const DEFAULT_MYSQL_PORT: u16 = 3306;
 const DEFAULT_LOG_FILTER: &str = "info";
 
 const DATA_DIR_FALLBACK_PARENT: &str = "/tmp";
@@ -51,8 +50,8 @@ pub struct ImmutableServerConfig {
     plugin_path: Vec<PathBuf>,
 
     /// Path for the Unix Domain socket that is used by the CLI
-    #[arg(short, long, env=UNIX_SOCKET_ENV)]
-    unix_socket: Option<PathBuf>,
+    #[arg(short, long, env=UNIX_SOCKET_ENV, default_value=DEFAULT_UNIX_SOCKET)]
+    unix_socket: PathBuf,
 
     /// Ignore some, all, or no errors when initially loading plugins
     ///
@@ -60,23 +59,23 @@ pub struct ImmutableServerConfig {
     /// load, but if all plugins are loaded and the server is unable to handle
     /// DNS requests (most likely because there isn't a Resolver or Listener
     /// enabled), server will immediately exit with an error code
-    #[arg(short, long, value_enum, env=IGNORE_ERRS_ENV)]
-    ignore_init_errors: Option<IgnoreErrorsConfig>,
+    #[arg(short, long, value_enum, env=IGNORE_ERRS_ENV, default_value_t)]
+    ignore_init_errors: IgnoreErrorsConfig,
 
     /// Path to the data directory
-    #[arg(short, long, env=DATA_DIR_ENV)]
-    data_dir: Option<PathBuf>,
+    #[arg(short, long, env=DATA_DIR_ENV, default_value=DEFAULT_DATA_DIR)]
+    data_dir: PathBuf,
 
     /// Path to the frontend root directory
     ///
     /// If a relative path is given, it will be expanded to that path relative to the persistent
     /// data directory (specified with --data-dir)
-    #[arg(long, env=FRONTEND_DIR_ENV)]
-    frontend_dir: Option<PathBuf>,
+    #[arg(long, env=FRONTEND_DIR_ENV, default_value=DEFAULT_FRONTEND_DIR)]
+    frontend_dir: PathBuf,
 
     /// Database backend to use, either SQLite (default) or MySql.
     #[arg(short='D', long, env=DB_TYPE_ENV)]
-    database: Option<DatabaseArg>,
+    database: Option<DatabaseBackend>,
 
     /// If using SQLite as the database, the path to the database file
     ///
@@ -107,15 +106,11 @@ pub struct ImmutableServerConfig {
 
 impl ImmutableServerConfig {
 
-    fn from_args() -> anyhow::Result<Self> {
-        Self::try_parse().context("Failed to parse configuration from arguments")
-    }
-
-    fn build(self) -> Result<ServerConfig> {
+    fn canonicalize_paths(self) -> Result<Self> {
 
         let Self {
             plugin_path,
-            unix_socket,
+            mut unix_socket,
             ignore_init_errors,
             data_dir,
             log,
@@ -126,48 +121,83 @@ impl ImmutableServerConfig {
             db_port
         } = self;
 
-        // Get default values for any empty config values
-        let unix_socket = unix_socket.unwrap_or(PathBuf::from(DEFAULT_UNIX_SOCKET));
+        // Get canonical paths for all plugin directories, creating any directories that don't exist
+        let mut plugin_path = plugin_path.into_iter().map(|p| {
 
-        let ignore_init_errors = ignore_init_errors.unwrap_or_default();
+            if !p.as_path().is_dir() {
+                fs::create_dir_all(p.as_path())
+                    .with_context(|| format!("Failed to create plugin directory at {}", p.as_path().display()))?;
+            };
 
-        let data_dir = data_dir.unwrap_or_else(|| {
-            env::current_dir()
-                .unwrap_or(PathBuf::from(DATA_DIR_FALLBACK_PARENT))
-                .join(DEFAULT_DATA_DIR)
-        });
+            p.as_path().canonicalize().with_context(|| format!("Plugin directory {} was not found", p.as_path().display()))
 
-        let log = log.unwrap_or(String::from(DEFAULT_LOG_FILTER));
+        }).collect::<Result<Vec<PathBuf>>>()?;
 
-        let frontend_dir = frontend_dir.unwrap_or(PathBuf::from(DEFAULT_FRONTEND_DIR));
+        // Ensure that no paths point to the same place
+        plugin_path.sort_unstable();
+        plugin_path.dedup();
 
-        let sqlite_db_path = sqlite_db_path.unwrap_or(PathBuf::from(DEFAULT_SQLITE_FILE));
+        // Server will attempt to create unix socket, so we should make sure it doesn't exist, but the directory it's in does
+        if unix_socket.as_path().try_exists()
+            .with_context(|| format!("Unable to check if unix socket {} exists", unix_socket.as_path().display()))?
+        {
+            std::fs::remove_file(&unix_socket)
+                .with_context(|| format!("Unix socket {} already exists and couldn't be removed", unix_socket.as_path().display()))?;
+        }
 
-        let db_addr = db_addr.unwrap_or(DEFAULT_DB_ADDR);
+        let unix_socket_dir = unix_socket.as_path().parent().unwrap_or(Path::new("."));
+        let unix_socket_file = unix_socket.as_path().file_name().with_context(|| format!("Unix socket path {} does not appear to be a name for a file", unix_socket.as_path().display()))?;
 
-        let db_port = db_port.unwrap_or(DEFAULT_DB_PORT);
-
-        let db_info = match database {
-            Some(DatabaseArg::Sqlite) => {
-                Some(DatabaseConfig::Sqlite(sqlite_db_path))
-            },
-            Some(_) => {
-                Some(DatabaseConfig::MySql(
-                    SocketAddr::from((db_addr, db_port))
-                ))
-            },
-            None => None
+        if !unix_socket_dir.is_dir() {
+            fs::create_dir_all(unix_socket_dir).with_context(|| format!("Couldn't create directory for unix socket {}", unix_socket.as_path().display()))?;
         };
 
-        // Build the configuration
-        let conf = ServerConfig::new(plugin_path, unix_socket, ignore_init_errors, data_dir, log, frontend_dir, db_info)?;
+        unix_socket = unix_socket_dir.canonicalize()
+            .with_context(|| format!("Unix socket directory {} was not found", unix_socket_dir.display()))?
+            .join(unix_socket_file);
 
-        Ok(conf)
+
+
+        // Get canonical path for data directory, creating it if it doesn't exist
+        if !data_dir.as_path().is_dir() {
+            fs::create_dir_all(&data_dir)
+                .with_context(|| format!("Failed to create data directory at {}", data_dir.as_path().display()))?;
+        };
+
+        let data_dir = data_dir.as_path().canonicalize()
+            .with_context(|| format!("Data directory {} was not found", data_dir.as_path().display()))?;
+
+        let join_data_dir = |p: &Path| {
+            if p.is_absolute() {
+                p.canonicalize()
+                    .with_context(|| format!("Directory {} was not found", p.display()))
+            } else {
+                let relative_path = data_dir.join(frontend_dir.as_path());
+
+            relative_path.canonicalize()
+                .with_context(|| format!("Frontend directory {} was not found", relative_path.display()))
+            }
+        };
+
+        let frontend_dir = join_data_dir(frontend_dir.as_ref())?;
+
+        Ok(Self {
+            plugin_path,
+            unix_socket,
+            ignore_init_errors,
+            data_dir,
+            frontend_dir,
+            database,
+            sqlite_db_path,
+            db_addr,
+            db_port,
+            log,
+        })
     }
 }
 
-#[derive(Debug, Default, ValueEnum, Clone, Copy, Deserialize)]
-enum DatabaseArg {
+#[derive(Debug, Default, ValueEnum, Clone, Copy, Serialize, Deserialize)]
+pub enum DatabaseBackend {
     #[default] Sqlite,
     Mysql,
 }
@@ -176,6 +206,63 @@ enum DatabaseArg {
 pub enum DatabaseConfig {
     Sqlite(PathBuf),
     MySql(SocketAddr)
+}
+
+impl DatabaseConfig {
+
+    /// Returns an enum representing the database backend
+    pub fn backend(&self) -> DatabaseBackend {
+        match self {
+            DatabaseConfig::Sqlite(_) => DatabaseBackend::Sqlite,
+            DatabaseConfig::MySql(_) => DatabaseBackend::Mysql,
+        }
+    }
+
+    /// Returns `Some` with the path to the SQLite database file if the database backend is SQLite.
+    pub fn path(&self) -> Option<&Path> {
+        if let Self::Sqlite(p) = self {
+            Some(p.as_path())
+        } else {
+            None
+        }
+    }
+
+    /// Returns `Some` with the socket address for the database, unless the backend is SQLite
+    pub fn addr(&self) -> Option<&SocketAddr> {
+        if let Self::MySql(s) = self {
+            Some(s)
+        } else {
+            None
+        }
+    }
+
+    /// Returns `Some` with the IP address for the database, unless the backend is SQLite
+    pub fn ip(&self) -> Option<IpAddr> {
+        if let Self::MySql(s) = self {
+            Some(s.ip())
+        } else {
+            None
+        }
+    }
+
+    /// Returns `Some` with the port for the database, unless the backend is SQLite
+    pub fn port(&self) -> Option<u16> {
+        if let Self::MySql(s) = self {
+            Some(s.port())
+        } else {
+            None
+        }
+    }
+
+    /// Similar to `port()`, but only returns `Some` if the default port for a particular
+    /// backend has been overriden
+    pub fn nonstandard_port(&self) -> Option<u16> {
+        match self {
+            DatabaseConfig::Sqlite(_) => None,
+            DatabaseConfig::MySql(s) if s.port() != DEFAULT_MYSQL_PORT => Some(s.port()),
+            _ => None
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum, Default, Serialize, Deserialize)]
@@ -203,16 +290,67 @@ struct MutableServerConfig {
 
     plugin_path: Vec<PathBuf>,
 
-    db_info: DatabaseConfig,
+    db_type: DatabaseBackend,
+
+    db_path: PathBuf,
+
+    db_addr: IpAddr,
+
+    db_port: Option<u16>,
+    
+    log: String
+}
+
+impl Default for MutableServerConfig {
+    fn default() -> Self {
+        Self {
+            plugin_path: Vec::new(),
+            db_type: DatabaseBackend::default(),
+            db_path: Path::new(DEFAULT_DATA_DIR).join(DEFAULT_SQLITE_FILE),
+            db_addr: DEFAULT_DB_ADDR,
+            db_port: None,
+            log: String::from(DEFAULT_LOG_FILTER)
+        }
+    }
 }
 
 impl MutableServerConfig {
 
-    fn new(data_dir: impl AsRef<Path>) -> Self {
+    fn new(data_path: impl AsRef<Path>,
+        plugin_path: impl Into<Vec<PathBuf>>,
+        db_info: DatabaseConfig,
+        log: impl Into<String>) -> Self
+    {
         Self {
-            plugin_path: Vec::new(),
-            db_info: DatabaseConfig::Sqlite(data_dir.as_ref().join(DEFAULT_SQLITE_FILE)),
+            plugin_path: plugin_path.into(),
+            db_type: db_info.backend(),
+            db_path: db_info.path().unwrap_or(&data_path.as_ref().join(DEFAULT_SQLITE_FILE)).to_path_buf(),
+            db_addr: db_info.ip().unwrap_or(DEFAULT_DB_ADDR),
+            db_port: db_info.nonstandard_port(),
+            log: log.into(),
         }
+    }
+
+    fn default_with_overrides(ov: &ImmutableServerConfig) -> Self {
+        let mut rv = Self::default();
+
+        rv.plugin_path = ov.plugin_path.clone();
+
+        if let Some(t) = ov.database {
+            rv.db_type = t;
+        }
+
+        if let Some(t) = &ov.sqlite_db_path {
+            rv.db_path = t.clone();
+        }
+
+        if let Some(t) = ov.db_addr {
+            rv.db_addr = t;
+        }
+
+        rv.db_port = ov.db_port;
+
+        rv
     }
 
     fn read_lockfile(lockfile: impl AsRef<Path>) -> Result<Self> {
@@ -234,8 +372,24 @@ impl MutableServerConfig {
         self.plugin_path.as_ref()
     }
 
-    fn db_info(&self) -> &DatabaseConfig {
-        &self.db_info
+    fn log(&self) -> &str {
+        self.log.as_ref()
+    }
+
+    fn db_type(&self) -> DatabaseBackend {
+        self.db_type
+    }
+
+    fn db_path(&self) -> &PathBuf {
+        &self.db_path
+    }
+
+    fn db_addr(&self) -> IpAddr {
+        self.db_addr
+    }
+
+    fn db_port(&self) -> Option<u16> {
+        self.db_port
     }
 }
 
@@ -245,7 +399,7 @@ pub struct ServerConfig {
     settings: MutableServerConfig,
 
     /// Directories to search for plugin directories
-    plugin_path: Vec<PathBuf>,
+    override_plugin_path: Vec<PathBuf>,
 
     /// Path to the API's unix socket
     unix_socket: PathBuf,
@@ -257,121 +411,54 @@ pub struct ServerConfig {
     data_dir: PathBuf,
 
     /// Filter to pass to logging crate
-    log: String,
+    override_log: Option<String>,
 
     frontend_dir: PathBuf,
 
-    db_info: Option<DatabaseConfig>,
+    override_db_type: Option<DatabaseBackend>,
+
+    override_db_path: Option<PathBuf>,
+
+    override_db_addr: Option<IpAddr>,
+
+    override_db_port: Option<u16>
 }
 
 impl ServerConfig {
-    fn new(
-        plugin_path: Vec<impl AsRef<Path>>,
-        unix_socket: impl AsRef<Path>,
-        ignore_init_errors: IgnoreErrorsConfig,
-        data_dir: impl AsRef<Path>,
-        log: String,
-        frontend_dir: impl AsRef<Path>,
-        db_info: Option<DatabaseConfig>,
-    ) -> Result<Self> {
 
-        // Get canonical paths for all plugin directories, creating any directories that don't exist
-        let mut plugin_path = plugin_path.into_iter().map(|p| {
+    pub fn parse() -> Result<Self> {
+        let overrides = ImmutableServerConfig::parse()
+            .canonicalize_paths()?;
 
-            if !p.as_ref().is_dir() {
-                fs::create_dir_all(p.as_ref())
-                    .with_context(|| format!("Failed to create plugin directory at {}", p.as_ref().display()))?;
-            };
+        let mutable = MutableServerConfig::read_lockfile(
+            overrides.data_dir.join(CONFIG_LOCKFILE_NAME)
+        )?;
 
-            p.as_ref().canonicalize().with_context(|| format!("Plugin directory {} was not found", p.as_ref().display()))
-
-        }).collect::<Result<Vec<PathBuf>>>()?;
-
-        // Ensure that no paths point to the same place
-        plugin_path.sort_unstable();
-        plugin_path.dedup();
-
-        // Server will attempt to create unix socket, so we should make sure it doesn't exist, but the directory it's in does
-        if unix_socket.as_ref().try_exists()
-            .with_context(|| format!("Unable to check if unix socket {} exists", unix_socket.as_ref().display()))?
-        {
-            std::fs::remove_file(unix_socket.as_ref())
-                .with_context(|| format!("Unix socket {} already exists and couldn't be removed", unix_socket.as_ref().display()))?;
-        }
-
-
-        let unix_socket_dir = unix_socket.as_ref().parent().unwrap_or(Path::new("."));
-        let unix_socket_file = unix_socket.as_ref().file_name().with_context(|| format!("Unix socket path {} does not appear to be a name for a file", unix_socket.as_ref().display()))?;
-
-        if !unix_socket_dir.is_dir() {
-            fs::create_dir_all(unix_socket_dir).with_context(|| format!("Couldn't create directory for unix socket {}", unix_socket.as_ref().display()))?;
-        };
-
-        let unix_socket = unix_socket_dir.canonicalize()
-            .with_context(|| format!("Unix socket directory {} was not found", unix_socket_dir.display()))?
-            .join(unix_socket_file);
-
-        // Get canonical path for data directory, creating it if it doesn't exist
-        if !data_dir.as_ref().is_dir() {
-            fs::create_dir_all(&data_dir)
-                .with_context(|| format!("Failed to create data directory at {}", data_dir.as_ref().display()))?;
-        };
-
-        let data_dir = data_dir.as_ref().canonicalize()
-            .with_context(|| format!("Data directory {} was not found", data_dir.as_ref().display()))?;
-
-        let join_data_dir = |p: &Path| {
-            if p.is_absolute() {
-                p.canonicalize()
-                    .with_context(|| format!("Directory {} was not found", p.display()))
-            } else {
-                let relative_path = data_dir.join(frontend_dir.as_ref());
-
-            relative_path.canonicalize()
-                .with_context(|| format!("Frontend directory {} was not found", relative_path.display()))
-            }
-        };
-
-        let frontend_dir = join_data_dir(frontend_dir.as_ref())?;
-
-        let db_info = match db_info {
-            Some(DatabaseConfig::Sqlite(p)) => {
-                Some(DatabaseConfig::Sqlite(join_data_dir(p.as_ref())?))
-            },
-            Some(DatabaseConfig::MySql(a)) => {
-                Some(DatabaseConfig::MySql(a))
-            },
-            None => None
-        };
-
-        let settings = MutableServerConfig::read_lockfile(data_dir.join(CONFIG_LOCKFILE_NAME))
-            .unwrap_or_else(|e| {
-                log::warn!("Failed to read configuration lockfile in {}, falling back to default options", data_dir.display());
-                log::debug!("Error: {e:#?}");
-                MutableServerConfig::new(&data_dir)
-            });
-
-        let new_conf = Self {
-            settings,
-            plugin_path,
-            unix_socket,
-            ignore_init_errors,
-            data_dir,
-            log,
-            frontend_dir,
-            db_info,
-        };
-
-        Ok(new_conf)
+        Ok(Self::new(overrides, mutable))
     }
 
+    fn new(im: ImmutableServerConfig, mu: MutableServerConfig) -> Self {
+        Self {
+            settings: mu,
+            override_plugin_path: im.plugin_path,
+            unix_socket: im.unix_socket,
+            ignore_init_errors: im.ignore_init_errors,
+            data_dir: im.data_dir,
+            override_log: im.log,
+            frontend_dir: im.frontend_dir,
+            override_db_type: im.database,
+            override_db_path: im.sqlite_db_path,
+            override_db_addr: im.db_addr,
+            override_db_port: im.db_port,
+        }
+    }
 }
 
 impl ServerConfig {
 
     pub fn plugin_path(&self) -> &[PathBuf] {
-        if self.plugin_path.len() > 0 {
-            self.plugin_path.as_ref()
+        if self.override_plugin_path.len() > 0 {
+            self.override_plugin_path.as_ref()
         } else {
             self.settings.plugin_path()
         }
@@ -394,21 +481,46 @@ impl ServerConfig {
     }
 
     pub fn log(&self) -> &str {
-        self.log.as_ref()
+        if let Some(s) = &self.override_log {
+            s
+        } else {
+            self.settings.log()
+        }
     }
 
     pub fn frontend_dir(&self) -> &Path{
         &self.frontend_dir.as_path()
     }
 
-    pub fn db_info(&self) -> &DatabaseConfig {
-        self.db_info
-            .as_ref()
-            .unwrap_or(self.settings.db_info())
+    pub fn db_type(&self) -> DatabaseBackend {
+        self.override_db_type
+            .unwrap_or(self.settings.db_type())
     }
-}
 
-pub fn init() -> Result<ServerConfig> {
-    ImmutableServerConfig::from_args()?
-        .build()
+    pub fn db_path(&self) -> &Path {
+        self.override_db_path
+            .as_ref()
+            .unwrap_or(self.settings.db_path())
+    }
+
+    pub fn db_addr(&self) -> IpAddr {
+        self.override_db_addr
+            .unwrap_or(self.settings.db_addr())
+    }
+
+    pub fn db_port(&self) -> Option<u16> {
+        self.override_db_port
+            .or(self.settings.db_port)
+    }
+
+    pub fn db_info(&self) -> DatabaseConfig {
+        match self.db_type() {
+            DatabaseBackend::Sqlite => DatabaseConfig::Sqlite(
+                self.db_path().to_path_buf()
+            ),
+            DatabaseBackend::Mysql => DatabaseConfig::MySql(
+                SocketAddr::from((self.db_addr(), self.db_port().unwrap_or(DEFAULT_MYSQL_PORT)))
+            ),
+        }
+    }
 }
