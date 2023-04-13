@@ -4,7 +4,6 @@ use anyhow::Context;
 use modnsd::plugins::manager::PluginManager;
 use modnsd::listeners::{ApiListener, DnsListener, self};
 
-use clap::Parser;
 use tokio::{net::{TcpListener, UnixListener, UdpSocket}, sync::RwLock};
 
 mod config;
@@ -12,7 +11,7 @@ mod config;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
 
-    let config = config::ServerConfig::parse();
+    let config = config::init()?;
 
     env_logger::Builder::from_env(
         env_logger::Env::new()
@@ -21,6 +20,8 @@ async fn main() -> anyhow::Result<()> {
     )
     .parse_filters(config.log())
     .init();
+
+    log::trace!("Starting server with configuration: {:#?}", config);
 
     let pm_arc = Arc::new(RwLock::new(PluginManager::new()));
 
@@ -43,7 +44,7 @@ async fn main() -> anyhow::Result<()> {
             }
         })?;
 
-        pm.validate(!config.always_init())
+        pm.is_valid_state(!config.always_init())
         .context("Server refused to start because it does not have enough plugins enabled to resolve DNS requests.
         To ignore this case and start anyway, run with `--ignore-init-errors always`")?;
 
@@ -53,7 +54,7 @@ async fn main() -> anyhow::Result<()> {
     log::info!("Binding API listeners");
     let apiaddrs = vec![
         ApiListener::Tcp(
-            TcpListener::bind(("0.0.0.0", 8080)).await
+            TcpListener::bind(("0.0.0.0", 80)).await
             .context("Failed to bind TCP listener on port 8080")?
         ),
 
@@ -65,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
 
     log::info!("Binding DNS listener");
     let dnsaddrs = vec![
-        DnsListener::Udp(UdpSocket::bind(("0.0.0.0", 5300)).await.context("Failed to bind DNS listener on port 5300/udp")?)
+        DnsListener::Udp(UdpSocket::bind(("0.0.0.0", 53)).await.context("Failed to bind DNS listener on port 5300/udp")?)
     ];
 
     listeners::listen(apiaddrs, dnsaddrs, pm_arc).await;

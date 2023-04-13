@@ -53,8 +53,8 @@ const Plugins = () => {
     const togglePlugin = (uuid) => {
         let pluginsEnabled = pluginsEnabledDict;
         if (!pluginsEnabled[uuid]) {
-            pluginDicts['all'][uuid]['modules'].forEach(module => {
-                if (onlyOneEnabledDict[module]) {
+            Object.keys(onlyOneEnabledDict).forEach(module => {
+                if (pluginDicts['all'][`is_${module}`] && onlyOneEnabledDict[module]) {
                     Object.keys(pluginDicts[module]).forEach(uuid2 => {
                         if (pluginsEnabled[uuid2]) {
                             pluginsEnabled[uuid2] = false;

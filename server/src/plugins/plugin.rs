@@ -1,18 +1,26 @@
 
-use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn};
-use modns_sdk::ffi;
+use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn, SdkInitFn, InterceptorFn, ValidatorFn, InspectorFn, ResponseSource};
+use modns_sdk::types::conversion::FfiVector;
+use modns_sdk::{types::ffi, PluginState};
 
 use libloading::{Symbol, Library};
 use serde::Deserialize;
+use anyhow::Result;
 use thiserror::Error;
 
 use std::{fs, io};
 use std::path::{PathBuf, Path};
-use std::ffi::{OsStr, c_char};
+use std::ffi::{OsStr, c_void, OsString};
 
-const DECODER_FN_NAME: &[u8] = b"impl_decode_req";
-const ENCODER_FN_NAME: &[u8] = b"impl_encode_resp";
-const RESOLVER_FN_NAME: &[u8] = b"impl_resolve_req";
+const SDK_INIT_FN_NAME:     &[u8] = b"_init_modns_sdk";
+const SETUP_FN_NAME:        &[u8] = b"impl_plugin_setup";
+const TEARDOWN_FN_NAME:     &[u8] = b"impl_plugin_teardown";
+const DECODER_FN_NAME:      &[u8] = b"impl_listener_sync_decode_req";
+const ENCODER_FN_NAME:      &[u8] = b"impl_listener_sync_encode_resp";
+const INTERCEPTOR_FN_NAME:  &[u8] = b"impl_intercept_req";
+const RESOLVER_FN_NAME:     &[u8] = b"impl_resolver_sync_resolve_req";
+const VALIDATOR_FN_NAME:    &[u8] = b"impl_validate_resp";
+const INSPECTOR_FN_NAME:    &[u8] = b"impl_inspect_resp";
 
 #[derive(Debug, Error)]
 pub enum PluginLoaderError {
@@ -22,14 +30,18 @@ pub enum PluginLoaderError {
     ManifestOpenError(#[from] io::Error),
     #[error("Unable to read manifest.yaml")]
     ManifestReadError(#[from] serde_yaml::Error),
+    #[error("SDK initialization failed")]
+    SDKInitError,
 }
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[derive(Error, Debug)]
 pub enum PluginExecutorError {
     #[error("Plugin returned error code {0}")]
     ErrorCode(u8),
     #[error("Required module implementation was not found for a plugin")]
     DoesNotImplement,
+    #[error("Plugin library returned an error")]
+    LibraryError(#[from] libloading::Error),
     #[error("No plugins are enabled that implement the required module")]
     NoneEnabled,
     #[error("Got an error while converting the plugin's output: {0:?}")]
@@ -47,6 +59,16 @@ impl From<u8> for PluginExecutorError {
 impl From<modns_sdk::FfiConversionError> for PluginExecutorError{
     fn from(value: modns_sdk::FfiConversionError) -> Self {
         Self::InvalidReturnValue(value)
+    }
+}
+
+impl PluginExecutorError {
+    pub fn error_code(&self) -> Option<u8> {
+        if let Self::ErrorCode(e) = self {
+            Some(*e)
+        } else {
+            None
+        }
     }
 }
 
@@ -70,9 +92,21 @@ pub struct DnsPlugin {
     /// that encode() and decode() can be called on this plugin
     is_listener: bool,
 
+    /// Whether the function is an interceptor, i.e. if callers should
+    /// expect that check_intercept() can be called on this plugin
+    is_interceptor: bool,
+
     /// Whether this plugin is a resolver, i.e. if callers should expect
     /// that resolve() can be called on this plugin
     is_resolver: bool,
+
+    /// Whether this plugin is a validator, i.e., if callers should expect
+    /// that validate() can be called on this plugin
+    is_validator: bool,
+
+    /// Whether this plugin is an inspector, i.e., if callers should expect
+    /// that notify_inspector() can be called on this plugin
+    is_inspector: bool,
 
     /// Whether this plugin should be treated as being enabled
     enabled: bool,
@@ -83,38 +117,51 @@ pub struct DnsPlugin {
 
     /// Human-readable description for this plugin provided by the author
     /// in the plugin's `manifest.yaml` file
-    description: String
+    description: String,
+
+    state_ptr: PluginState
 }
 
 impl DnsPlugin {
     pub(crate) fn new(
         lib: Library,
-        is_listener: bool,
-        is_resolver: bool,
         home_dir: PathBuf,
-        enabled: bool,
         friendly_name: String,
-        description: String
-    ) -> Self {
-        Self{
+        description: String,
+    ) -> Result<Self, PluginLoaderError> {
+
+        let is_listener =
+        check_sym::<ListenerDecodeFn>(&lib, DECODER_FN_NAME)?.is_some() &&
+            check_sym::<ListenerEncodeFn>(&lib, ENCODER_FN_NAME)?.is_some();
+
+        let is_interceptor = 
+        check_sym::<InterceptorFn>(&lib, INTERCEPTOR_FN_NAME)?.is_some();
+
+        let is_resolver =
+        check_sym::<ResolverFn>(&lib, RESOLVER_FN_NAME)?.is_some();
+
+        let is_validator = 
+        check_sym::<ValidatorFn>(&lib, VALIDATOR_FN_NAME)?.is_some();
+
+        let is_inspector =
+        check_sym::<InspectorFn>(&lib, INSPECTOR_FN_NAME)?.is_some();
+
+        Ok(Self{
             lib,
             is_listener,
+            is_interceptor,
             is_resolver,
+            is_validator,
+            is_inspector,
             home_dir,
-            enabled,
+            enabled: false,
             friendly_name,
-            description
-        }
+            description,
+            state_ptr: PluginState::new(),
+        })
+
     }
     
-    pub fn is_listener(&self) -> bool {
-        self.is_listener
-    }
-
-    pub fn is_resolver(&self) -> bool {
-        self.is_resolver
-    }
-
     pub fn decode(&self, buf: &[u8]) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
 
         let f: Symbol<ListenerDecodeFn> = unsafe { self.lib.get(DECODER_FN_NAME) }
@@ -122,7 +169,7 @@ impl DnsPlugin {
 
         let mut message = Box::new(ffi::DnsMessage::default());
 
-        let rc = unsafe {f(buf.into(), message.as_mut())};
+        let rc = unsafe {f(buf.into(), message.as_mut(), self.state_ptr.into())};
 
         if rc == 0 {
             Ok(message)
@@ -131,26 +178,45 @@ impl DnsPlugin {
         }
     }
 
-    pub fn encode(&self, message: Box<ffi::DnsMessage>) -> Result<Vec<c_char>, PluginExecutorError> {
+    pub fn encode(&self, message: Box<ffi::DnsMessage>) -> Result<Vec<u8>, PluginExecutorError> {
 
         let f: Symbol<ListenerEncodeFn> = unsafe { self.lib.get(ENCODER_FN_NAME) }
         .or(Err(PluginExecutorError::DoesNotImplement))?;
 
-        let mut buf = Vec::new().into();
+        let mut buf = ffi::ByteVector::from_safe_vec(Vec::new());
 
         let rc = unsafe {
-            f(message.as_ref(), &mut buf)
+            f(message.as_ref(), &mut buf, self.state_ptr.into())
         };
 
         if rc != 0 {
             Err(PluginExecutorError::ErrorCode(rc))
         } else {
-            Ok(buf.try_into()?)
+            Ok(unsafe { buf.try_safe_vec() }?)
         }
 
     }
 
-    pub fn resolve(&self, req: Box<ffi::DnsMessage>) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
+    pub fn check_intercept(&self, req: &Box<ffi::DnsMessage>) -> Result<Option<Box<ffi::DnsMessage>>, PluginExecutorError> {
+
+        let f = check_sym::<InterceptorFn>(&self.lib, INTERCEPTOR_FN_NAME)?
+        .ok_or(PluginExecutorError::DoesNotImplement)?;
+
+        let mut resp = Box::new(ffi::DnsMessage::default());
+
+        let rc = unsafe{
+            f(req.as_ref(), resp.as_mut(), self.state_ptr.into())
+        };
+
+        match rc {
+            0 => Ok(None),
+            1 => Ok(Some(resp)),
+            e => Err(PluginExecutorError::ErrorCode(e))
+        }
+
+    }
+
+    pub fn resolve(&self, req: &Box<ffi::DnsMessage>) -> Result<Box<ffi::DnsMessage>, PluginExecutorError> {
 
         let f: Symbol<ResolverFn> = unsafe { self.lib.get(RESOLVER_FN_NAME) }
         .or(Err(PluginExecutorError::DoesNotImplement))?;
@@ -158,7 +224,7 @@ impl DnsPlugin {
         let mut resp = Box::new(ffi::DnsMessage::default());
 
         let rc = unsafe {
-            f(req.as_ref(), resp.as_mut())
+            f(req.as_ref(), resp.as_mut(), self.state_ptr.into())
         };
 
         if rc == 0 {
@@ -169,6 +235,129 @@ impl DnsPlugin {
 
     }
 
+    pub fn validate(&self, req: &Box<ffi::DnsMessage>, resp: &Box<ffi::DnsMessage>) -> Result<Option<Box<ffi::DnsMessage>>, PluginExecutorError> {
+
+        let f = check_sym::<ValidatorFn>(&self.lib, VALIDATOR_FN_NAME)?
+        .ok_or(PluginExecutorError::DoesNotImplement)?;
+
+        let mut err_resp = Box::new(ffi::DnsMessage::default());
+
+        let rc = unsafe{
+            f(req.as_ref(), resp.as_ref(), err_resp.as_mut(), self.state_ptr.into())
+        };
+
+        match rc {
+            0 => Ok(None),
+            1 => Ok(Some(err_resp)),
+            e => Err(PluginExecutorError::ErrorCode(e))
+        }
+
+    }
+
+    pub fn inspect(&self, req: &Box<ffi::DnsMessage>, resp: &Box<ffi::DnsMessage>, source: ResponseSource) -> Result<(), PluginExecutorError> {
+
+        let f = check_sym::<InspectorFn>(&self.lib, INSPECTOR_FN_NAME)?
+        .ok_or(PluginExecutorError::DoesNotImplement)?;
+
+        let rc = unsafe{
+            f(req.as_ref(), resp.as_ref(), source as u8, self.state_ptr.into())
+        };
+
+        if rc != 0 {
+            Err(PluginExecutorError::ErrorCode(rc))
+        } else {
+            Ok(())
+        }
+
+    }
+
+    pub fn load<P: AsRef<OsStr>>(home_dir: P) -> Result<Self, PluginLoaderError> {
+
+        let home_dir = PathBuf::from(home_dir.as_ref());
+
+        let lib = unsafe { Library::new(home_dir.join("plugin.so")) }?;
+
+        let log_name = home_dir.file_name()
+            .unwrap_or(&OsString::from("unknown"))
+            .to_string_lossy()
+            .to_string();
+
+        match check_sym::<SdkInitFn>(&lib, SDK_INIT_FN_NAME)? {
+            Some(sdk_init) => {
+
+                log::trace!("Initializing SDK logger for {log_name}");
+
+                if let Err(e) = sdk_init(&log_name, log::logger()) {
+
+                    log::warn!("Failed to initialize SDK for {log_name}");
+                    log::debug!("Got error while initializing SDK: {e:?}");
+
+                };
+
+            }
+            None => {
+                log::error!("Couldn't find SDK init function for {log_name}");
+                return Err(PluginLoaderError::SDKInitError)
+            }
+        }
+
+        let manifest_file = fs::read_to_string(home_dir.join("manifest.yaml"))?;
+
+        let manifest: PluginManifest = serde_yaml::from_str(&manifest_file)?;
+
+        let plugin = Self::new(
+            lib, 
+            home_dir,
+            manifest.friendly_name,
+            manifest.description,
+        )?;
+
+        Ok(plugin)
+    }
+
+    pub fn enable(&mut self) -> Result<()> {
+        self.state_ptr = if let Some(f) = check_sym::<SetupFn>(&self.lib, SETUP_FN_NAME)? {
+            unsafe { f() }.into()
+        } else { std::ptr::null_mut::<c_void>().into() };
+
+        self.enabled = true;
+
+        Ok(())
+    }
+
+    pub fn disable(&mut self) -> Result<()> {
+        
+        if let Some(f) = check_sym::<TeardownFn>(&self.lib, TEARDOWN_FN_NAME)? {
+            unsafe { f(self.state_ptr.into()) }
+        };
+
+        self.state_ptr = std::ptr::null_mut::<c_void>().into();
+
+        self.enabled = false;
+
+        Ok(())
+    }
+
+    pub fn is_listener(&self) -> bool {
+        self.is_listener
+    }
+
+    pub fn is_interceptor(&self) -> bool {
+        self.is_interceptor
+    }
+
+    pub fn is_resolver(&self) -> bool {
+        self.is_resolver
+    }
+
+    pub fn is_validator(&self) -> bool {
+        self.is_validator
+    }
+
+    pub fn is_inspector(&self) -> bool {
+        self.is_inspector
+    }
+
     pub fn enabled(&self) -> bool {
         self.enabled
     }
@@ -176,35 +365,6 @@ impl DnsPlugin {
     pub fn home_dir(&self) -> &Path {
         &self.home_dir
     }
-
-    pub fn load<P: AsRef<OsStr>>(home_dir: P, enable: bool) -> Result<Self, PluginLoaderError> {
-
-        let home_dir = PathBuf::from(home_dir.as_ref());
-
-        let lib = unsafe { Library::new(home_dir.join("plugin.so")) }?;
-
-        let manifest_file = fs::read_to_string(home_dir.join("manifest.yaml"))?;
-
-        let manifest: PluginManifest = serde_yaml::from_str(&manifest_file)?;
-
-        let is_listener =
-        get_sym::<ListenerDecodeFn>(&lib, DECODER_FN_NAME)?.is_some() &&
-        get_sym::<ListenerEncodeFn>(&lib, ENCODER_FN_NAME)?.is_some();
-
-        let is_resolver =
-        get_sym::<ResolverFn>(&lib, RESOLVER_FN_NAME)?.is_some();
-
-        Ok(Self::new(
-            lib, 
-            is_listener,
-            is_resolver,
-            home_dir,
-            enable,
-            manifest.friendly_name,
-            manifest.description
-        ))
-    }
-
 
     pub fn friendly_name(&self) -> &str {
         self.friendly_name.as_ref()
@@ -215,7 +375,7 @@ impl DnsPlugin {
     }
 }
 
-fn get_sym<'lib, T> (lib: &'lib Library, name: &[u8]) -> Result<Option<Symbol<'lib, T>>, libloading::Error> {
+fn check_sym<'lib, T> (lib: &'lib Library, name: &[u8]) -> Result<Option<Symbol<'lib, T>>, libloading::Error> {
     let sym = unsafe {
         lib.get(name)
     };
