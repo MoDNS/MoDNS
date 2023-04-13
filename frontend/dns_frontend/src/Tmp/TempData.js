@@ -453,7 +453,6 @@ export const mockBarData = [
   },
 ];
 
-
 export const mockLineData = [
   {
     id: "japan",

@@ -12,25 +12,31 @@ import {
   mockBarData,
   mockLineData,
   mockGeographyData,
+  mockDataTeam,
 } from "../Tmp/TempData";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import EmailIcon from "@mui/icons-material/Email";
+// import EmailIcon from "@mui/icons-material/Email";
 import ErrorOutline from "@mui/icons-material/ErrorOutline";
 import TrafficIcon from "@mui/icons-material/TrafficOutlined";
 import StatBox from "../Components/DashboardComponents/StatBox";
 import PieChart from "../Components/DashboardComponents/PieChart";
 import LineChart from "../Components/DashboardComponents/LineChart";
-import MarimekoChart from "../Components/DashboardComponents/MarimekoChart";
+// import MarimekoChart from "../Components/DashboardComponents/MarimekoChart";
 import VerticalBarChart from "../Components/DashboardComponents/VerticalBarChart";
-import HorizontalBarChart from "../Components/DashboardComponents/HorizontalBarChart";
-import GeoMap from "../Components/DashboardComponents/GeoMap";
+// import HorizontalBarChart from "../Components/DashboardComponents/HorizontalBarChart";
+// import GeoMap from "../Components/DashboardComponents/GeoMap";
+import DataTable from "../Components/DashboardComponents/DataTable";
 
 const Dashboard = () => {
+  const getHeadings = () => {
+    return Object.keys(mockDataTeam[0]);
+  };
+
   return (
     <MainBox title={"Dashboard"}>
       {/* Grid */}
       <div>
-        <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap="20px">
+        <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap="0px" sx={{ overflow: "scroll"}}>
           {/* Row 1 */}
           <Box
             gridColumn="span 3"
@@ -91,6 +97,15 @@ const Dashboard = () => {
             height="300px"
           >
             <PieChart data={mockDataFruits} />
+          </Box>
+          <Box
+            gridColumn="span 6"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            height="300px"
+          >
+            <DataTable theadData={getHeadings()} tbodyData={mockDataTeam}/>
           </Box>
           <Box
             gridColumn="span 6"
