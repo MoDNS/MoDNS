@@ -651,3 +651,102 @@ impl ServerConfig {
         self.settings.set_admin_pw_hash(pw)
     }
 }
+
+#[derive(Debug)]
+pub struct MutableConfigValue<T: Debug> {
+    pub overridden: bool,
+    pub value: T,
+}
+
+impl<T: Debug> MutableConfigValue<T> {
+    fn overridden(value: T) -> Self {
+        Self {
+            overridden: true,
+            value
+        }
+    }
+
+    fn mutable(value: T) -> Self {
+        Self {
+            overridden: false,
+            value
+        } 
+    }
+}
+
+
+/// Getters which include Override status
+impl ServerConfig {
+    pub fn query_db_type(&self) -> MutableConfigValue<DatabaseBackend> {
+        MutableConfigValue {
+            overridden: self.override_db_type.is_some(),
+            value: self.db_type()
+        }
+    }
+
+    pub fn query_db_path(&self) -> MutableConfigValue<PathBuf> {
+        MutableConfigValue {
+            overridden: self.override_db_path.is_some(),
+            value: self.db_path()
+        }
+    }
+
+    pub fn query_db_addr(&self) -> MutableConfigValue<IpAddr> {
+        MutableConfigValue {
+            overridden: self.override_db_addr.is_some(),
+            value: self.db_addr()
+        }
+    }
+
+    pub fn query_db_port(&self) -> MutableConfigValue<Option<u16>> {
+        MutableConfigValue {
+            overridden: self.override_db_port.is_some(),
+            value: self.db_port()
+        }
+    }
+
+    pub fn query_log(&self) -> MutableConfigValue<String> {
+        MutableConfigValue {
+            overridden: self.override_log.is_some(),
+            value: self.log()
+        }
+    }
+
+    pub fn query_admin_pw(&self) -> MutableConfigValue<()> {
+        MutableConfigValue {
+            overridden: self.override_admin_pw_hash.is_some(),
+            value: ()
+        }
+    }
+
+    pub fn query_plugin_path(&self) -> Vec<MutableConfigValue<PathBuf>> {
+        let mut path = Vec::with_capacity(
+            self.override_plugin_path.len() +
+            self.settings.plugin_path().map(|v| v.len()).unwrap_or(0) +
+            1
+        );
+
+        if !self.no_default_plugins {
+            path.push(
+                MutableConfigValue::overridden(PathBuf::from(DEFAULT_PLUGIN_PATH))
+            );
+        }
+
+        path.extend(
+            self.override_plugin_path
+                .iter()
+                .map(Clone::clone)
+                .map(MutableConfigValue::overridden)
+        );
+
+        path.extend(
+            self.settings.plugin_path()
+                .unwrap_or_default()
+                .iter()
+                .map(Clone::clone)
+                .map(MutableConfigValue::mutable)
+        );
+
+        path
+    }
+}
