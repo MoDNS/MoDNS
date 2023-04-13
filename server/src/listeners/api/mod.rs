@@ -12,6 +12,7 @@ use std::path::Path;
 use std::sync::Arc;
 use anyhow::Result;
 
+use crate::ServerConfig;
 use crate::plugins::manager::PluginManager;
 
 #[derive(Debug)]
@@ -48,13 +49,13 @@ impl Display for ApiListener {
     }
 }
 
-pub async fn listen_api(listeners: Vec<ApiListener>, shutdown_channel: broadcast::Sender<()>, pm: Arc<RwLock<PluginManager>>, frontend_path: &Path) -> Result<()>{
+pub async fn listen_api(listeners: Vec<ApiListener>, shutdown_channel: broadcast::Sender<()>, pm: Arc<RwLock<PluginManager>>, cfg: &ServerConfig) -> Result<()>{
     // let pm_arc = Arc::new(RwLock::new(PluginManager::new()));
     
     let api_filter = api_filter(pm);
 
     let frontend_routes = root_redirect()
-        .or(frontend_filter(frontend_path))
+        .or(frontend_filter(cfg.frontend_dir(), cfg.headless()))
         .or(api_filter)
         .with(warp::log("modnsd::listeners::api"));
 

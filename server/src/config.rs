@@ -213,7 +213,7 @@ impl ImmutableServerConfig {
             }
         };
 
-        let frontend_dir = if headless {
+        let frontend_dir = if !headless {
             join_data_dir(frontend_dir.as_ref())?
         } else {
             PathBuf::new()

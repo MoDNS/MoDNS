@@ -19,7 +19,7 @@ pub async fn listen(apiaddrs: Vec<api::ApiListener>, dnsaddrs: Vec<dns::DnsListe
     let (shutdown, _) = broadcast::channel(1);
 
     if let Err(e) = tokio::try_join!(
-        api::listen_api(apiaddrs, shutdown.clone(), pm_arc.clone(), cfg.frontend_dir()),
+        api::listen_api(apiaddrs, shutdown.clone(), pm_arc.clone(), cfg),
         dns::listen_dns(dnsaddrs, shutdown.clone(), pm_arc.clone()),
         wait_for_shutdown(shutdown)
     ) {

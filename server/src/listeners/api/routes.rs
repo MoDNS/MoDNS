@@ -29,8 +29,20 @@ pub fn root_redirect() -> BoxedFilter<(impl Reply,)> {
     warp::path::end().map(|| warp::redirect(Uri::from_static("/manage"))).boxed()
 }
 
-pub fn frontend_filter(path: &Path) -> BoxedFilter<(impl Reply,)> {
-    warp::path("manage").and(warp::fs::dir(path.to_owned())).boxed()
+pub fn frontend_filter(path: &Path, disable: bool) -> BoxedFilter<(impl Reply,)> {
+    warp::any()
+        .and(warp::path("manage"))
+        .and_then(move || async move {
+            if !disable{
+                Ok(())
+            } else {
+                log::trace!("Rejected request because headless mode is enabled");
+                Err(warp::reject())
+            }
+        })
+        .untuple_one()
+        .and(warp::fs::dir(path.to_owned()))
+        .boxed()
 }
 
 pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> {
