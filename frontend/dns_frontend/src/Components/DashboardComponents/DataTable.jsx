@@ -25,7 +25,7 @@ const DataTable = ({ theadData, tbodyData }) => {
           <tr>
             {theadData.map((heading) => {
               return (
-                <th style={{ textAlign: "left", padding: 5 }} key={heading}>
+                <th style={{ textAlign: "left", padding: 5, background: "#00aeef" }} key={heading}>
                   {heading}
                 </th>
               );
