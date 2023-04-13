@@ -22,6 +22,7 @@ anyhow = "1.0.70"
 thiserror = "1.0.39"
 env_logger = "0.10.0"
 serde_json = "1.0.95"
+scrypt = "0.11.0"
 
 [dev-dependencies]
 cfg-if = "1.0.0"

@@ -7,6 +7,9 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
+use scrypt::Scrypt;
+use scrypt::password_hash::rand_core::OsRng;
+use scrypt::password_hash::{PasswordHasher, SaltString};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, Map};
@@ -22,6 +25,8 @@ const SQLITE_PATH_ENV: &str = "MODNS_DB_SQLITE_PATH";
 const DB_ADDR_ENV: &str = "MODNS_DB_ADDR";
 const DB_PORT_ENV: &str = "MODNS_DB_PORT";
 const LOG_ENV: &str = "MODNS_LOG";
+const ADMIN_PW_ENV: &str = "MODNS_ADMIN_PW";
+const HEADLESS_ENV: &str = "MODNS_HEADLESS";
 
 const PLUGIN_PATH_KEY: &str = "plugin_path";
 const DB_TYPE_KEY: &str = "db_type";
@@ -29,6 +34,7 @@ const DB_PATH_KEY: &str = "db_path";
 const DB_ADDR_KEY: &str = "db_addr";
 const DB_PORT_KEY: &str = "db_port";
 const LOG_KEY: &str = "log_filter";
+const ADMIN_PW_KEY: &str = "admin_pw_hash";
 
 const DEFAULT_PLUGIN_PATH: &str = "/usr/share/modnsd/default-plugins";
 const DEFAULT_UNIX_SOCKET: &str = "/run/modnsd.sock";
@@ -119,6 +125,14 @@ pub struct ImmutableServerConfig {
     /// `info` for all modules except `modnsd::listeners`. See documentation for the Rust `log` crate for more info.
     #[arg(short, long, env=LOG_ENV)]
     log: Option<String>,
+
+    /// Override the administrator password
+    #[arg(long, env=ADMIN_PW_ENV)]
+    admin_password: Option<String>,
+
+    /// Don't expose the web frontend
+    #[arg(long, action=clap::ArgAction::SetTrue, env=HEADLESS_ENV)]
+    headless: bool,
 }
 
 impl ImmutableServerConfig {
@@ -126,17 +140,19 @@ impl ImmutableServerConfig {
     fn canonicalize_paths(self) -> Result<Self> {
 
         let Self {
-            plugin_path,
-            no_default_plugins,
-            mut unix_socket,
-            ignore_init_errors,
-            data_dir,
-            log,
-            frontend_dir,
-            database,
-            sqlite_db_path,
-            db_addr,
-            db_port
+        plugin_path,
+        no_default_plugins,
+        mut unix_socket,
+        ignore_init_errors,
+        data_dir,
+        log,
+        frontend_dir,
+        database,
+        sqlite_db_path,
+        db_addr,
+        db_port,
+        admin_password,
+        headless
         } = self;
 
         // Get canonical paths for all plugin directories, creating any directories that don't exist
@@ -197,7 +213,21 @@ impl ImmutableServerConfig {
             }
         };
 
-        let frontend_dir = join_data_dir(frontend_dir.as_ref())?;
+        let frontend_dir = if headless {
+            join_data_dir(frontend_dir.as_ref())?
+        } else {
+            PathBuf::new()
+        };
+
+        let admin_password = if let Some(p) = admin_password {
+            let salt = SaltString::generate(&mut OsRng);
+            Some(Scrypt.hash_password(p.as_bytes(), &salt)
+                .context("Failed to hash admin password")?
+                .to_string()
+            )
+        } else {
+            None
+        };
 
         Ok(Self {
             plugin_path,
@@ -211,6 +241,8 @@ impl ImmutableServerConfig {
             db_addr,
             db_port,
             log,
+            admin_password,
+            headless
         })
     }
 }
@@ -390,6 +422,10 @@ impl MutableServerConfig {
         self.get_config_obj(DB_PORT_KEY)
     }
 
+    fn admin_pw_hash(&self) -> Option<String> {
+        self.get_config_obj(ADMIN_PW_KEY)
+    }
+
     pub fn set_plugin_path(&mut self, plugin_path: Vec<PathBuf>) -> Result<()> {
         self.set_config_obj(PLUGIN_PATH_KEY, plugin_path)
     }
@@ -412,6 +448,10 @@ impl MutableServerConfig {
 
     pub fn set_log(&mut self, log: String) -> Result<()> {
         self.set_config_obj(LOG_KEY, log)
+    }
+
+    pub fn set_admin_pw_hash(&mut self, pw: String) -> Result<()> {
+        self.set_config_obj(ADMIN_PW_ENV, pw)
     }
 }
 
@@ -447,7 +487,11 @@ pub struct ServerConfig {
 
     override_db_addr: Option<IpAddr>,
 
-    override_db_port: Option<u16>
+    override_db_port: Option<u16>,
+
+    override_admin_pw_hash: Option<String>,
+
+    headless: bool,
 }
 
 impl ServerConfig {
@@ -477,6 +521,8 @@ impl ServerConfig {
             override_db_path: im.sqlite_db_path,
             override_db_addr: im.db_addr,
             override_db_port: im.db_port,
+            override_admin_pw_hash: im.admin_password,
+            headless: im.headless,
         }
     }
 
@@ -565,6 +611,15 @@ impl ServerConfig {
             ),
         }
     }
+
+    pub fn admin_pw_hash(&self) -> Option<String> {
+        self.override_admin_pw_hash.clone()
+            .or(self.settings.admin_pw_hash())
+    }
+
+    pub fn headless(&self) -> bool {
+        self.headless
+    }
 }
 
 impl ServerConfig {
@@ -590,5 +645,9 @@ impl ServerConfig {
 
     pub fn set_log(&mut self, log: String) -> Result<()> {
         self.settings.set_log(log)
+    }
+    
+    pub fn set_admin_pw_hash(&mut self, pw: String) -> Result<()> {
+        self.settings.set_admin_pw_hash(pw)
     }
 }
