@@ -30,8 +30,7 @@ pub fn root_redirect() -> BoxedFilter<(impl Reply,)> {
 }
 
 pub fn frontend_filter(path: &Path, disable: bool) -> BoxedFilter<(impl Reply,)> {
-    warp::any()
-        .and(warp::path("manage"))
+    warp::path("manage")
         .and_then(move || async move {
             if !disable{
                 Ok(())
