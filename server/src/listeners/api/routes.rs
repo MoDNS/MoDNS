@@ -47,8 +47,17 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             let pm = enable_pm.clone();
             log::trace!("Plugin enabled status change requested");
             set_plugin_stat(pm, uuid, eq)
-       
             })
+        )
+        .or(warp::path!("server" / "restart")
+        .then(|| {
+            server_restart()
+        })
+        )
+        .or(warp::path!("server" / "shutdown")
+        .then(|| {
+            server_shutdown()
+        })
         )
     ).boxed()
 }
@@ -95,4 +104,16 @@ pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, query: 
         Err(e) => ApiResponse::from(e),
 
     }
+}
+
+pub async fn server_shutdown() -> impl Reply {
+
+   ApiResponse::new(200, format!("You tried to shutdown the server 👍"))
+
+}
+
+pub async fn server_restart() -> impl Reply {
+
+    ApiResponse::new(200, format!("You tried to restart the server 👍"))
+
 }
