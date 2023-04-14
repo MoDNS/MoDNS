@@ -22,9 +22,14 @@ fn main() -> anyhow::Result<()> {
             PluginCommand::GetConfig { name, keys } => commands::plugins::get_config(name, keys, config.global_args()),
             PluginCommand::SetConfig { name, key, value } => commands::plugins::set_config(name, key, value, config.global_args()),
             PluginCommand::Uninstall { name } => commands::plugins::uninstall(name, config.global_args()),
-            _ => Err(anyhow::anyhow!("Not implemented"))
+            PluginCommand::Install { path } => commands::plugins::install(path, config.global_args()),
         },
-        _ => Err(anyhow::anyhow!("Not implemented"))
+        CLICommand::Config { command } => match command {
+            ConfigCommand::Get { key } => Err(anyhow::anyhow!("Not implemented")),
+            ConfigCommand::Set { key, value } => Err(anyhow::anyhow!("Not implemented")),
+        }
+        CLICommand::Restart => Err(anyhow::anyhow!("Not implemented")),
+        CLICommand::Shutdown => Err(anyhow::anyhow!("Not implemented")),
     }
 
 }
