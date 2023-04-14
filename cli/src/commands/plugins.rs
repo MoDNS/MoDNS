@@ -1,5 +1,6 @@
 
 use std::fmt::Write;
+use std::path::Path;
 
 use hyper::{Method, StatusCode};
 
@@ -136,6 +137,11 @@ pub fn uninstall(plugin: &str, config: &CliOptions) -> Result<()> {
     if resp.status() != StatusCode::OK {
         anyhow::bail!("Got unexpected error code from daemon: {} ({})", resp.status(), resp.body());
     };
+
+    Ok(())
+}
+
+pub fn install(local_path: &Path, config: &CliOptions) -> Result<()> {
 
     Ok(())
 }
