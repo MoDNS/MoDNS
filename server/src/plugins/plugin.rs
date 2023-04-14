@@ -32,6 +32,8 @@ pub enum PluginLoaderError {
     ManifestReadError(#[from] serde_yaml::Error),
     #[error("SDK initialization failed")]
     SDKInitError,
+    #[error("Couldn't get name from directory")]
+    InvalidName,
 }
 
 #[derive(Error, Debug)]
@@ -111,6 +113,10 @@ pub struct DnsPlugin {
     /// Whether this plugin should be treated as being enabled
     enabled: bool,
 
+    /// Short, CLI-friendly name for the plugin. Used to uniquely identify
+    /// plugin. Derived from plugin home directory
+    short_name: String,
+
     /// Human-readable name for this plugin provided by the author in the
     /// plugin's `manifest.yaml` file
     friendly_name: String,
@@ -126,6 +132,7 @@ impl DnsPlugin {
     pub(crate) fn new(
         lib: Library,
         home_dir: PathBuf,
+        short_name: String,
         friendly_name: String,
         description: String,
     ) -> Result<Self, PluginLoaderError> {
@@ -155,6 +162,7 @@ impl DnsPlugin {
             is_inspector,
             home_dir,
             enabled: false,
+            short_name,
             friendly_name,
             description,
             state_ptr: PluginState::new(),
@@ -275,6 +283,11 @@ impl DnsPlugin {
 
         let home_dir = PathBuf::from(home_dir.as_ref());
 
+        let short_name = match home_dir.file_name() {
+            Some(name) => name.to_string_lossy().into_owned(),
+            None => return Err(PluginLoaderError::InvalidName),
+        };
+
         let lib = unsafe { Library::new(home_dir.join("plugin.so")) }?;
 
         let log_name = home_dir.file_name()
@@ -308,8 +321,10 @@ impl DnsPlugin {
         let plugin = Self::new(
             lib, 
             home_dir,
+            short_name,
             manifest.friendly_name,
             manifest.description,
+            
         )?;
 
         Ok(plugin)
@@ -372,6 +387,10 @@ impl DnsPlugin {
 
     pub fn description(&self) -> &str {
         self.description.as_ref()
+    }
+
+    pub fn short_name(&self) -> &str {
+        self.short_name.as_ref()
     }
 }
 
