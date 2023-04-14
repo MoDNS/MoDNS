@@ -1,4 +1,6 @@
 
+use std::fmt::Write;
+
 use hyper::{Method, StatusCode};
 
 use anyhow::{Result, Context};
@@ -6,9 +8,15 @@ use anyhow::{Result, Context};
 use crate::CliOptions;
 use crate::util::{make_request, get_plugin_list, uuid_from_name};
 
-pub fn list_plugins(config: &CliOptions) -> Result<()> {
+pub fn list_plugins(config: &CliOptions, all: bool) -> Result<()> {
 
-    let metadata = get_plugin_list(config).context("Failed to get plugin metadata")?;
+    let mut filter = String::new();
+
+    if !all {
+        filter.write_str("enabled=true")?;
+    }
+
+    let metadata = get_plugin_list(config, &filter).context("Failed to get plugin metadata")?;
 
     if config.verbose() > 2 {
         println!("{:#?}", metadata.iter());

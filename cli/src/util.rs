@@ -66,9 +66,9 @@ fn send_request(req: Request<Body>, unix: bool) -> Result<Response<String>> {
     Ok(Response::from_parts(parts, full_body))
 }
 
-pub fn get_plugin_list(config: &CliOptions) -> Result<HashMap<Uuid, PluginMetadata>> {
+pub fn get_plugin_list(config: &CliOptions, filter: &str) -> Result<HashMap<Uuid, PluginMetadata>> {
 
-    let resp = make_request(Method::GET, "/api/plugins", config)
+    let resp = make_request(Method::GET, &format!("/api/plugins?{filter}"), config)
         .context("Unable to request plugin metadata")?;
 
     if resp.status() != StatusCode::OK {
@@ -80,7 +80,7 @@ pub fn get_plugin_list(config: &CliOptions) -> Result<HashMap<Uuid, PluginMetada
 } 
 
 pub fn uuid_from_name(name: &str, config: &CliOptions) -> Option<Uuid> {
-    let plugins = match get_plugin_list(config) {
+    let plugins = match get_plugin_list(config, "") {
         Ok(p) => p,
         Err(e) => {
             eprintln!("Couldn't get plugin list");

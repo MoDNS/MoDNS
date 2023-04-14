@@ -16,7 +16,7 @@ fn main() -> anyhow::Result<()> {
 
     match config.command() {
         CLICommand::Plugin { command } => match command {
-            PluginCommand::List => commands::plugins::list_plugins(&config.global_args()),
+            PluginCommand::List { all }=> commands::plugins::list_plugins(&config.global_args(), *all),
             PluginCommand::Enable { name } => commands::plugins::set_enabled(name, true, config.global_args()),
             PluginCommand::Disable { name } => commands::plugins::set_enabled(name, false, config.global_args()),
             PluginCommand::GetConfig { name, keys } => commands::plugins::get_config(name, keys, config.global_args()),
@@ -125,7 +125,10 @@ pub enum CLICommand {
 
 #[derive(Debug, Subcommand)]
 pub enum PluginCommand {
-    List,
+    List {
+        #[arg(short, long, action=clap::ArgAction::SetTrue)]
+        all: bool
+    },
     Install {
         path: PathBuf
     },
