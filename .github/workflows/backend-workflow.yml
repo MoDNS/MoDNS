@@ -13,6 +13,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
 
 jobs:
   
@@ -22,9 +23,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Makefile
-      run: make plugins test-plugins
     - name: Build
-      run: cargo build --verbose --deny-warnings
+      run: cargo build --verbose
+    - name: Build plugins
+      run: make plugins test-plugins
     - name: Run tests
       run: cargo test --verbose
