@@ -9,7 +9,7 @@ import { enabledisablePlugin, getPluginDict, setPluginOrder } from '../API/getse
 import { getPluginViewStorage, setPluginViewStorage } from '../scripts/getsetLocalStorage';
 
 
-const Plugins = () => {
+const Plugins = => {
 
     // sets sequential or overview
     const [view, setView] = useState(getPluginViewStorage());
