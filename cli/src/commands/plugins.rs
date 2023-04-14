@@ -123,3 +123,19 @@ pub fn set_config(plugin: &str, key: &str, value: &str, config: &CliOptions) -> 
 
     Ok(())
 }
+
+pub fn uninstall(plugin: &str, config: &CliOptions) -> Result<()> {
+
+    let uuid = uuid_from_name(plugin, config)
+        .with_context(|| format!("Couldn't get UUID for `{plugin}`"))?
+        .simple();
+
+    let resp = make_request(Method::POST, &format!("/api/plugins/{uuid}/uninstall"), config)
+        .context("Unable to send request")?;
+
+    if resp.status() != StatusCode::OK {
+        anyhow::bail!("Got unexpected error code from daemon: {} ({})", resp.status(), resp.body());
+    };
+
+    Ok(())
+}
