@@ -25,6 +25,6 @@ jobs:
     - name: Makefile
       run: make plugins test-plugins
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --deny-warnings
     - name: Run tests
       run: cargo test --verbose
