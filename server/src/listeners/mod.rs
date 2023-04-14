@@ -4,6 +4,7 @@ mod dns;
 
 pub use api::ApiListener;
 pub use dns::DnsListener;
+use crate::config::ServerConfig;
 use crate::plugins::manager::PluginManager;
 
 use tokio::sync::RwLock;
@@ -13,12 +14,12 @@ use std::sync::Arc;
 use anyhow::Result;
 
 /// Start API and DNS servers on the provided listeners
-pub async fn listen(apiaddrs: Vec<api::ApiListener>, dnsaddrs: Vec<dns::DnsListener>, pm_arc: Arc<RwLock<PluginManager>>) {
+pub async fn listen(apiaddrs: Vec<api::ApiListener>, dnsaddrs: Vec<dns::DnsListener>, pm_arc: Arc<RwLock<PluginManager>>, cfg: &ServerConfig) {
 
     let (shutdown, _) = broadcast::channel(1);
 
     if let Err(e) = tokio::try_join!(
-        api::listen_api(apiaddrs, shutdown.clone(), pm_arc.clone()),
+        api::listen_api(apiaddrs, shutdown.clone(), pm_arc.clone(), cfg),
         dns::listen_dns(dnsaddrs, shutdown.clone(), pm_arc.clone()),
         wait_for_shutdown(shutdown)
     ) {
