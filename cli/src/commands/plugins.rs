@@ -15,19 +15,28 @@ pub fn list_plugins(config: &CliOptions) -> Result<()> {
         return Ok(());
     }
 
+    if config.verbose() == 0 {
+        for (_, plugin) in metadata.iter() {
+            println!("{}{}", plugin.short_name(), if !plugin.enabled() {" [disabled]"} else {""})
+        }
+
+        return Ok(())
+    }
+
     println!("Plugins:");
     println!("=========================");
     for (id, plugin) in metadata.iter() {
         println!();
+        println!("`{}`", plugin.short_name());
         println!("Name: {}", plugin.friendly_name());
         println!("UUID: {}", id);
         if !plugin.enabled() {
             println!("Disabled");
-        } else if config.verbose() > 0 {
+        } else if config.verbose() > 1 {
             println!("Enabled");
         }
 
-        if config.verbose() > 0 {
+        if config.verbose() > 1 {
             println!();
             println!("Home directory on server: {}", plugin.home().display());
             print!("Modules: ");
@@ -65,7 +74,7 @@ pub fn set_enabled(name: &str, enabled: bool, config: &CliOptions) -> Result<()>
 
     let uuid = uuid_from_name(name, config).with_context(|| format!("Couldn't get UUID for `{name}`"))?;
 
-    let resp = make_request(Method::POST, &format!("/api/plugins/enable?uuid={}&enable={enabled}", uuid.as_simple()), config)
+    let resp = make_request(Method::POST, &format!("/api/plugins/{}/enable?enable={enabled}", uuid.as_simple()), config)
         .context("Unable to send request")?;
 
     if resp.status() != StatusCode::OK {
@@ -74,4 +83,35 @@ pub fn set_enabled(name: &str, enabled: bool, config: &CliOptions) -> Result<()>
 
     Ok(())
 
+}
+
+pub fn get_config(plugin: &str, keys: &[String], config: &CliOptions) -> Result<()> {
+
+    let uuid = uuid_from_name(plugin, config)
+        .with_context(|| format!("Couldn't get UUID for `{plugin}`"))?;
+
+    let resp = make_request(Method::GET, &format!("/api/plugins/{}/config?{}", uuid.as_simple(), keys.join("&")), config)
+        .context("Unable to send request")?;
+
+    if resp.status() != StatusCode::OK {
+        anyhow::bail!("Got error code from daemon: {} ({})", resp.status(), resp.body());
+    };
+
+    Ok(())
+}
+
+pub fn set_config(plugin: &str, key: &str, value: &str, config: &CliOptions) -> Result<()> {
+
+    let uuid = uuid_from_name(plugin, config)
+        .with_context(|| format!("Couldn't get UUID for `{plugin}`"))?
+        .simple();
+
+    let resp = make_request(Method::POST, &format!("/api/plugins/{uuid}/config?{key}={value}"), config)
+        .context("Unable to send request")?;
+
+    if resp.status() != StatusCode::OK {
+        anyhow::bail!("Got unexpected error code from daemon: {} ({})", resp.status(), resp.body());
+    };
+
+    Ok(())
 }

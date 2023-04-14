@@ -19,6 +19,8 @@ fn main() -> anyhow::Result<()> {
             PluginCommand::List => commands::plugins::list_plugins(&config.global_args()),
             PluginCommand::Enable { name } => commands::plugins::set_enabled(name, true, config.global_args()),
             PluginCommand::Disable { name } => commands::plugins::set_enabled(name, false, config.global_args()),
+            PluginCommand::GetConfig { name, keys } => commands::plugins::get_config(name, keys, config.global_args()),
+            PluginCommand::SetConfig { name, key, value } => commands::plugins::set_config(name, key, value, config.global_args()),
             _ => Err(anyhow::anyhow!("Not implemented"))
         },
         _ => Err(anyhow::anyhow!("Not implemented"))
