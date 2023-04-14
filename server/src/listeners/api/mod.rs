@@ -8,7 +8,6 @@ use tokio::sync::{broadcast, RwLock};
 use tokio_stream::wrappers::{UnixListenerStream, TcpListenerStream};
 use futures::{future::join_all, FutureExt};
 use std::fmt::Display;
-use std::path::Path;
 use std::sync::Arc;
 use anyhow::Result;
 
