@@ -4,7 +4,7 @@ use std::sync::Arc;
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use warp::reply::json;
+use warp::reply::{json, Json};
 use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
 
@@ -48,6 +48,11 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             log::trace!("Plugin enabled status change requested");
             set_plugin_stat(pm, uuid, eq)
             })
+        )
+        .or(warp::path!("plugins" / Uuid / "settingspage")
+        .then(move |uuid: Uuid| {
+            fetch_settingspage(uuid)
+        })
         )
         .or(warp::path!("server" / "restart")
         .then(|| {
@@ -115,5 +120,13 @@ pub async fn server_shutdown() -> impl Reply {
 pub async fn server_restart() -> impl Reply {
 
     ApiResponse::new(200, format!("You tried to restart the server 👍"))
+
+}
+
+pub async fn fetch_settingspage(uuid: Uuid) -> impl Reply {
+
+    let json = json("test");
+
+    ApiResponse::new(200, json)
 
 }
