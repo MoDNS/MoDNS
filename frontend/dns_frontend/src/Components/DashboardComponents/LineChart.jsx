@@ -7,7 +7,7 @@ const LineChart = ({ data }) => {
   return (
     <ResponsiveLine
       data={data}
-      margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
+      margin={{ top: 50, right: 110, bottom: 70, left: 60 }}
       xScale={{ type: "point" }}
       yScale={{
         type: "linear",
@@ -22,12 +22,12 @@ const LineChart = ({ data }) => {
       axisBottom={{
         orient: "bottom",
         tickSize: 5,
-        tickPadding: 5,
-        tickRotation: 0,
+        tickPadding: 6,
+        tickRotation: 45,
         legend: "transportation",
-        legendOffset: 36,
+        legendOffset: 60,
         legendPosition: "middle",
-        fill: "white",
+        fill: theme.palette.text.primary,
         fontSize: "12pt",
       }}
       axisLeft={{
@@ -36,7 +36,7 @@ const LineChart = ({ data }) => {
         tickPadding: 5,
         tickRotation: 0,
         legend: "count",
-        legendOffset: -40,
+        legendOffset: -50,
         legendPosition: "middle",
       }}
       pointSize={10}

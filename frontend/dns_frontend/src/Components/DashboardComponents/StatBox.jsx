@@ -1,18 +1,18 @@
 import { Box, Typography } from "@mui/material";
 import ProgressCircle from "./ProgressCircle";
 
-const StatBox = ({ title, subtitle, icon, progress, increase }) => {
+const StatBox = ({ title, subtitle, icon, progress, increase, progressCircle }) => {
   return (
-    <Box width="100%" m="0 30px">
+    <Box width="100%" m="20px 20px">
       <Box display="flex" justifyContent="space-between">
         <Box>
           {icon}
           <Typography variant="h4" fontWeight="bold" sx={{ color: "white" }}>
             {title}
           </Typography>
-          <Box>
+          { progressCircle && <Box>
             <ProgressCircle progress={progress} />
-          </Box>
+          </Box>}
           <Box display="flex" justifyContent="space-between">
             <Typography variant="h5" fontStyle="Bold" sx={{ color: "white" }}>
               {subtitle}

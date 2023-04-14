@@ -6,6 +6,18 @@ export const mockDataFruits = [
     color: "hsl(104, 70%, 50%)",
   },
   {
+    id: "0908",
+    label: "Banana",
+    value: 215,
+    color: "hsl(104, 70%, 50%)",
+  },
+  {
+    id: "966",
+    label: "Banana",
+    value: 299,
+    color: "hsl(104, 70%, 50%)",
+  },
+  {
     id: "Carrot",
     label: "Carrot",
     value: 450,
