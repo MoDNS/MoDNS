@@ -1,7 +1,11 @@
 
+use std::collections::HashMap;
+
 use anyhow::{Context, Result};
-use hyper::{Body, Request, Response, Client, body::HttpBody};
+use hyper::{Body, Request, Response, Client, body::HttpBody, Method, StatusCode};
 use hyperlocal::UnixClientExt;
+use modnsd::plugins::metadata::PluginMetadata;
+use uuid::Uuid;
 
 use crate::CliOptions;
 
@@ -60,4 +64,39 @@ fn send_request(req: Request<Body>, unix: bool) -> Result<Response<String>> {
     let full_body = String::from_utf8(buf).context("Response was not UTF-8 encoded")?;
 
     Ok(Response::from_parts(parts, full_body))
+}
+
+pub fn get_plugin_list(config: &CliOptions) -> Result<HashMap<Uuid, PluginMetadata>> {
+
+    let resp = make_request(Method::GET, "/api/plugins", config)
+        .context("Unable to request plugin metadata")?;
+
+    if resp.status() != StatusCode::OK {
+            anyhow::bail!("Got error code from daemon: {} {}", resp.status(), resp.body());
+    }
+
+    serde_json::from_str(resp.body()).context("Unable to parse response")
+
+} 
+
+pub fn uuid_from_name(name: &str, config: &CliOptions) -> Option<Uuid> {
+    let plugins = match get_plugin_list(config) {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("Couldn't get plugin list");
+            if config.verbose() > 0 {
+                eprintln!("Error: {e}");
+            }
+            return None
+        }
+    };
+
+    plugins.into_iter().find_map(|(uuid, pm)| {
+        if pm.short_name() == name {
+            Some(uuid)
+        } else {
+            None
+        }
+    })
+
 }

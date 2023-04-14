@@ -1,45 +1,16 @@
 
-use std::collections::HashMap;
-
 use hyper::{Method, StatusCode};
 
-use modnsd::plugins::metadata::PluginMetadata;
 use uuid::Uuid;
 
 use crate::CliOptions;
-use crate::util::make_request;
+use crate::util::{make_request, get_plugin_list};
 
 pub fn list_plugins(config: &CliOptions) {
 
-    let resp = make_request(Method::GET, "/api/plugins", config);
-
-    let body = match resp {
-        Ok(r) if r.status() == StatusCode::OK => {
-            r.body().to_owned()
-        },
-        Ok(r) => {
-            eprintln!("Got error code from daemon: {}", r.status());
-            if !r.body().is_empty() {
-                eprintln!("{}", r.body());
-            }
-            return
-        },
-        Err(e) => {
-            if config.verbose() > 0 {
-                eprintln!("Unable to send request: {e:?}");
-            } else {
-                eprintln!("Unable to send request: {e}");
-            }
-            return
-        },
-    };
-
-    let metadata: HashMap<Uuid, PluginMetadata> = match serde_json::from_str(&body) {
-        Ok(m) => m,
-        Err(e) => {
-            eprintln!("Unable to parse response: {e}");
-            return
-        },
+    let Ok(metadata) = get_plugin_list(config) else {
+        eprintln!("Failed to get plugin metadata from server");
+        return
     };
 
     if config.verbose() > 2 {
