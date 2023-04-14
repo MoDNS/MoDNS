@@ -1,21 +1,18 @@
 
 use hyper::{Method, StatusCode};
 
-use uuid::Uuid;
+use anyhow::{Result, Context};
 
 use crate::CliOptions;
-use crate::util::{make_request, get_plugin_list};
+use crate::util::{make_request, get_plugin_list, uuid_from_name};
 
-pub fn list_plugins(config: &CliOptions) {
+pub fn list_plugins(config: &CliOptions) -> Result<()> {
 
-    let Ok(metadata) = get_plugin_list(config) else {
-        eprintln!("Failed to get plugin metadata from server");
-        return
-    };
+    let metadata = get_plugin_list(config).context("Failed to get plugin metadata")?;
 
     if config.verbose() > 2 {
         println!("{:#?}", metadata.iter());
-        return
+        return Ok(());
     }
 
     println!("Plugins:");
@@ -59,31 +56,22 @@ pub fn list_plugins(config: &CliOptions) {
         println!("{}", plugin.description().replace(r"\n", "\n"));
         println!();
         println!("=========================");
-    }
+    };
+
+    Ok(())
 }
 
-pub fn set_enabled(uuid: &Uuid, enabled: bool, config: &CliOptions) {
-    let resp = make_request(Method::POST, &format!("/api/plugins/enable?uuid={}&enable={enabled}", uuid.as_simple()), config);
+pub fn set_enabled(name: &str, enabled: bool, config: &CliOptions) -> Result<()> {
 
-    match resp {
-        Ok(r) if r.status() == StatusCode::OK => {
-            return
-        },
-        Ok(r) => {
-            eprintln!("Got error code from daemon: {}", r.status());
-            if !r.body().is_empty() {
-                eprintln!("{}", r.body());
-            }
-            return
-        },
-        Err(e) => {
-            if config.verbose() > 0{
-                eprintln!("Unable to send request: {e:?}");
-            } else {
-                eprintln!("Unable to send request: {e}")
-            }
-            return
-        },
-    };
+    let uuid = uuid_from_name(name, config).with_context(|| format!("Couldn't get UUID for `{name}`"))?;
+
+    let resp = make_request(Method::POST, &format!("/api/plugins/enable?uuid={}&enable={enabled}", uuid.as_simple()), config)
+        .context("Unable to send request")?;
+
+    if resp.status() != StatusCode::OK {
+        anyhow::bail!("Got error code from daemon: {} ({})", resp.status(), resp.body())
+    }
+
+    Ok(())
 
 }

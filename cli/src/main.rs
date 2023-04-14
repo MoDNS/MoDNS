@@ -6,7 +6,7 @@ use clap::{Parser, Subcommand, Args};
 mod util;
 mod commands;
 
-fn main() {
+fn main() -> anyhow::Result<()> {
 
     let config = CLI::parse();
 
@@ -17,12 +17,12 @@ fn main() {
     match config.command() {
         CLICommand::Plugin { command } => match command {
             PluginCommand::List => commands::plugins::list_plugins(&config.global_args()),
-            PluginCommand::Enable { uuid } => commands::plugins::set_enabled(uuid, true, config.global_args()),
-            PluginCommand::Disable { uuid } => commands::plugins::set_enabled(uuid, false, config.global_args()),
-            _ => eprintln!("Not implemented")
+            PluginCommand::Enable { name } => commands::plugins::set_enabled(name, true, config.global_args()),
+            PluginCommand::Disable { name } => commands::plugins::set_enabled(name, false, config.global_args()),
+            _ => Err(anyhow::anyhow!("Not implemented"))
         },
-        _ => eprintln!("Not implemented")
-    };
+        _ => Err(anyhow::anyhow!("Not implemented"))
+    }
 
 }
 
@@ -128,22 +128,22 @@ pub enum PluginCommand {
         path: PathBuf
     },
     Uninstall {
-        uuid: uuid::Uuid
+        name: String
     },
     Enable {
-        uuid: uuid::Uuid
+        name: String
     },
     Disable {
-        uuid: uuid::Uuid
+        name: String
     },
     GetConfig {
-        uuid: uuid::Uuid,
+        name: String,
 
         #[arg(action=clap::ArgAction::Append)]
         keys: Vec<String>
     },
     SetConfig {
-        uuid: uuid::Uuid,
+        name: String,
 
         key: String,
         value: String
