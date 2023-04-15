@@ -1,4 +1,5 @@
 
+use std::collections::HashMap;
 use std::fmt::Write;
 use std::io::Read;
 use std::path::Path;
@@ -6,6 +7,8 @@ use std::path::Path;
 use hyper::{Method, StatusCode, Body};
 
 use anyhow::{Result, Context};
+use modnsd::config::MutableConfigValue;
+use serde_json::Value;
 use tokio_util::codec::{FramedRead, BytesCodec};
 
 use crate::CliOptions;
@@ -104,9 +107,26 @@ pub fn get_config(plugin: &str, keys: &[String], config: &CliOptions) -> Result<
     let resp = make_request(Method::GET, &format!("/api/plugins/{}/config?{}", uuid.as_simple(), keys.join("&")), None, None, config)
         .context("Unable to send request")?;
 
+    if resp.status() == StatusCode::NOT_FOUND {
+        anyhow::bail!(resp.body().to_owned())
+    }
+
     if resp.status() != StatusCode::OK {
         anyhow::bail!("Got error code from daemon: {} ({})", resp.status(), resp.body());
     };
+
+    if config.verbose() > 2 {
+        eprintln!("Got response from server: {}", resp.body())
+    }
+
+    let values: HashMap<String, MutableConfigValue<Value>> = serde_json::from_str(resp.body())
+        .context("Couldn't decode server response")?;
+
+    if config.verbose() == 0 {
+        for (key, value) in values {
+            println!("{} = {}", key, value.value())
+        }
+    }
 
     Ok(())
 }
