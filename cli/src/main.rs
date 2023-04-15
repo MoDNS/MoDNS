@@ -25,11 +25,11 @@ fn main() -> anyhow::Result<()> {
             PluginCommand::Install { path } => commands::plugins::install(path, config.global_args()),
         },
         CLICommand::Config { command } => match command {
-            ConfigCommand::Get { key } => Err(anyhow::anyhow!("Not implemented")),
-            ConfigCommand::Set { key, value } => Err(anyhow::anyhow!("Not implemented")),
+            ConfigCommand::Get { keys } => commands::get_config(keys, config.global_args()),
+            ConfigCommand::Set { key, value } => commands::set_config(key, value, config.global_args()),
         }
-        CLICommand::Restart => Err(anyhow::anyhow!("Not implemented")),
-        CLICommand::Shutdown => Err(anyhow::anyhow!("Not implemented")),
+        CLICommand::Restart => commands::restart(config.global_args()),
+        CLICommand::Shutdown => commands::shutdown(config.global_args()),
     }
 
 }
@@ -164,7 +164,7 @@ pub enum PluginCommand {
 #[derive(Debug, Subcommand)]
 pub enum ConfigCommand {
     Get {
-        key: Vec<String>
+        keys: Vec<String>
     },
     
     Set {
