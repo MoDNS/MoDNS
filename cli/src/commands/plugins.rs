@@ -83,7 +83,7 @@ pub fn set_enabled(name: &str, enabled: bool, config: &CliOptions) -> Result<()>
 
     let uuid = uuid_from_name(name, config).with_context(|| format!("Couldn't get UUID for `{name}`"))?;
 
-    let resp = make_request(Method::POST, &format!("/api/plugins/{}/enable?enable={enabled}", uuid.as_simple()), config)
+    let resp = make_request(Method::POST, &format!("/api/plugins/{}/enable?enable={enabled}", uuid.as_simple()), None, config)
         .context("Unable to send request")?;
 
     if resp.status() != StatusCode::OK {
@@ -99,7 +99,7 @@ pub fn get_config(plugin: &str, keys: &[String], config: &CliOptions) -> Result<
     let uuid = uuid_from_name(plugin, config)
         .with_context(|| format!("Couldn't get UUID for `{plugin}`"))?;
 
-    let resp = make_request(Method::GET, &format!("/api/plugins/{}/config?{}", uuid.as_simple(), keys.join("&")), config)
+    let resp = make_request(Method::GET, &format!("/api/plugins/{}/config?{}", uuid.as_simple(), keys.join("&")), None, config)
         .context("Unable to send request")?;
 
     if resp.status() != StatusCode::OK {
@@ -115,7 +115,7 @@ pub fn set_config(plugin: &str, key: &str, value: &str, config: &CliOptions) -> 
         .with_context(|| format!("Couldn't get UUID for `{plugin}`"))?
         .simple();
 
-    let resp = make_request(Method::POST, &format!("/api/plugins/{uuid}/config?{key}={value}"), config)
+    let resp = make_request(Method::POST, &format!("/api/plugins/{uuid}/config?{key}={value}"), None, config)
         .context("Unable to send request")?;
 
     if resp.status() != StatusCode::OK {
@@ -131,7 +131,7 @@ pub fn uninstall(plugin: &str, config: &CliOptions) -> Result<()> {
         .with_context(|| format!("Couldn't get UUID for `{plugin}`"))?
         .simple();
 
-    let resp = make_request(Method::POST, &format!("/api/plugins/{uuid}/uninstall"), config)
+    let resp = make_request(Method::POST, &format!("/api/plugins/{uuid}/uninstall"), None, config)
         .context("Unable to send request")?;
 
     if resp.status() != StatusCode::OK {

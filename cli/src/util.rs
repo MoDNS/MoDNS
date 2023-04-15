@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::CliOptions;
 
-pub fn make_request(method: hyper::Method, path: &str, config: &CliOptions) -> Result<Response<String>> {
+pub fn make_request(method: hyper::Method, path: &str, body: Option<Body>, config: &CliOptions) -> Result<Response<String>> {
 
     let uri = if let Some(host) = config.remote_host() {
         hyper::Uri::builder()
@@ -68,7 +68,7 @@ fn send_request(req: Request<Body>, unix: bool) -> Result<Response<String>> {
 
 pub fn get_plugin_list(config: &CliOptions, filter: &str) -> Result<HashMap<Uuid, PluginMetadata>> {
 
-    let resp = make_request(Method::GET, &format!("/api/plugins?{filter}"), config)
+    let resp = make_request(Method::GET, &format!("/api/plugins?{filter}"), None, config)
         .context("Unable to request plugin metadata")?;
 
     if resp.status() != StatusCode::OK {
