@@ -1,10 +1,12 @@
 
 use std::fmt::Write;
+use std::io::Read;
 use std::path::Path;
 
-use hyper::{Method, StatusCode};
+use hyper::{Method, StatusCode, Body};
 
 use anyhow::{Result, Context};
+use tokio_util::codec::{FramedRead, BytesCodec};
 
 use crate::CliOptions;
 use crate::util::{make_request, get_plugin_list, uuid_from_name};
@@ -83,7 +85,7 @@ pub fn set_enabled(name: &str, enabled: bool, config: &CliOptions) -> Result<()>
 
     let uuid = uuid_from_name(name, config).with_context(|| format!("Couldn't get UUID for `{name}`"))?;
 
-    let resp = make_request(Method::POST, &format!("/api/plugins/{}/enable?enable={enabled}", uuid.as_simple()), None, config)
+    let resp = make_request(Method::POST, &format!("/api/plugins/{}/enable?enable={enabled}", uuid.as_simple()), None, None, config)
         .context("Unable to send request")?;
 
     if resp.status() != StatusCode::OK {
@@ -99,7 +101,7 @@ pub fn get_config(plugin: &str, keys: &[String], config: &CliOptions) -> Result<
     let uuid = uuid_from_name(plugin, config)
         .with_context(|| format!("Couldn't get UUID for `{plugin}`"))?;
 
-    let resp = make_request(Method::GET, &format!("/api/plugins/{}/config?{}", uuid.as_simple(), keys.join("&")), None, config)
+    let resp = make_request(Method::GET, &format!("/api/plugins/{}/config?{}", uuid.as_simple(), keys.join("&")), None, None, config)
         .context("Unable to send request")?;
 
     if resp.status() != StatusCode::OK {
@@ -115,7 +117,7 @@ pub fn set_config(plugin: &str, key: &str, value: &str, config: &CliOptions) -> 
         .with_context(|| format!("Couldn't get UUID for `{plugin}`"))?
         .simple();
 
-    let resp = make_request(Method::POST, &format!("/api/plugins/{uuid}/config?{key}={value}"), None, config)
+    let resp = make_request(Method::POST, &format!("/api/plugins/{uuid}/config?{key}={value}"), None, None, config)
         .context("Unable to send request")?;
 
     if resp.status() != StatusCode::OK {
@@ -131,7 +133,7 @@ pub fn uninstall(plugin: &str, config: &CliOptions) -> Result<()> {
         .with_context(|| format!("Couldn't get UUID for `{plugin}`"))?
         .simple();
 
-    let resp = make_request(Method::POST, &format!("/api/plugins/{uuid}/uninstall"), None, config)
+    let resp = make_request(Method::POST, &format!("/api/plugins/{uuid}/uninstall"), None, None, config)
         .context("Unable to send request")?;
 
     if resp.status() != StatusCode::OK {
@@ -141,7 +143,51 @@ pub fn uninstall(plugin: &str, config: &CliOptions) -> Result<()> {
     Ok(())
 }
 
-pub fn install(local_path: &Path, config: &CliOptions) -> Result<()> {
+pub fn install(local_path: impl AsRef<Path>, config: &CliOptions) -> Result<()> {
+
+    let local_path = local_path.as_ref().canonicalize()
+        .context(format!("Couldn't find `{}`", local_path.as_ref().display()))?;
+
+    if !local_path.is_file() {
+        anyhow::bail!("`{}` is not a file", local_path.display())
+    }
+
+    let mut file = std::fs::File::open(local_path)
+        .context("Couldn't open archive")?;
+
+    let mut magic = [0u8; 262];
+    file.read_exact(&mut magic)
+        .context("Couldn't read from archive")?;
+
+    let file_type = infer::get(&magic)
+        .context("Couldn't infer filetype of archive")?;
+
+    if !(infer::archive::is_tar(&magic) || infer::archive::is_zip(&magic)) {
+        anyhow::bail!("file is not a zip or tar.gz archive (is {})", file_type.mime_type())
+    }
+
+    let file_len = file.metadata()
+        .context("Couldn't get archive metadata")?
+        .len()
+        .to_string();
+
+    let req_headers = vec![
+        ("Content-Type", file_type.mime_type()),
+        ("Content-Length", &file_len)
+    ];
+
+    let file = tokio::fs::File::from_std(file);
+
+    let stream = FramedRead::new(file, BytesCodec::new());
+
+    let req_body = Body::wrap_stream(stream);
+
+    let resp = make_request(Method::PUT, "/api/plugins/install", Some(req_body), Some(req_headers), config)
+        .context("Failed to send request to server")?;
+
+    if resp.status() != StatusCode::CREATED {
+        anyhow::bail!("Got unexpected error code from daemon: {} ({})", resp.status(), resp.body());
+    };
 
     Ok(())
 }
