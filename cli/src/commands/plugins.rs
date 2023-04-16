@@ -7,7 +7,6 @@ use std::path::Path;
 use hyper::{Method, StatusCode, Body};
 
 use anyhow::{Result, Context};
-use modnsd::config::MutableConfigValue;
 use serde_json::Value;
 use tokio_util::codec::{FramedRead, BytesCodec};
 
@@ -119,11 +118,11 @@ pub fn get_config(plugin: &str, keys: &[String], config: &CliOptions) -> Result<
         eprintln!("Got response from server: {}", resp.body())
     }
 
-    let values: HashMap<String, MutableConfigValue<Value>> = serde_json::from_str(resp.body())
+    let values: HashMap<String, Value> = serde_json::from_str(resp.body())
         .context("Couldn't decode server response")?;
 
     for (key, value) in values {
-        println!("{} = {}{}", key, value.value(), if value.is_overridden() {"*"} else {""})
+        println!("{} = {}", key, value)
     }
 
     Ok(())
