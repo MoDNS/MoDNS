@@ -122,10 +122,8 @@ pub fn get_config(plugin: &str, keys: &[String], config: &CliOptions) -> Result<
     let values: HashMap<String, MutableConfigValue<Value>> = serde_json::from_str(resp.body())
         .context("Couldn't decode server response")?;
 
-    if config.verbose() == 0 {
-        for (key, value) in values {
-            println!("{} = {}", key, value.value())
-        }
+    for (key, value) in values {
+        println!("{} = {}{}", key, value.value(), if value.is_overridden() {"*"} else {""})
     }
 
     Ok(())
