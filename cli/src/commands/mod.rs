@@ -63,7 +63,7 @@ pub fn restart(config: &CliOptions) -> Result<()> {
 
 pub fn shutdown(config: &CliOptions) -> Result<()> {
 
-    let resp = make_request(Method::POST, "/api/server/restart", None, None, config)
+    let resp = make_request(Method::POST, "/api/server/shutdown", None, None, config)
         .context("Unable to send request")?;
 
     if resp.status() != StatusCode::OK {
