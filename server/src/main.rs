@@ -1,24 +1,24 @@
 use std::sync::Arc;
 
 use anyhow::Context;
+
+use modnsd::config;
 use modnsd::plugins::manager::PluginManager;
 use modnsd::listeners::{ApiListener, DnsListener, self};
 
 use tokio::{net::{TcpListener, UnixListener, UdpSocket}, sync::RwLock};
 
-mod config;
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
 
-    let config = config::init()?;
+    let config = config::ServerConfig::parse()?;
 
     env_logger::Builder::from_env(
         env_logger::Env::new()
         .filter("MODNS_LOG")
         .write_style("MODNS_LOG_STYLE")
     )
-    .parse_filters(config.log())
+    .parse_filters(&config.log())
     .init();
 
     log::trace!("Starting server with configuration: {:#?}", config);
@@ -29,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
         log::info!("Initializing plugins...");
         let mut pm = pm_arc.write().await;
 
-        pm.search(config.plugin_path())
+        pm.search(&config.plugin_path())
         .or_else(|e| {
 
             log::error!("Got an error during initial plugin search: {e}");
@@ -69,7 +69,7 @@ async fn main() -> anyhow::Result<()> {
         DnsListener::Udp(UdpSocket::bind(("0.0.0.0", 53)).await.context("Failed to bind DNS listener on port 5300/udp")?)
     ];
 
-    listeners::listen(apiaddrs, dnsaddrs, pm_arc).await;
+    listeners::listen(apiaddrs, dnsaddrs, pm_arc, &config).await;
 
     std::fs::remove_file(config.unix_socket())
     .with_context(|| format!("Failed to remove unix socket at {}", config.unix_socket().display()))?;
