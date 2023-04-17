@@ -304,7 +304,7 @@ export const getPluginLogo = (uuid) => {
 }
 
 export const getPluginCustomSettings = (uuid) => {
-    return null;
+    return [];
     // return customSettings;
 }
 

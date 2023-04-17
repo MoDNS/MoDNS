@@ -1,9 +1,9 @@
 import { Box, Typography } from "@mui/material";
 import ProgressCircle from "./ProgressCircle";
 
-const StatBox = ({ title, subtitle, icon, progress, increase, progressCircle }) => {
+const StatBox = ({ title, subtitle, icon, progress, increase, progressCircle, height }) => {
   return (
-    <Box width="100%" m="20px 20px">
+    <Box width="100%" p="20px 20px" height={height} >
       <Box display="flex" justifyContent="space-between">
         <Box>
           {icon}

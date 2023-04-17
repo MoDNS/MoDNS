@@ -1,8 +1,8 @@
 import { Box, Typography } from "@mui/material";
 
-const StatusBox = ({ title, status }) => {
+const StatusBox = ({ title, status, height }) => {
   return (
-    <Box width="100%" m="0 30px">
+    <Box width="100%" m="20px 20px" height={height} >
       <Box display="flex" justifyContent="space-between">
         <Box>
           <Typography variant="h4" fontWeight="bold" sx={{ color: "white" }}>

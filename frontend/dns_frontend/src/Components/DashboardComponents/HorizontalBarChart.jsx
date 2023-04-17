@@ -11,51 +11,14 @@ const HorizontalBarChart = ({ data }) => {
       data={data}
       keys={["hot dog", "burger", "sandwich", "kebab", "fries", "donut"]}
       indexBy="country"
-      margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
+      margin={{ top: 50, right: 140, bottom: 50, left: 65 }}
       padding={0.3}
       groupMode="grouped"
       layout="horizontal"
       valueScale={{ type: "linear" }}
       indexScale={{ type: "band", round: true }}
       colors={{ scheme: "nivo" }}
-      defs={[
-        {
-          id: "dots",
-          type: "patternDots",
-          background: "inherit",
-          color: "#38bcb2",
-          size: 4,
-          padding: 1,
-          stagger: true,
-        },
-        {
-          id: "lines",
-          type: "patternLines",
-          background: "inherit",
-          color: "#eed312",
-          rotation: -45,
-          lineWidth: 6,
-          spacing: 10,
-        },
-      ]}
-      fill={[
-        {
-          match: {
-            id: "fries",
-          },
-          id: "dots",
-        },
-        {
-          match: {
-            id: "sandwich",
-          },
-          id: "lines",
-        },
-      ]}
-      borderColor={{
-        from: "color",
-        modifiers: [["darker", 1.6]],
-      }}
+      isInteractive={false}
       axisTop={null}
       axisRight={null}
       axisBottom={{
@@ -76,25 +39,7 @@ const HorizontalBarChart = ({ data }) => {
       }}
       labelSkipWidth={12}
       labelSkipHeight={12}
-      labelTextColor={{
-        from: "color",
-        modifiers: [["darker", 1.6]],
-      }}
-      // tooltip={({ point }) => {
-      //   return (
-      //     <div
-      //       style={{
-      //         background: theme.palette.background.default,
-      //         padding: ".13rem .25rem",
-      //         border: theme.palette.background,
-      //         text: theme.palette.primary.text,
-      //       }}
-      //     >
-      //       <div>Time: {point.x}</div>
-      //       <div>Value: {point.y}</div>
-      //     </div>
-      //   );
-      // }}
+      labelTextColor={theme.palette.text.primary}
       legends={[
         {
           dataFrom: "keys",
@@ -109,50 +54,38 @@ const HorizontalBarChart = ({ data }) => {
           itemDirection: "left-to-right",
           itemOpacity: 0.85,
           symbolSize: 20,
-          effects: [
-            {
-              on: "hover",
-              style: {
-                itemOpacity: 1,
-              },
-            },
-          ],
         },
       ]}
       role="application"
-      ariaLabel="Nivo bar chart demo"
-      barAriaLabel={function (e) {
-        return e.id + ": " + e.formattedValue + " in country: " + e.indexValue;
-      }}
       // This is for themeing the stuff
       theme={{
         axis: {
           ticks: {
             line: {
-              stroke: "black",
+              stroke: theme.palette.primary.dark,
             },
             text: {
-              fill: "white",
+              fill: theme.palette.text.primary,
               fontSize: "8pt",
             },
           },
           legend: {
             text: {
-              fill: "white",
+              fill: theme.palette.text.primary,
               fontSize: "8pt",
             },
           },
         },
         grid: {
           line: {
-            stroke: "black",
+            stroke: theme.palette.primary.dark,
             strokeWidth: 2,
             strokeDasharray: "4 4",
           },
         },
         legends: {
           text: {
-            fill: "white",
+            fill: theme.palette.text.primary,
             fontSize: "12pt",
           },
         },
