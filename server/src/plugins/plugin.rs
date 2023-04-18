@@ -22,6 +22,8 @@ const RESOLVER_FN_NAME:     &[u8] = b"impl_resolver_sync_resolve_req";
 const VALIDATOR_FN_NAME:    &[u8] = b"impl_validate_resp";
 const INSPECTOR_FN_NAME:    &[u8] = b"impl_inspect_resp";
 
+const PLUGIN_FILE_NAME: &str = const_format::formatcp!("plugin_{}.so", std::env::consts::ARCH);
+
 #[derive(Debug, Error)]
 pub enum PluginLoaderError {
     #[error("Unable to load library")]
@@ -288,7 +290,7 @@ impl DnsPlugin {
             None => return Err(PluginLoaderError::InvalidName),
         };
 
-        let lib = unsafe { Library::new(home_dir.join("plugin.so")) }?;
+        let lib = unsafe { Library::new(home_dir.join(PLUGIN_FILE_NAME)) }?;
 
         let log_name = home_dir.file_name()
             .unwrap_or(&OsString::from("unknown"))

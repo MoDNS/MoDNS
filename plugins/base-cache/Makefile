@@ -3,10 +3,15 @@ CFLAGS+= -Wall -Wno-pointer-sign $(SDK_HEADER_ARGS)
 LDFLAGS=$(SDK_LINK_ARGS) -I../common
 SRC=$(wildcard *.go)
 
-plugin.so: export CGO_CFLAGS=$(CFLAGS)
-plugin.so: export CGO_LDFLAGS=$(LDFLAGS)
-plugin.so: $(SRC)
+ARCH?=$(shell uname -m)
+PLUGINFILE=plugin_$(ARCH).so
+
+all: $(PLUGINFILE)
+
+$(PLUGINFILE): export CGO_CFLAGS=$(CFLAGS)
+$(PLUGINFILE): export CGO_LDFLAGS=$(LDFLAGS)
+$(PLUGINFILE): $(SRC)
 	go build -buildmode c-shared -o $@ modns/simple_cache
 
 clean:
-	$(RM) plugin.so
+	$(RM) $(PLUGINFILE)

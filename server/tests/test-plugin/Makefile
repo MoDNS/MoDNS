@@ -1,10 +1,14 @@
+
 CFLAGS+= -Wall -Wno-pointer-sign $(SDK_HEADER_ARGS)
 LDFLAGS=$(SDK_LINK_ARGS)
 
-all: plugin.so
+ARCH?=$(shell uname -m)
+PLUGINFILE=plugin_$(ARCH).so
 
-plugin.so: plugin.c
+all: $(PLUGINFILE)
+
+$(PLUGINFILE): plugin.c
 	$(CC) $(CFLAGS) -fPIC -shared $^ -o $@ $(LDFLAGS)
 
 clean:
-	$(RM) plugin.so
+	$(RM) $(PLUGINFILE)
