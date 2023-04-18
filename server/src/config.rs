@@ -652,13 +652,13 @@ impl ServerConfig {
     }
 }
 
-#[derive(Debug, Serialize)]
-pub struct MutableConfigValue<T: Debug + Serialize> {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MutableConfigValue<T: Debug> {
     overridden: bool,
     value: T,
 }
 
-impl<T: Debug + Serialize> MutableConfigValue<T> {
+impl<T: Debug> MutableConfigValue<T> {
     fn overridden(value: T) -> Self {
         Self {
             overridden: true,
@@ -671,6 +671,18 @@ impl<T: Debug + Serialize> MutableConfigValue<T> {
             overridden: false,
             value
         } 
+    }
+
+    pub fn is_overridden(&self) -> bool {
+        self.overridden
+    }
+
+    pub fn value(&self) -> &T {
+        &self.value
+    }
+
+    pub fn into_value(self) -> T {
+        self.value
     }
 }
 
