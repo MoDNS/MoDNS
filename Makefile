@@ -2,6 +2,8 @@
 # Include variable definitions for cross-compiling
 ifdef ARCH
 include cross-compile.Makefile
+else
+export ARCH=$(shell uname -m)
 endif
 
 PROFILE?=debug
@@ -36,9 +38,12 @@ plugins: sdk
 test-plugins: sdk
 	$(MAKE) -C server/tests/test-plugin/
 
+# We can't actually run tests when cross compiling
+ifeq ($(ARCH),$(shell uname -m))
 .PHONY: test
 test: plugins test-plugins
 	cargo test
+endif
 
 .PHONY: clean
 clean: cargo-clean plugin-clean
