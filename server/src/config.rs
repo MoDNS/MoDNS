@@ -2,7 +2,7 @@ use std::borrow::Borrow;
 use std::fmt::Debug;
 use std::fs;
 use std::hash::Hash;
-use std::net::{SocketAddr, IpAddr, Ipv4Addr};
+use std::net::{IpAddr, Ipv4Addr};
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
@@ -26,6 +26,8 @@ const DB_TYPE_ENV: &str = "MODNS_DB_TYPE";
 const SQLITE_PATH_ENV: &str = "MODNS_DB_SQLITE_PATH";
 const DB_ADDR_ENV: &str = "MODNS_DB_ADDR";
 const DB_PORT_ENV: &str = "MODNS_DB_PORT";
+const DB_USER_ENV: &str = "MODNS_DB_USER";
+const DB_PASSWORD_ENV: &str = "MODNS_DB_PASSWORD";
 const LOG_ENV: &str = "MODNS_LOG";
 const ADMIN_PW_ENV: &str = "MODNS_ADMIN_PW";
 const HEADLESS_ENV: &str = "MODNS_HEADLESS";
@@ -35,6 +37,8 @@ const DB_TYPE_KEY: &str = "db_type";
 const DB_PATH_KEY: &str = "db_path";
 const DB_ADDR_KEY: &str = "db_addr";
 const DB_PORT_KEY: &str = "db_port";
+const DB_USER_KEY: &str = "db_user";
+const DB_PASS_KEY: &str = "db_pass";
 const LOG_KEY: &str = "log_filter";
 const ADMIN_PW_KEY: &str = "admin_pw_hash";
 
@@ -44,6 +48,8 @@ const DEFAULT_DATA_DIR: &str = "/var/lib/modnsd";
 const DEFAULT_FRONTEND_DIR: &str = "/usr/share/modnsd/web";
 const DEFAULT_SQLITE_FILE: &str = "modns.sqlite";
 const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
+const DEFAULT_POSTGRES_USER: &str = "postgres";
+const DEFAULT_POSTGRES_PASS: &str = "postgres";
 const DEFAULT_LOG_FILTER: &str = "info";
 
 const CONFIG_LOCKFILE_NAME: &str = "config-lock.json";
@@ -120,6 +126,12 @@ pub struct ImmutableServerConfig {
     #[arg(long, env=DB_PORT_ENV)]
     db_port: Option<u16>,
 
+    #[arg(long, env=DB_USER_ENV)]
+    db_user: Option<String>,
+
+    #[arg(long, env=DB_PASSWORD_ENV)]
+    db_password: Option<String>,
+
     /// Log level to output. Can be `error` (most severe), `warn`, `info`, `debug`, or `trace` (least severe).
     ///
     /// You can also specify filters per module, like `modnsd::listeners=debug,info` which sets the filter to
@@ -152,6 +164,8 @@ impl ImmutableServerConfig {
         sqlite_db_path,
         db_addr,
         db_port,
+        db_user,
+        db_password,
         admin_password,
         headless
         } = self;
@@ -241,6 +255,8 @@ impl ImmutableServerConfig {
             sqlite_db_path,
             db_addr,
             db_port,
+            db_user,
+            db_password,
             log,
             admin_password,
             headless
@@ -360,6 +376,14 @@ impl MutableServerConfig {
         self.get_config_obj(DB_PORT_KEY)
     }
 
+    fn db_user(&self) -> Option<String> {
+        self.get_config_obj(DB_USER_KEY)
+    }
+
+    fn db_password(&self) -> Option<String> {
+        self.get_config_obj(DB_PASS_KEY)
+    }
+
     fn admin_pw_hash(&self) -> Option<String> {
         self.get_config_obj(ADMIN_PW_KEY)
     }
@@ -382,6 +406,14 @@ impl MutableServerConfig {
 
     pub fn set_db_port(&mut self, db_port: Option<u16>) -> Result<()> {
         self.set_config_obj(DB_PORT_KEY, db_port)
+    }
+
+    pub fn set_db_user(&mut self, user: &str) -> Result<()> {
+        self.set_config_obj(DB_USER_KEY, user)
+    }
+
+    pub fn set_db_password(&mut self, password: &str) -> Result<()> {
+        self.set_config_obj(DB_PASS_KEY, password)
     }
 
     pub fn set_log(&mut self, log: String) -> Result<()> {
@@ -427,6 +459,10 @@ pub struct ServerConfig {
 
     override_db_port: Option<u16>,
 
+    override_db_user: Option<String>,
+
+    override_db_pass: Option<String>,
+
     override_admin_pw_hash: Option<String>,
 
     headless: bool,
@@ -459,6 +495,8 @@ impl ServerConfig {
             override_db_path: im.sqlite_db_path,
             override_db_addr: im.db_addr,
             override_db_port: im.db_port,
+            override_db_user: im.db_user,
+            override_db_pass: im.db_password,
             override_admin_pw_hash: im.admin_password,
             headless: im.headless,
         }
@@ -539,6 +577,18 @@ impl ServerConfig {
             .or(self.settings.db_port())
     }
 
+    pub fn db_user(&self) -> String {
+        self.override_db_user.clone()
+            .or(self.settings.db_user())
+            .unwrap_or(DEFAULT_POSTGRES_USER.to_string())
+    }
+
+    pub fn db_password(&self) -> String {
+        self.override_db_pass.clone()
+            .or(self.settings.db_password())
+            .unwrap_or(DEFAULT_POSTGRES_PASS.to_string())
+    }
+
     pub fn db_info(&self) -> safe::DatabaseInfo {
         match self.db_type() {
             DatabaseBackend::Sqlite => safe::DatabaseInfo::Sqlite(
@@ -547,8 +597,8 @@ impl ServerConfig {
             DatabaseBackend::Postgres => safe::DatabaseInfo::Postgres{
                 host: self.db_addr().to_string(),
                 port: self.db_port().unwrap_or(DEFAULT_POSTGRES_PORT),
-                username: todo!(),
-                password: todo!(),
+                username: self.db_user(),
+                password: self.db_password(),
             },
         }
     }
@@ -582,6 +632,14 @@ impl ServerConfig {
 
     pub fn set_db_port(&mut self, db_port: Option<u16>) -> Result<()> {
         self.settings.set_db_port(db_port)
+    }
+
+    pub fn set_db_user(&mut self, user: &str) -> Result<()> {
+        self.settings.set_db_user(user)
+    }
+
+    pub fn set_db_password(&mut self, password: &str) -> Result<()> {
+        self.settings.set_db_password(password)
     }
 
     pub fn set_log(&mut self, log: String) -> Result<()> {
