@@ -1,6 +1,7 @@
 name: Rust & Make CI
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main]
     paths:
@@ -34,6 +35,10 @@ jobs:
     steps:
 
     - uses: actions/checkout@v3
+    - uses: actions/cache@v3
+      with:
+        key: ci-build-${{ matrix.architecture }}
+        path: target
 
     - name: Install coresponding Rust toolchain
       if: matrix.rust_toolchain != ''
@@ -42,11 +47,13 @@ jobs:
         target: ${{ matrix.rust_toolchain }}
 
     - name: Install gcc cross-compiler
-      if: matrix.gcc != ''
-      run: sudo apt install ${{ matrix.gcc }}
+      run: sudo apt-get install ${{ matrix.gcc }}
 
     - name: Build server
       run: make server ARCH=${{ matrix.architecture }}
+
+    - name: Build CLI
+      run: make cli ARCH=${{ matrix.architecture }}
 
     - name: Build plugins
       run: make plugins test-plugins ARCH=${ matrix.architecture }
