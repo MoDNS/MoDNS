@@ -1,17 +1,13 @@
 
 # Variables for cross-compiling
 ARCH?=$(shell uname -m)
+TOOLCHAIN?=gnu
 PROFILE?=debug
-CARGO_BUILD_TARGET=$(ARCH)-unknown-linux-gnu
-CC=$(ARCH)-linux-gnu-gcc
+CARGO_BUILD_TARGET?=$(ARCH)-unknown-linux-$(TOOLCHAIN)
+CC=$(ARCH)-linux-$(TOOLCHAIN)-gcc
+GOARCH?=$(ARCH)
 
-
-GOARCH_OVERRIDE_x86_64=amd64
-GOARCH_OVERRIDE_aarch64=arm64
-GOARCH=$(or $(GOARCH_OVERRIDE_$(ARCH)), $(ARCH))
-
-export ARCH TARGET CARGO_BUILD_TARGET CC GOARCH
-
+export ARCH TOOLCHAIN TARGET CARGO_BUILD_TARGET CC GOARCH
 export SDK_HEADER_ARGS=-I${CURDIR}/modns-sdk/headers  
 export SDK_LINK_ARGS=-u_init_modns_sdk -L${CURDIR}/target/${CARGO_BUILD_TARGET}/${PROFILE} -lmodns_sdk -ldl
 
@@ -22,7 +18,7 @@ server:
 	cargo build
 
 .PHONY: debug
-debug: export CFLAGS+= -DDEBUG
+debug: export CFLAGS+=-DDEBUG
 
 .PHONY: sdk
 sdk: $(wildcard $(CURDIR)/modns-sdk/src/*)
