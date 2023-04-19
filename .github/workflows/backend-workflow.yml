@@ -56,9 +56,9 @@ jobs:
       run: make cli ARCH=${{ matrix.architecture }}
 
     - name: Build plugins
-      run: make plugins test-plugins ARCH=${ matrix.architecture }
+      run: make plugins test-plugins ARCH=${{ matrix.architecture }}
 
     - name: Run tests
-      if: matrix.gcc == 'x86_64'
-      run: cargo test --verbose --
+      if: matrix.architecture == 'x86_64'
+      run: make test ARCH=${{ matrix.architecture }}
 
