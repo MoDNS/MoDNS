@@ -37,7 +37,7 @@ test-plugins: sdk
 	$(MAKE) -C server/tests/test-plugin/
 
 .PHONY: test
-test: sdk plugins test-plugins
+test: plugins test-plugins
 	cargo test
 
 .PHONY: clean

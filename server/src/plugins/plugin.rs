@@ -1,5 +1,5 @@
 
-use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn, SdkInitFn, InterceptorFn, ValidatorFn, InspectorFn, ResponseSource};
+use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn, SdkInitFn, InterceptorFn, ValidatorFn, InspectorFn, ResponseSource, PLUGIN_FILE_NAME};
 use modns_sdk::types::conversion::FfiVector;
 use modns_sdk::{types::ffi, PluginState};
 
@@ -21,8 +21,6 @@ const INTERCEPTOR_FN_NAME:  &[u8] = b"impl_intercept_req";
 const RESOLVER_FN_NAME:     &[u8] = b"impl_resolver_sync_resolve_req";
 const VALIDATOR_FN_NAME:    &[u8] = b"impl_validate_resp";
 const INSPECTOR_FN_NAME:    &[u8] = b"impl_inspect_resp";
-
-const PLUGIN_FILE_NAME: &str = const_format::formatcp!("plugin_{}.so", std::env::consts::ARCH);
 
 #[derive(Debug, Error)]
 pub enum PluginLoaderError {
