@@ -1,15 +1,13 @@
 
-# Variables for cross-compiling
-ARCH?=$(shell uname -m)
-TOOLCHAIN?=gnu
-PROFILE?=debug
-CARGO_BUILD_TARGET?=$(ARCH)-unknown-linux-$(TOOLCHAIN)
-CC=$(ARCH)-linux-$(TOOLCHAIN)-gcc
-GOARCH?=$(ARCH)
+# Include variable definitions for cross-compiling
+ifdef ARCH
+include cross-compile.Makefile
+endif
 
-export ARCH TOOLCHAIN TARGET CARGO_BUILD_TARGET CC GOARCH
+PROFILE?=debug
+
 export SDK_HEADER_ARGS=-I${CURDIR}/modns-sdk/headers  
-export SDK_LINK_ARGS=-u_init_modns_sdk -L${CURDIR}/target/${CARGO_BUILD_TARGET}/${PROFILE} -lmodns_sdk -ldl
+export SDK_LINK_ARGS=-u_init_modns_sdk -L${CURDIR}/target/$(or $(CARGO_BUILD_TARGET),.)/${PROFILE} -lmodns_sdk -ldl
 
 all: sdk server plugins cli
 

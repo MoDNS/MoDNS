@@ -15,4 +15,4 @@ $(PLUGINFILE): $(SRC)
 	go build -buildmode c-shared -o $@ modns/simple_cache
 
 clean:
-	$(RM) $(PLUGINFILE)
+	$(RM) $(wildcard plugin*.so)

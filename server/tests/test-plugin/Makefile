@@ -10,4 +10,4 @@ $(PLUGINFILE): plugin.c
 	$(CC) $(CFLAGS) -fPIC -shared $^ -o $@ $(LDFLAGS)
 
 clean:
-	$(RM) $(PLUGINFILE)
+	$(RM) $(wildcard plugin*.so)
