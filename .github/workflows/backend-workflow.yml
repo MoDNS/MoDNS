@@ -44,6 +44,8 @@ jobs:
       if: matrix.rust_toolchain != ''
       uses: actions-rs/toolchain@v1
       with:
+        profile: minimal
+        toolchain: stable
         target: ${{ matrix.rust_toolchain }}
 
     - name: Install gcc cross-compiler
