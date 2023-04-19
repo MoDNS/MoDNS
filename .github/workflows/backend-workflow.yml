@@ -18,14 +18,40 @@ env:
 jobs:
   
   build:
+    strategy:
+      matrix:
+        architecture: [x86_64, aarch64, arm]
+        include:
+          - architecture: aarch64
+            gcc: gcc-aarch64-linux-gnu
+            rust_toolchain: aarch64-unknown-linux-gnu
+          - architecture: arm
+            gcc: gcc-arm-linux-gnueabi
+            rust_toolchain: arm-unknown-linux-gnueabi
 
     runs-on: ubuntu-latest
 
     steps:
+
     - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --verbose
+
+    - name: Install coresponding Rust toolchain
+      if: matrix.rust_toolchain != ''
+      uses: actions-rs/toolchain@v1
+      with:
+        target: ${{ matrix.rust_toolchain }}
+
+    - name: Install gcc cross-compiler
+      if: matrix.gcc != ''
+      run: sudo apt install ${{ matrix.gcc }}
+
+    - name: Build server
+      run: make server ARCH=${{ matrix.architecture }}
+
     - name: Build plugins
-      run: make plugins test-plugins
+      run: make plugins test-plugins ARCH=${ matrix.architecture }
+
     - name: Run tests
-      run: cargo test --verbose
+      if: matrix.gcc == 'x86_64'
+      run: cargo test --verbose --
+
