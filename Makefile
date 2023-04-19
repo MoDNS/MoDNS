@@ -1,7 +1,19 @@
 
-export SDK_HEADER_ARGS = -I${CURDIR}/modns-sdk/headers  
+# Variables for cross-compiling
+ARCH?=$(shell uname -m)
+PROFILE?=debug
+CARGO_BUILD_TARGET=$(ARCH)-unknown-linux-gnu
+CC=$(ARCH)-linux-gnu-gcc
 
-export SDK_LINK_ARGS = -u_init_modns_sdk -L${CURDIR}/target/debug -lmodns_sdk -ldl
+
+GOARCH_OVERRIDE_x86_64=amd64
+GOARCH_OVERRIDE_aarch64=arm64
+GOARCH=$(or $(GOARCH_OVERRIDE_$(ARCH)), $(ARCH))
+
+export ARCH TARGET CARGO_BUILD_TARGET CC GOARCH
+
+export SDK_HEADER_ARGS=-I${CURDIR}/modns-sdk/headers  
+export SDK_LINK_ARGS=-u_init_modns_sdk -L${CURDIR}/target/${CARGO_BUILD_TARGET}/${PROFILE} -lmodns_sdk -ldl
 
 all: sdk server plugins cli
 

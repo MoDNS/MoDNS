@@ -2,7 +2,6 @@
 CFLAGS+= -Wall -Wno-pointer-sign $(SDK_HEADER_ARGS)
 LDFLAGS=$(SDK_LINK_ARGS)
 
-ARCH?=$(shell uname -m)
 PLUGINFILE=plugin_$(ARCH).so
 
 all: $(PLUGINFILE)

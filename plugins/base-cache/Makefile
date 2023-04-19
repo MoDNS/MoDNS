@@ -3,7 +3,8 @@ CFLAGS+= -Wall -Wno-pointer-sign $(SDK_HEADER_ARGS)
 LDFLAGS=$(SDK_LINK_ARGS) -I../common
 SRC=$(wildcard *.go)
 
-ARCH?=$(shell uname -m)
+export CGO_ENABLED=1
+
 PLUGINFILE=plugin_$(ARCH).so
 
 all: $(PLUGINFILE)
