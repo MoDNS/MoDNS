@@ -1,4 +1,6 @@
-use std::net::{Ipv4Addr, Ipv6Addr};
+use std::{net::{Ipv4Addr, Ipv6Addr}, path::PathBuf};
+
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug)]
 pub enum DnsOpcode {
@@ -72,3 +74,15 @@ pub struct DnsMessage {
     pub authority: Vec<DnsResourceRecord>,
     pub additional: Vec<DnsResourceRecord>
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DatabaseInfo {
+    Sqlite(PathBuf),
+    Postgres {
+        host: String,
+        port: u16,
+        username: String,
+        password: String
+    }
+}
+

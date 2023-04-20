@@ -1,11 +1,12 @@
 
-use std::net::Ipv6Addr;
+use std::{net::Ipv6Addr, path::PathBuf};
 use std::ffi::c_char;
 use std::string::FromUtf8Error;
 use std::mem::ManuallyDrop;
 use std::net::Ipv4Addr;
 use std::panic::catch_unwind;
 
+use super::ffi::ByteVector;
 use super::{ffi, safe};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -495,3 +496,40 @@ impl TryInto<safe::DnsResourceRecord> for ffi::DnsResourceRecord {
     }
 }
 
+impl FfiType for ffi::DatabaseInfo {
+    type Safe = safe::DatabaseInfo;
+
+    fn try_safe(self) -> Result<Self::Safe, FfiConversionError> {
+        match self {
+            ffi::DatabaseInfo::SQLite { file } => {
+                let s: String = file.try_into()?;
+                Ok(safe::DatabaseInfo::Sqlite(PathBuf::from(s)))
+            },
+            ffi::DatabaseInfo::Postgres { host, port, username, password } => {
+                Ok(safe::DatabaseInfo::Postgres {
+                    host: host.try_into()?,
+                    port,
+                    username: username.try_into()?,
+                    password: password.try_into()?
+                })
+            },
+        }
+    }
+
+    fn from_safe(safe_val: Self::Safe) -> Self {
+        match safe_val {
+            safe::DatabaseInfo::Sqlite(file) => {
+                let bytes = Vec::from(file.as_path().to_string_lossy().as_bytes());
+                ffi::DatabaseInfo::SQLite { file: ByteVector::from_safe_vec(bytes) }
+            },
+            safe::DatabaseInfo::Postgres { host, port, username, password } => {
+                ffi::DatabaseInfo::Postgres {
+                    host: ByteVector::from(host.as_bytes()),
+                    port,
+                    username: ByteVector::from(username.as_bytes()),
+                    password: ByteVector::from(password.as_bytes())
+                }
+            },
+        }
+    }
+}

@@ -1,5 +1,6 @@
 pub mod memory;
 pub mod logging;
+pub mod database;
 
 use std::sync::Once;
 
@@ -25,7 +26,7 @@ pub extern "Rust" fn _init_modns_sdk(plugin_name: &str, logger: &'static dyn log
     Ok(())
 }
 
-pub fn get_plugin_name<'a>() -> &'a str {
+pub fn get_plugin_name() -> &'static str {
     INIT.call_once(|| {
         unsafe {
             PLUGIN_NAME = String::from("uninitialized");

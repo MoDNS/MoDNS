@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
+use modns_sdk::helpers::database::DEFAULT_POSTGRES_PORT;
+use modns_sdk::types::safe;
 use scrypt::Scrypt;
 use scrypt::password_hash::rand_core::OsRng;
 use scrypt::password_hash::{PasswordHasher, SaltString};
@@ -42,7 +44,6 @@ const DEFAULT_DATA_DIR: &str = "/var/lib/modnsd";
 const DEFAULT_FRONTEND_DIR: &str = "/usr/share/modnsd/web";
 const DEFAULT_SQLITE_FILE: &str = "modns.sqlite";
 const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-const DEFAULT_MYSQL_PORT: u16 = 3306;
 const DEFAULT_LOG_FILTER: &str = "info";
 
 const CONFIG_LOCKFILE_NAME: &str = "config-lock.json";
@@ -250,70 +251,7 @@ impl ImmutableServerConfig {
 #[derive(Debug, Default, ValueEnum, Clone, Copy, Serialize, Deserialize)]
 pub enum DatabaseBackend {
     #[default] Sqlite,
-    Mysql,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum DatabaseConfig {
-    Sqlite(PathBuf),
-    MySql(SocketAddr)
-}
-
-impl DatabaseConfig {
-
-    /// Returns an enum representing the database backend
-    pub fn backend(&self) -> DatabaseBackend {
-        match self {
-            DatabaseConfig::Sqlite(_) => DatabaseBackend::Sqlite,
-            DatabaseConfig::MySql(_) => DatabaseBackend::Mysql,
-        }
-    }
-
-    /// Returns `Some` with the path to the SQLite database file if the database backend is SQLite.
-    pub fn path(&self) -> Option<&Path> {
-        if let Self::Sqlite(p) = self {
-            Some(p.as_path())
-        } else {
-            None
-        }
-    }
-
-    /// Returns `Some` with the socket address for the database, unless the backend is SQLite
-    pub fn addr(&self) -> Option<&SocketAddr> {
-        if let Self::MySql(s) = self {
-            Some(s)
-        } else {
-            None
-        }
-    }
-
-    /// Returns `Some` with the IP address for the database, unless the backend is SQLite
-    pub fn ip(&self) -> Option<IpAddr> {
-        if let Self::MySql(s) = self {
-            Some(s.ip())
-        } else {
-            None
-        }
-    }
-
-    /// Returns `Some` with the port for the database, unless the backend is SQLite
-    pub fn port(&self) -> Option<u16> {
-        if let Self::MySql(s) = self {
-            Some(s.port())
-        } else {
-            None
-        }
-    }
-
-    /// Similar to `port()`, but only returns `Some` if the default port for a particular
-    /// backend has been overriden
-    pub fn nonstandard_port(&self) -> Option<u16> {
-        match self {
-            DatabaseConfig::Sqlite(_) => None,
-            DatabaseConfig::MySql(s) if s.port() != DEFAULT_MYSQL_PORT => Some(s.port()),
-            _ => None
-        }
-    }
+    Postgres,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum, Default, Serialize, Deserialize)]
@@ -601,14 +539,17 @@ impl ServerConfig {
             .or(self.settings.db_port())
     }
 
-    pub fn db_info(&self) -> DatabaseConfig {
+    pub fn db_info(&self) -> safe::DatabaseInfo {
         match self.db_type() {
-            DatabaseBackend::Sqlite => DatabaseConfig::Sqlite(
+            DatabaseBackend::Sqlite => safe::DatabaseInfo::Sqlite(
                 self.db_path().to_path_buf()
             ),
-            DatabaseBackend::Mysql => DatabaseConfig::MySql(
-                SocketAddr::from((self.db_addr(), self.db_port().unwrap_or(DEFAULT_MYSQL_PORT)))
-            ),
+            DatabaseBackend::Postgres => safe::DatabaseInfo::Postgres{
+                host: self.db_addr().to_string(),
+                port: self.db_port().unwrap_or(DEFAULT_POSTGRES_PORT),
+                username: todo!(),
+                password: todo!(),
+            },
         }
     }
 
