@@ -483,7 +483,36 @@ MoDNS hosts a webpage for ease of maneagement.
 
 ### Dashboard Widgets
 
-TODO
+Plugins can provide widgets for the web dashboard which display stats provided by the plugin.
+
+#### Implementing a Widget on the Frontend
+
+TODO: Frontend
+
+#### Implementing a Backend
+
+Data is pulled from your plugin by polling the API endpoint `/api/plugins/<uuid>/stats/<key>`. To implement
+a backend for this endpoint, expose the following C function:
+
+```C
+uint8_t impl_statistics(const struct ByteVector *key,
+                        struct ByteVector *resp,
+                        const void *plugin_state);
+```
+
+This function should write a JSON response into `*resp` and return to indicate the appropriate response code.
+Function return codes and their associated API response codes are:
+
+| rc | API response |
+| -- | ------------- |
+| 0 | `200 OK` |
+| 1 | `404 Not Found` |
+
+Any other return code becomes `500 Internal Server Error`.
+
+##### Formatting API Responses
+
+TODO: Frontend
 
 ### Settings Page
 
