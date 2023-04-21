@@ -1,7 +1,15 @@
 
-export SDK_HEADER_ARGS = -I${CURDIR}/modns-sdk/headers  
+# Include variable definitions for cross-compiling
+ifdef ARCH
+include cross-compile.Makefile
+else
+export ARCH=$(shell uname -m)
+endif
 
-export SDK_LINK_ARGS = -u_init_modns_sdk -L${CURDIR}/target/debug -lmodns_sdk -ldl
+PROFILE?=debug
+
+export SDK_HEADER_ARGS=-I${CURDIR}/modns-sdk/headers  
+export SDK_LINK_ARGS=-u_init_modns_sdk -L${CURDIR}/target/$(or $(CARGO_BUILD_TARGET),.)/${PROFILE} -lmodns_sdk -ldl
 
 all: sdk server plugins cli
 
@@ -10,7 +18,7 @@ server:
 	cargo build
 
 .PHONY: debug
-debug: export CFLAGS+= -DDEBUG
+debug: export CFLAGS+=-DDEBUG
 
 .PHONY: sdk
 sdk: $(wildcard $(CURDIR)/modns-sdk/src/*)
@@ -30,9 +38,12 @@ plugins: sdk
 test-plugins: sdk
 	$(MAKE) -C server/tests/test-plugin/
 
+# We can't actually run tests when cross compiling
+ifeq ($(ARCH),$(shell uname -m))
 .PHONY: test
-test: sdk plugins test-plugins
+test: plugins test-plugins
 	cargo test
+endif
 
 .PHONY: clean
 clean: cargo-clean plugin-clean

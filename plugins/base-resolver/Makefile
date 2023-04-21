@@ -1,10 +1,13 @@
+
 CFLAGS+= -Wall -Wno-pointer-sign $(SDK_HEADER_ARGS)
 LDFLAGS=$(SDK_LINK_ARGS) -I../common
 
-all: plugin.so
+PLUGINFILE=plugin_$(ARCH).so
 
-plugin.so: $(wildcard ../common/*.c) $(wildcard src/*.c) | $(wildcard ../common/*.h) $(wildcard ../modns-sdk/headers/*.h)
+all: $(PLUGINFILE)
+
+$(PLUGINFILE): $(wildcard ../common/*.c) $(wildcard src/*.c) | $(wildcard ../common/*.h) $(wildcard ../modns-sdk/headers/*.h)
 	$(CC) $(CFLAGS) -fPIC -shared $^ -o $@ $(LDFLAGS)
 
 clean:
-	$(RM) plugin.so
+	$(RM) $(wildcard plugin*.so)

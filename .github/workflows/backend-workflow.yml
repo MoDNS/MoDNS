@@ -1,6 +1,7 @@
 name: Rust & Make CI
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main]
     paths:
@@ -18,14 +19,48 @@ env:
 jobs:
   
   build:
+    strategy:
+      matrix:
+        architecture: [x86_64, aarch64, arm]
+        include:
+          - architecture: aarch64
+            gcc: gcc-aarch64-linux-gnu
+            rust_toolchain: aarch64-unknown-linux-gnu
+          - architecture: arm
+            gcc: gcc-arm-linux-gnueabi
+            rust_toolchain: arm-unknown-linux-gnueabi
 
     runs-on: ubuntu-latest
 
     steps:
+
     - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --verbose
+    - uses: actions/cache@v3
+      with:
+        key: ci-build-${{ matrix.architecture }}
+        path: target
+
+    - name: Install coresponding Rust toolchain
+      if: matrix.rust_toolchain != ''
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        target: ${{ matrix.rust_toolchain }}
+
+    - name: Install gcc cross-compiler
+      run: sudo apt-get install ${{ matrix.gcc }}
+
+    - name: Build server
+      run: make server ARCH=${{ matrix.architecture }}
+
+    - name: Build CLI
+      run: make cli ARCH=${{ matrix.architecture }}
+
     - name: Build plugins
-      run: make plugins test-plugins
+      run: make plugins test-plugins ARCH=${{ matrix.architecture }}
+
     - name: Run tests
-      run: cargo test --verbose
+      if: matrix.architecture == 'x86_64'
+      run: make test ARCH=${{ matrix.architecture }}
+
