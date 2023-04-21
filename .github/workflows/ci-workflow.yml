@@ -28,7 +28,7 @@ jobs:
             gcc: gcc-arm-linux-gnueabi
             rust_toolchain: arm-unknown-linux-gnueabi
     with:
-      architecure: ${{ matrix.architecture }}
+      architecture: ${{ matrix.architecture }}
       rust_toolchain: ${{ matrix.rust_toolchain }}
       gcc: ${{ matrix.gcc }}
 
