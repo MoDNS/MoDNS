@@ -5,6 +5,7 @@ package main
 #include <stdlib.h>
 
 typedef const struct DnsMessage constMessage;
+typedef const void constVoid;
 */
 import "C"
 import "unsafe"
@@ -20,7 +21,7 @@ func log(level uint8, msg string) {
 }
 
 //export impl_inspect_resp
-func impl_inspect_resp(req *C.constMessage, resp *C.constMessage, source C.uchar, state unsafe.Pointer) C.uchar {
+func impl_inspect_resp(req *C.constMessage, resp *C.constMessage, source C.uchar, state *C.constVoid) C.uchar {
 
     log(2, "Inspector called")
 

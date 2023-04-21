@@ -478,10 +478,10 @@ impl ServerConfig {
             overrides.data_dir.join(CONFIG_LOCKFILE_NAME)
         )?;
 
-        Ok(Self::new(overrides, mutable))
+        Ok(Self::compose(overrides, mutable))
     }
 
-    fn new(im: ImmutableServerConfig, mu: MutableServerConfig) -> Self {
+    fn compose(im: ImmutableServerConfig, mu: MutableServerConfig) -> Self {
         Self {
             settings: mu,
             override_plugin_path: im.plugin_path,
@@ -504,6 +504,12 @@ impl ServerConfig {
 
     pub fn write_lockfile(&self) -> Result<()> {
         self.settings.write_lockfile()
+    }
+
+    pub fn new() -> Self {
+        let im = ImmutableServerConfig::parse();
+        let mu = MutableServerConfig(Map::new(), PathBuf::new());
+        Self::compose(im, mu)
     }
 
 }

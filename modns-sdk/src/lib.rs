@@ -21,15 +21,17 @@ impl From<*mut c_void> for PluginState {
     }
 }
 
-impl From<PluginState> for *mut c_void {
-    fn from(value: PluginState) -> Self {
-        value.0
-    }
-}
-
 impl PluginState {
     pub fn new() -> Self {
         Self(std::ptr::null_mut())
+    }
+
+    pub fn ptr(&self) -> *const c_void {
+        self.0.cast_const()
+    }
+
+    pub fn mut_ptr(&mut self) -> *mut c_void {
+        self.0
     }
 }
 
@@ -67,7 +69,7 @@ pub fn impl_plugin_teardown(plugin_state: *mut c_void);
 /// When the server recieves a non-zero return code, it will generate a default
 /// response and attempt to encode that response using `impl_listener_sync_encode_resp`.
 pub fn impl_listener_sync_decode_req(
-    req: ffi::ByteVector, message: *mut ffi::DnsMessage, plugin_state: *mut c_void
+    req: &ffi::ByteVector, message: &mut ffi::DnsMessage, plugin_state: *const c_void
 ) -> u8;
 
 /// Implement this function (and impl_decode_req) to have your plugin
@@ -78,7 +80,7 @@ pub fn impl_listener_sync_decode_req(
 ///
 /// Return 0 on success and any other number on an error.
 pub fn impl_listener_sync_encode_resp(
-    resp: *const ffi::DnsMessage, buf: *mut ffi::ByteVector, plugin_state: *mut c_void
+    resp: &ffi::DnsMessage, buf: &mut ffi::ByteVector, plugin_state: *const c_void
 ) -> u8;
 
 /// Implement this function to have your plugin register as having an Interceptor
@@ -102,7 +104,7 @@ pub fn impl_listener_sync_encode_resp(
 /// simply log the error using the appropriate logging helper function, and return 0
 /// to ignore the request
 pub fn impl_intercept_req(
-    req: *const ffi::DnsMessage, resp: *mut ffi::DnsMessage, plugin_state: *mut c_void
+    req: &ffi::DnsMessage, resp: &mut ffi::DnsMessage, plugin_state: *const c_void
 ) -> u8;
 
 /// Implement this function for your plugin to register as having a Resolver module.
@@ -117,7 +119,7 @@ pub fn impl_intercept_req(
 /// request, always specify a value for all fields of the response, and ensure all
 /// vector fields are of the proper size.
 pub fn impl_resolver_sync_resolve_req(
-    req: *const ffi::DnsMessage, resp: *mut ffi::DnsMessage, plugin_state: *mut c_void
+    req: &ffi::DnsMessage, resp: &mut ffi::DnsMessage, plugin_state: *const c_void
 ) -> u8;
 
 /// Implement this function for your plugin to register as having a Validator module.
@@ -139,7 +141,7 @@ pub fn impl_resolver_sync_resolve_req(
 /// simply log the error using the appropriate logging helper function, and return 0
 /// to ignore the request
 pub fn impl_validate_resp(
-    req: *const ffi::DnsMessage, resp: *const ffi::DnsMessage, error_resp: *mut ffi::DnsMessage, plugin_state: *mut c_void
+    req: &ffi::DnsMessage, resp: &ffi::DnsMessage, error_resp: &mut ffi::DnsMessage, plugin_state: *const c_void
 ) -> u8;
 
 /// Implement this function for your plugin to register as having an Inspector module.
@@ -160,7 +162,7 @@ pub fn impl_validate_resp(
 /// to populate a cache, which is then used by an Interceptor to provide cached results
 /// on future requests.
 pub fn impl_inspect_resp(
-    req: *const ffi::DnsMessage, resp: *const ffi::DnsMessage, source: u8, plugin_state: *mut c_void
+    req: &ffi::DnsMessage, resp: &ffi::DnsMessage, source: u8, plugin_state: *const c_void
 ) -> u8;
 
 }

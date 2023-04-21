@@ -25,6 +25,7 @@ typedef struct { const char *p; ptrdiff_t n; } _GoString_;
 #include <stdlib.h>
 
 typedef const struct DnsMessage constMessage;
+typedef const void constVoid;
 
 #line 1 "cgo-generated-wrapper"
 
@@ -82,7 +83,7 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern unsigned char impl_inspect_resp(constMessage* req, constMessage* resp, unsigned char source, void* state);
+extern unsigned char impl_inspect_resp(constMessage* req, constMessage* resp, unsigned char source, constVoid* state);
 
 #ifdef __cplusplus
 }
