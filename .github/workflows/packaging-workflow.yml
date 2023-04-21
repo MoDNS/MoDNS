@@ -7,7 +7,8 @@ on:
       - 'v*.*.*'
 
 jobs:
-  package:
+  build-backend:
+    uses: MoDNS/MoDNS/.github/workflow/backend-workdflow.yml@main
     strategy:
       matrix:
         architecture: [x86_64, aarch64, arm]
@@ -23,21 +24,36 @@ jobs:
             debian_arch: arm
             gcc: gcc-arm-linux-gnueabi
             rust_toolchain: arm-unknown-linux-gnueabi
+    with:
+      architecture: ${{ matrix.architecture }}
+      rust_toolchain: ${{ matrix.rust_toolchain }}
+      gcc: ${{ matrix.gcc }}
 
+  build-frontend:
+    uses: MoDNS/MoDNS/.github/workflow/react-workflow.yml@main
+
+  package:
+    needs: [build-backend, build-frontend]
+    strategy:
+      matrix:
+        architecture: [x86_64, aarch64, arm]
+        include:
+          - architecture: x86_64
+            debian_arch: amd64
+            rust_toolchain: x86_64-unknown-linux-gnu
+          - architecture: aarch64
+            debian_arch: arm64
+            gcc: gcc-aarch64-linux-gnu
+            rust_toolchain: aarch64-unknown-linux-gnu
+          - architecture: arm
+            debian_arch: arm
+            gcc: gcc-arm-linux-gnueabi
+            rust_toolchain: arm-unknown-linux-gnueabi
+    outputs:
+      package-file-x86_64: ${{ steps.get_file.outputs.filename_x86_64 }}
+      package-file-arm: ${{ steps.get_file.outputs.filename_arm }}
+      package-file-aarch32: ${{ steps.get_file.outputs.filename_aarch32 }}
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Build backend
-        uses: MoDNS/MoDNS/.github/workflow/backend-workdflow.yml@main
-        with:
-          architecture: ${{ matrix.architecture }}
-          rust_toolchain: ${{ matrix.rust_toolchain }}
-          gcc: ${{ matrix.gcc }}
-
-      - name: Build frontend
-        uses: MoDNS/MoDNS/.github/workflow/react-workflow.yml@main
-
       - name: Copy Files Into Package
         run: |
           make install MODNS_INSTALL_PKGDIR=.debpkg ARCH=${{ matrix.architecture }}
@@ -54,9 +70,17 @@ jobs:
           arch: ${{ matrix.debian_arch }}
           depends: 'libc6'
           desc: 'Modular DNS Server (MoDNS).'
-
+      - name: Get File
+        run: echo ${{ matrix.arch }}=${{ steps.create_debian_package.outputs.file_name }} >> $GITHUB_OUTPUT
+  
+  create-artifact:
+    needs: package
       - name: Upload package file
         uses: actions/upload-artifact@v3
         with:
-          name: modns-deb-${{ matrix.architecture }}
-          path: ${{ steps.create_debian_package.outputs.file_name }}
+          name: modns-deb-release-${{ github.ref }}
+          path: |
+            ${{ jobs.package.outputs.package-file-x86_64 }}
+            ${{ jobs.package.outputs.package-file-arm }}
+            ${{ jobs.package.outputs.package-file-aarch64 }}
+

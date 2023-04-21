@@ -13,6 +13,7 @@ on:
 
 jobs:
   build:
+    uses: MoDNS/MoDNS/.github/workflows/backend-workflow.yml@main
     strategy:
       matrix:
         architecture: [x86_64, aarch64, arm]
@@ -28,18 +29,6 @@ jobs:
             debian_arch: arm
             gcc: gcc-arm-linux-gnueabi
             rust_toolchain: arm-unknown-linux-gnueabi
-
-    runs-on: ubuntu-latest
+  test:
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Build backend
-      uses: MoDNS/MoDNS/.github/workflows/backend-workflow.yml@main
-      with:
-        architecture: ${{ matrix.architecture }}
-        rust_toolchain: ${{ matrix.rust_toolchain }}
-        gcc: ${{ matrix.gcc }}
-
-    - name: Run tests
-      if: inputs.architecture == 'x86_64'
-      run: make test ARCH=${{ matrix.architecture }}
+    - run: make test ARCH=${{ matrix.architecture }}
