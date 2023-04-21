@@ -14,7 +14,7 @@ int main() {
     // Prompt the user for some data
     std::string name;
     int age;
-    bool isMarried;
+    bool isMarried = "false";
 
     Json::StyledStreamWriter writer;
     std::list<Json::Value> dataList;
@@ -55,9 +55,14 @@ int main() {
         myMap["isMarried"] = isMarried ? "true" : "false";
 
         // Add the map to the list
-        dataList.push_back(myMap);
+         if (dataList.size() <= 10000) {
+            dataList.push_back(myMap);
+        } else {
+            dataList.pop_front();
+            dataList.push_back(myMap);
+        }
 
-         // Open a file stream to write the JSON data to a file
+        // Open a file stream to write the JSON data to a file
         std::ofstream file("myData.json");
 
         // Create a JSON object to store the list of maps
@@ -74,6 +79,8 @@ int main() {
         file.close();
 
         std::cout << "Data has been written to myData.json" << std::endl;
+
+        std::cout << dataList.size() << std::endl;
 
     }
 
