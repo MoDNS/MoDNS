@@ -33,6 +33,7 @@ jobs:
     uses: MoDNS/MoDNS/.github/workflow/react-workflow.yml@main
 
   package:
+    runs-on: ubuntu-latest
     needs: [build-backend, build-frontend]
     strategy:
       matrix:
@@ -53,7 +54,7 @@ jobs:
       package-file-x86_64: ${{ steps.get_file.outputs.filename_x86_64 }}
       package-file-arm: ${{ steps.get_file.outputs.filename_arm }}
       package-file-aarch32: ${{ steps.get_file.outputs.filename_aarch32 }}
-    runs-on: ubuntu-latest
+    steps:
       - name: Copy Files Into Package
         run: |
           make install MODNS_INSTALL_PKGDIR=.debpkg ARCH=${{ matrix.architecture }}
@@ -74,7 +75,9 @@ jobs:
         run: echo ${{ matrix.arch }}=${{ steps.create_debian_package.outputs.file_name }} >> $GITHUB_OUTPUT
   
   create-artifact:
+    runs-on: ubuntu-latest
     needs: package
+    steps:
       - name: Upload package file
         uses: actions/upload-artifact@v3
         with:
