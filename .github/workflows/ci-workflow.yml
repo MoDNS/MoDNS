@@ -13,7 +13,6 @@ on:
 
 jobs:
   build:
-    
     strategy:
       matrix:
         architecture: [x86_64, aarch64, arm]
@@ -32,14 +31,14 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
-      - name: Build backend
-        uses: MoDNS/MoDNS/.github/workflow/backend-workdflow.yml@main
-        with:
-          architecture: ${{ matrix.architecture }}
-          rust_toolchain: ${{ matrix.rust_toolchain }}
-          gcc: ${{ matrix.gcc }}
+    - name: Build backend
+      uses: MoDNS/MoDNS/.github/workflow/backend-workdflow.yml@main
+      with:
+        architecture: ${{ matrix.architecture }}
+        rust_toolchain: ${{ matrix.rust_toolchain }}
+        gcc: ${{ matrix.gcc }}
 
     - name: Run tests
       if: inputs.architecture == 'x86_64'
