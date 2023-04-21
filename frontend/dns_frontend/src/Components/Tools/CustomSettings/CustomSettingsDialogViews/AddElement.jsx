@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement }) => {
 
     
-
     const [text, setText] = useState("");
     const [list, setList] = useState("");
     const [key, setKey] = useState("");

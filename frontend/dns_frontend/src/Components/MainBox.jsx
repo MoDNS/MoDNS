@@ -15,14 +15,13 @@ const MainBox = ({ children, sx, title, divider, titleCentered }) => {
                     backgroundColor: 'primary.main',
                     padding: 6,
                     paddingTop: 4,
-                    overflow: 'hidden',
                     ...sx
                 }}
             >
                 <Title titleCentered={titleCentered} divider={divider}>
                     {title}
                 </Title>
-                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', paddingTop: pt, paddingBottom: pb, }} >
+                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', paddingTop: pt, paddingBottom: pb, overflowY: 'auto', overflowX: 'hidden' }} >
                     {children}
                 </div>
             </Box>
@@ -34,7 +33,7 @@ export default MainBox;
 MainBox.propTypes = {
     children: PropTypes.any,
     sx: PropTypes.object,
-    title: PropTypes.string,
+    title: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
     divider: PropTypes.bool,
     titleCentered: PropTypes.bool,
 };
