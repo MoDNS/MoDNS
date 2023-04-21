@@ -61,8 +61,14 @@ impl PluginManager {
 
     pub fn search(&mut self, search_path: &[PathBuf]) -> Result<()>{
         for parent in search_path {
-            let parent = parent.canonicalize()
-            .with_context(|| format!("Couldn't canonicalize search path {}", parent.display()))?;
+            let parent = match parent.canonicalize() {
+                Ok(path) => path,
+                Err(e) => {
+                    log::warn!("Failed to search {} for plugins: {e}", parent.display());
+                    log::debug!("Full Error: {e:#?}");
+                    continue;
+                },
+            };
 
             log::debug!("Searching {} for plugins", parent.display());
 
@@ -82,7 +88,7 @@ impl PluginManager {
                     for subdir in dirs {
                         log::trace!("Checking {}", subdir.display());
 
-                        let so_path = subdir.join("plugin.so");
+                        let so_path = subdir.join(super::PLUGIN_FILE_NAME);
 
                         if !so_path.is_file() { continue; }
 

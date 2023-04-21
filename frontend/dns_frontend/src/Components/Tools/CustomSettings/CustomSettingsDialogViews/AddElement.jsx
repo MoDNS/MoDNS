@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement }) => {
 
     
-
     const [text, setText] = useState("");
     const [list, setList] = useState("");
     const [key, setKey] = useState("");
@@ -394,8 +393,8 @@ const AddElement = ({ jsonPage, setJsonPage, setShowDialog, element, setElement 
                     }
                     let newJson = jsonPage;
                     let check_list = list.split(",");
-                    check_list.forEach(element => {
-                        element = element.trim();
+                    check_list.forEach((element, index) => {
+                        check_list[index] = element.trim();
                     });
                     newJson.push(
                         {
