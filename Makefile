@@ -8,8 +8,16 @@ endif
 
 PROFILE?=debug
 
-export SDK_HEADER_ARGS=-I${CURDIR}/modns-sdk/headers  
-export SDK_LINK_ARGS=-u_init_modns_sdk -L${CURDIR}/target/$(or $(CARGO_BUILD_TARGET),.)/${PROFILE} -lmodns_sdk -ldl
+HEADER_DIR=$(CURDIR)/modns-sdk/headers
+TARGET_DIR=$(CURDIR)/target/$(or $(CARGO_BUILD_TARGET),.)/$(PROFILE)
+
+ifdef MODNS_INSTALL_PKGDIR
+PKGDIR=$(CURDIR)/$(MODNS_INSTALL_PKGDIR)
+export PKGDIR
+endif
+
+export SDK_HEADER_ARGS=-I$(HEADER_DIR)
+export SDK_LINK_ARGS=-u_init_modns_sdk -L$(TARGET_DIR) -lmodns_sdk -ldl
 
 all: sdk server plugins cli
 
@@ -47,11 +55,10 @@ endif
 
 .PHONY: clean
 clean: cargo-clean plugin-clean
-
-cargo-clean:
+	$(MAKE) -C plugins/ clean
 	cargo clean
 
-plugin-clean:
-	$(MAKE) -C plugins/base-listener/ clean
-	$(MAKE) -C plugins/base-resolver/ clean
-	$(MAKE) -C plugins/base-cache/ clean
+install:
+	install -d $(PKGDIR)/usr/share/modns/web $(PKGDIR)/var/lib/modns
+	install -CDt $(PKGDIR)/usr/bin $(TARGET_DIR)/modns $(TARGET_DIR)/modnsd
+	$(MAKE) -C plugins/ install
