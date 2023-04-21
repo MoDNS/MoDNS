@@ -1,29 +1,44 @@
 import { ResponsiveBar } from "@nivo/bar";
-// import { mockDataFruits as data } from "../../Tmp/TempData.js"
-import { useTheme } from "@mui/material";
+import { Typography, useTheme } from "@mui/material";
+import { PropTypes } from 'prop-types';
 
-const VerticalBarchart = ({ data, height }) => {
+const VerticalBarChart = ({ label, data, height }) => {
   const theme = useTheme();
+  
+  const getLegendFromSample = () => {
+    let theData = data.data ? data.data[0] : {}
+    theData = Object.keys(theData);
+    theData.splice(theData.indexOf(data ? data.index_by : ''), 1);
+    return theData;
+  }
+
   return (
-    <div style={{ height: height }} >
+    <div style={{ direction: 'column', width: '100%', }}>
+      <Typography
+        fontSize={24}
+        
+      >
+        {label}
+      </Typography>
         <ResponsiveBar
-          data={data}
-          keys={["hot dog", "burger", "sandwich", "kebab", "fries", "donut"]}
-          indexBy="country"
-          margin={{ top: 50, right: 140, bottom: 50, left: 60 }}
+          data={data.data}
+          height={height}
+          keys={getLegendFromSample()}
+          indexBy={data.index_by || ''}
+          margin={{ top: 20, right: 140, bottom: 50, left: 60 }}
           padding={0.3}
           groupMode="grouped"
           valueScale={{ type: "linear" }}
           indexScale={{ type: "band", round: true }}
           colors={{ scheme: "nivo" }}
-          enableLabel= {false}
+          enableLabel={false}
           axisTop={null}
           axisRight={null}
           axisBottom={{
             tickSize: 5,
             tickPadding: 5,
             tickRotation: 0,
-            legend: "country",
+            legend: data.x_axis_label || '',
             legendPosition: "middle",
             legendOffset: 36,
           }}
@@ -31,7 +46,7 @@ const VerticalBarchart = ({ data, height }) => {
             tickSize: 5,
             tickPadding: 5,
             tickRotation: 0,
-            legend: "food",
+            legend: data.y_axis_label || '',
             legendPosition: "middle",
             legendOffset: -40,
           }}
@@ -84,13 +99,25 @@ const VerticalBarchart = ({ data, height }) => {
             legends: {
               text: {
                 fill: theme.palette.text.primary,
-                fontSize: "10pt",
+                fontSize: "12pt",
               },
             },
           }}
         />
-    </div>
+      </div>
   );
 };
 
-export default VerticalBarchart;
+export default VerticalBarChart;
+
+VerticalBarChart.propTypes = {
+  label: PropTypes.string,
+  data: PropTypes.object,
+  height: PropTypes.number,
+};
+
+VerticalBarChart.defaultProps = {
+  label: "Insert Label",
+  data: {},
+  height: 300,
+};

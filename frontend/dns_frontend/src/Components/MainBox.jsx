@@ -33,7 +33,7 @@ export default MainBox;
 MainBox.propTypes = {
     children: PropTypes.any,
     sx: PropTypes.object,
-    title: PropTypes.string,
+    title: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
     divider: PropTypes.bool,
     titleCentered: PropTypes.bool,
 };

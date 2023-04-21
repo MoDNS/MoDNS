@@ -1,4 +1,12 @@
-
+// To be removed later
+import {
+    mockStatData,
+    mockStatusData,
+    mockPieData,
+    mockTableData,
+    mockBarData,
+    mockLineData,
+  } from "../Tmp/TempData";
 
 
 //////////////////////////////////////////////////////// SETTINGS ////////////////////////////////////////////////////////
@@ -15,6 +23,12 @@ export const getServerConfig = (key) => {
     }
     if (key === 'use_static_ip') {
         return true;
+    }
+    if (key === 'use_global_dashboard') {
+        return false;
+    }
+    if (key === 'dashboard') {
+        return [];
     }
 }
 
@@ -328,3 +342,20 @@ export const getPluginConfig = (uuid, key) => {
     return null;
 }
 
+export const getDashboardData = (uuid, key) => {
+    if (key === "bar") {
+        return mockBarData;
+    } else if (key === "pie") {
+        return mockPieData;
+    } else if (key === "stat") {
+        return mockStatData;
+    } else if (key === "status") {
+        return mockStatusData;
+    } else if (key === "table") {
+        return mockTableData;
+    } else if (key === "line") {
+        return mockLineData;
+    } else {
+        return undefined;
+    }
+}

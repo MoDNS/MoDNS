@@ -25,3 +25,18 @@ export const getPluginViewStorage = () => {
 export const setPluginViewStorage = (view) => {
     localStorage.setItem('pluginView', view);
 }
+
+//////////////////////////// LOCAL DASHBOARD ////////////////////////////
+export const getDashboardLayout = () => {
+    var dashboard_layout = localStorage.getItem('dashboardLayout');
+    if (dashboard_layout) {
+        console.log()
+        return JSON.parse(dashboard_layout);
+    } else {
+        return [];
+    }
+}
+
+export const setDashboardLayout = (layout) => {
+    localStorage.setItem('dashboardLayout', JSON.stringify(layout));
+}
