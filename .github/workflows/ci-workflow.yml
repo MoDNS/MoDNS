@@ -12,7 +12,8 @@ on:
       - '!**docker**'
 
 jobs:
-  build:
+  test-build:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         architecture: [x86_64, aarch64, arm]
@@ -29,7 +30,7 @@ jobs:
             gcc: gcc-arm-linux-gnueabi
             rust_toolchain: arm-unknown-linux-gnueabi
 
-    runs-on: ubuntu-latest
+    
     steps:
       - uses: actions/checkout@v2
 
