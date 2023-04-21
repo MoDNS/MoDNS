@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-backend:
-    uses: MoDNS/MoDNS/.github/workflow/backend-workdflow.yml@main
+    uses: MoDNS/MoDNS/.github/workflows/backend-workflow.yml@main
     strategy:
       matrix:
         architecture: [x86_64, aarch64, arm]
