@@ -12,11 +12,8 @@ on:
       - '!**docker**'
 
 jobs:
-  
   build:
-    
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         architecture: [x86_64, aarch64, arm]
