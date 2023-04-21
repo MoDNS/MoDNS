@@ -78,13 +78,31 @@ export const configurePlugin = async (uuid, key, value) => {
 export const getPluginConfig = async (uuid, key) => {
     return await fetch(`${window.location.origin}/api/plugins/${uuid}/config?${key}`, {
         method: 'GET',
+        headers: {
+            'Accept': 'application/json'
+        }
     }).then(response => {
         if (response.ok) {
-            return response;
+            return response.json().data;
         } else {
             return null;
         }
     });
+}
+
+export const getDashboardData = async (uuid, key) => {
+    return await fetch(`${window.location.origin}/api/plugins/${uuid}/stats/${key}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.ok) {
+            return response.json().data;
+        } else {
+            return undefined;
+        }
+    })
 }
 
 export const executePluginCommand = async (uuid, command) => {
@@ -97,11 +115,11 @@ export const getPluginCustomSettings = async (uuid) => {
     return await fetch(`${window.location.origin}/api/plugins/${uuid}/settingspage`, {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json'
+            'Accept': 'application/json'
         }
     }).then(response => {
         if (response.ok) {
-            return response.json();
+            return response.json().data;
         } else {
             return [];
         }
@@ -140,13 +158,25 @@ export const setServerConfig = async (key, value) => {
 }
 
 export const getServerConfig = async (key) => {
-    return await fetch(`${window.location.origin}/api/config?${key}`).then(response => {
+    return await fetch(`${window.location.origin}/api/config?${key}`, {
+        method: 'GET'
+    }).then(response => {
         if (response.ok) {
             return response;
         } else {
             return null;
         }
     })
+}
+
+export const getServerDashboard = async () => {
+    return await fetch(`${window.location.origin}/api/dashboard`).then(response => {
+        if (response.ok) {
+            return response.json().data;
+        } else {
+            return [];
+        }
+    });
 }
 
 ////////////////////////////// AUTHENTICATION ///////////////////////////////

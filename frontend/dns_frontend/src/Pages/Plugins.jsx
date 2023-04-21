@@ -59,15 +59,12 @@ const Plugins = () => {
     }
 
     useEffect(() => {
-
         makePluginDict().then(dicts => {
             setPluginDicts({...dicts})
             makeSettingsPageDict(dicts['all']).then(settingsPages => {
                 setSettingsPagesDict({...settingsPages});
             })
         })
-
-
 
     }, []);
 

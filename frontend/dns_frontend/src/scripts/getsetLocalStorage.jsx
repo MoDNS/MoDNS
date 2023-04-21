@@ -38,5 +38,6 @@ export const getDashboardLayout = () => {
 }
 
 export const setDashboardLayout = (layout) => {
+    console.log(JSON.stringify(layout));
     localStorage.setItem('dashboardLayout', JSON.stringify(layout));
 }

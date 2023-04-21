@@ -1,25 +1,31 @@
 import { Button } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import MainBox from "../Components/MainBox";
 import { ParseDashboardPage } from "../scripts/ParseDashboardPage";
-import { getServerConfig, setServerConfig } from "../API/getsetAPI";
+import { getServerConfig, getServerDashboard, setServerConfig } from "../API/getsetAPI";
 import { getDashboardLayout, setDashboardLayout } from "../scripts/getsetLocalStorage";
 
 
 const Dashboard = () => {
   const [editMode, setEditMode] = useState(false);
+  const [useGlobalDashboard, setUseGlobDash] = useState(true);
+  
+  const [dashboardJson, setDashboardJson] = useState();
 
-  const useGlobalDashboard = getServerConfig('use_global_dashboard');;
 
-    let json;
-    if (useGlobalDashboard) {
-      json = getServerConfig("dashboard");
-    } else {
-      json = getDashboardLayout();
-      console.log(json);
-    }
-
-    const [dashboardJson, setDashboardJson] = useState([...json]);
+  useEffect(() => {
+    getServerConfig('use_global_dashboard').then(useGlobDash => {
+      setUseGlobDash(useGlobDash);
+      console.log(useGlobDash);
+      if (useGlobDash) {
+        getServerDashboard().then(res => {
+          setDashboardJson([...res]);
+        })
+      } else {
+        setDashboardJson(getDashboardLayout());
+      }
+    })
+  }, [] );
 
   return (
     <>
@@ -43,7 +49,7 @@ const Dashboard = () => {
         } 
         divider
       >
-        <ParseDashboardPage editMode={editMode} dashboardJson={dashboardJson} setDashboardJson={setDashboardJson} />
+        { dashboardJson && <ParseDashboardPage editMode={editMode} dashboardJson={dashboardJson} setDashboardJson={setDashboardJson} />}
       </MainBox>
 
       
