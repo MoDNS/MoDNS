@@ -12,7 +12,7 @@ on:
       - '!**docker**'
 
 jobs:
-  test-build:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Build backend
-        uses: MoDNS/MoDNS/.github/workflow/backend-workdflow.yml
+        uses: MoDNS/MoDNS/.github/workflow/backend-workdflow.yml@main
         with:
           architecture: ${{ matrix.architecture }}
           rust_toolchain: ${{ matrix.rust_toolchain }}
