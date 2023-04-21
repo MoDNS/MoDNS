@@ -12,7 +12,7 @@ on:
       - '!**docker**'
 
 jobs:
-  test-build:
+  test_build:
     strategy:
       matrix:
         architecture: [x86_64, aarch64, arm]
