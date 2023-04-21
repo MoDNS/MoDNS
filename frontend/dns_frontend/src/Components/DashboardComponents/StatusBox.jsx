@@ -27,7 +27,7 @@ const StatusBox = ({ label, data, height }) => {
             fontSize={24}
             sx={{ color: theme.palette.text.primary }}
           >
-              {data && data.status_label}
+              {data && data.status_text}
           </Typography>
           </div>
         </Box>

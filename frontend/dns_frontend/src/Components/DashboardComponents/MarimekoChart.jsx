@@ -15,7 +15,8 @@ const MarimekoChart = ({ label, data, height }) => {
   return (
     <div style={{ direction: 'column', width: '100%', }}>
       <Typography
-        fontSize={24}
+        variant="h4" 
+        fontWeight="bold"
       >
         {label}
       </Typography>
