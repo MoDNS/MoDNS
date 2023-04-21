@@ -6,7 +6,7 @@ use clap::{Parser, Subcommand, Args};
 mod util;
 mod commands;
 
-fn main() {
+fn main() -> anyhow::Result<()> {
 
     let config = CLI::parse();
 
@@ -16,13 +16,21 @@ fn main() {
 
     match config.command() {
         CLICommand::Plugin { command } => match command {
-            PluginCommand::List => commands::plugins::list_plugins(&config.global_args()),
-            PluginCommand::Enable { uuid } => commands::plugins::set_enabled(uuid, true, config.global_args()),
-            PluginCommand::Disable { uuid } => commands::plugins::set_enabled(uuid, false, config.global_args()),
-            _ => eprintln!("Not implemented")
+            PluginCommand::List { all }=> commands::plugins::list_plugins(&config.global_args(), *all),
+            PluginCommand::Enable { name } => commands::plugins::set_enabled(name, true, config.global_args()),
+            PluginCommand::Disable { name } => commands::plugins::set_enabled(name, false, config.global_args()),
+            PluginCommand::GetConfig { name, keys } => commands::plugins::get_config(name, keys, config.global_args()),
+            PluginCommand::SetConfig { name, key, value } => commands::plugins::set_config(name, key, value, config.global_args()),
+            PluginCommand::Uninstall { name } => commands::plugins::uninstall(name, config.global_args()),
+            PluginCommand::Install { path } => commands::plugins::install(path, config.global_args()),
         },
-        _ => eprintln!("Not implemented")
-    };
+        CLICommand::Config { command } => match command {
+            ConfigCommand::Get { keys } => commands::get_config(keys, config.global_args()),
+            ConfigCommand::Set { key, value } => commands::set_config(key, value, config.global_args()),
+        }
+        CLICommand::Restart => commands::restart(config.global_args()),
+        CLICommand::Shutdown => commands::shutdown(config.global_args()),
+    }
 
 }
 
@@ -123,27 +131,30 @@ pub enum CLICommand {
 
 #[derive(Debug, Subcommand)]
 pub enum PluginCommand {
-    List,
+    List {
+        #[arg(short, long, action=clap::ArgAction::SetTrue)]
+        all: bool
+    },
     Install {
         path: PathBuf
     },
     Uninstall {
-        uuid: uuid::Uuid
+        name: String
     },
     Enable {
-        uuid: uuid::Uuid
+        name: String
     },
     Disable {
-        uuid: uuid::Uuid
+        name: String
     },
     GetConfig {
-        uuid: uuid::Uuid,
+        name: String,
 
         #[arg(action=clap::ArgAction::Append)]
         keys: Vec<String>
     },
     SetConfig {
-        uuid: uuid::Uuid,
+        name: String,
 
         key: String,
         value: String
@@ -153,7 +164,7 @@ pub enum PluginCommand {
 #[derive(Debug, Subcommand)]
 pub enum ConfigCommand {
     Get {
-        key: Vec<String>
+        keys: Vec<String>
     },
     
     Set {
