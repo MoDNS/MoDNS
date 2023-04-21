@@ -34,7 +34,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Build backend
-      uses: MoDNS/MoDNS/.github/workflow/backend-workflow.yml@main
+      uses: MoDNS/MoDNS/.github/workflows/backend-workflow.yml@main
       with:
         architecture: ${{ matrix.architecture }}
         rust_toolchain: ${{ matrix.rust_toolchain }}
