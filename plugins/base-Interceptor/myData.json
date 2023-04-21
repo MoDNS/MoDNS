@@ -1,0 +1,17 @@
+[
+	{
+		"age" : "1",
+		"isMarried" : "false",
+		"name" : "aa"
+	},
+	{
+		"age" : "12",
+		"isMarried" : "false",
+		"name" : "bb"
+	},
+	{
+		"age" : "2",
+		"isMarried" : "true",
+		"name" : "aankit"
+	}
+]
