@@ -30,5 +30,6 @@ jobs:
             gcc: gcc-arm-linux-gnueabi
             rust_toolchain: arm-unknown-linux-gnueabi
   test:
+    runs-on: ubuntu-latest
     steps:
     - run: make test ARCH=${{ matrix.architecture }}
