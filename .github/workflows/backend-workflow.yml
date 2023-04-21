@@ -1,15 +1,18 @@
-name: Rust & Make CI
+name: Build Backend
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches: [main]
-    paths:
-      - '**'
-      - '!docs/**'
-      - '!frontend/**'
-      - '!**Dockerfile**'
-      - '!**docker**'
+  workflow_call:
+    inputs:
+      architecture:
+        required: true
+        type: string
+      rust_toolchain:
+        required: true
+        type: string
+      gcc:
+        required: false
+        type: string
 
 
 env:
@@ -19,48 +22,32 @@ env:
 jobs:
   
   build:
-    strategy:
-      matrix:
-        architecture: [x86_64, aarch64, arm]
-        include:
-          - architecture: aarch64
-            gcc: gcc-aarch64-linux-gnu
-            rust_toolchain: aarch64-unknown-linux-gnu
-          - architecture: arm
-            gcc: gcc-arm-linux-gnueabi
-            rust_toolchain: arm-unknown-linux-gnueabi
-
+    
     runs-on: ubuntu-latest
 
     steps:
 
-    - uses: actions/checkout@v3
     - uses: actions/cache@v3
       with:
-        key: ci-build-${{ matrix.architecture }}
-        path: target
+        key: ci-build-${{ inputs.architecture }}
+        path: target/${{ inputs.rust_toolchain }}
 
     - name: Install coresponding Rust toolchain
-      if: matrix.rust_toolchain != ''
+      if: inputs.rust_toolchain != ''
       uses: actions-rs/toolchain@v1
       with:
         profile: minimal
         toolchain: stable
-        target: ${{ matrix.rust_toolchain }}
+        target: ${{ inputs.rust_toolchain }}
 
     - name: Install gcc cross-compiler
-      run: sudo apt-get install ${{ matrix.gcc }}
+      run: sudo apt-get install ${{ inputs.gcc }}
 
     - name: Build server
-      run: make server ARCH=${{ matrix.architecture }}
+      run: make server ARCH=${{ inputs.architecture }}
 
     - name: Build CLI
-      run: make cli ARCH=${{ matrix.architecture }}
+      run: make cli ARCH=${{ inputs.architecture }}
 
     - name: Build plugins
-      run: make plugins test-plugins ARCH=${{ matrix.architecture }}
-
-    - name: Run tests
-      if: matrix.architecture == 'x86_64'
-      run: make test ARCH=${{ matrix.architecture }}
-
+      run: make plugins test-plugins ARCH=${{ inputs.architecture }}
