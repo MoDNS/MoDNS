@@ -1,7 +1,7 @@
 
 use std::{path::Path, net::{SocketAddr, IpAddr}};
 
-use crate::types::safe;
+use crate::types::{safe, ffi};
 
 pub const DEFAULT_POSTGRES_PORT: u16 = 5432;
 
@@ -67,3 +67,7 @@ impl safe::DatabaseInfo {
     }
 }
 
+#[no_mangle]
+pub extern "C" fn modns_get_database() -> Option<&'static ffi::DatabaseInfo> {
+    super::get_database()
+}
