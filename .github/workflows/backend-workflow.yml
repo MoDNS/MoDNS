@@ -46,9 +46,9 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/cache@v3
       with:
-        key: ci-build-${{ inputs.architecture }}
+        key: ci-build-${{ inputs.architecture }}-${{ hashFiles('**/Cargo.toml')}}
         path: target/${{ inputs.rust_toolchain }}
-    - name: Install coresponding Rust toolchain
+    - name: Install corresponding Rust toolchain
       uses: actions-rs/toolchain@v1
       with:
         profile: minimal
