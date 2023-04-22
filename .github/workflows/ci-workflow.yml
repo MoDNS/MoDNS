@@ -40,6 +40,12 @@ jobs:
     - uses: actions/cache@v3
       with:
         key: ci-build-x86_64-${{ hashFiles('**/Cargo.toml') }}
+        path: |
+          target/x86_64-unknown-linux-gnu
+          ~/.cargo/registry
+          ~/.cargo/git
+        restore-keys:
+          ci-build-x86_64-
     - uses: actions/download-artifact@v3
       with:
         name: backend-build-x86_64
