@@ -65,7 +65,7 @@ jobs:
     - name: Save artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: backend-build-${{ inputs.architecture }}-${{ github.ref }}
+        name: backend-build-${{ inputs.architecture }}
         path: |
           target/${{ inputs.rust_toolchain }}/debug/modns
           target/${{ inputs.rust_toolchain }}/debug/modnsd
