@@ -65,7 +65,7 @@ jobs:
       - name: Copy Files into Package
         run: |
           make install MODNS_INSTALL_PKGDIR=.debpkg ARCH=${{ matrix.architecture }}
-          cp -r frontend/dns_frontend/build/ .debpkg/usr/share/web
+          cp -r frontend/dns_frontend/build/ .debpkg/usr/share/modns/web
       
       - name: Create Debian Package
         id: deb
