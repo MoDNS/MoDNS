@@ -74,7 +74,7 @@ jobs:
           package: modns
           package_root: .debpkg
           maintainer: MoDNS
-          version: ${{ inputs.version || github.ref }} # refs/tags/v*.*.*
+          version: ${{ inputs.version || github.ref_name }} # refs/tags/v*.*.*
           arch: ${{ matrix.debian_arch }}
           depends: 'libc6'
           desc: 'Modular DNS Server (MoDNS).'
@@ -82,7 +82,7 @@ jobs:
       - name: Upload package artifact
         uses: actions/upload-artifact@v3
         with:
-          name: deb-release-${{ matrix.debian_arch }}-${{ github.ref }}
+          name: deb-release-${{ matrix.debian_arch }}
           path: |
             ${{ steps.deb.outputs.file_name }}
 
