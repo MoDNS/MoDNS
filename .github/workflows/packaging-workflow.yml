@@ -37,7 +37,7 @@ jobs:
     uses: MoDNS/MoDNS/.github/workflows/react-workflow.yml@main
 
   package:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [backend, frontend]
     strategy:
       matrix:
@@ -76,7 +76,7 @@ jobs:
           maintainer: MoDNS
           version: ${{ inputs.version || github.ref_name }} # refs/tags/v*.*.*
           arch: ${{ matrix.debian_arch }}
-          depends: 'libc6'
+          depends: 'libc6 (>=2.31)'
           desc: 'Modular DNS Server (MoDNS).'
 
       - name: Upload package artifact
