@@ -57,10 +57,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: frontend-build
+          path: frontend/dns_frontend/build/
       - name: Copy Files into Package
         run: |
           make install MODNS_INSTALL_PKGDIR=.debpkg ARCH=${{ matrix.architecture }}
-          cp -r frontend/dns_frontend/build/* .debpkg/usr/share/web
+          cp -r frontend/dns_frontend/build/ .debpkg/usr/share/web
       
       - name: Create Debian Package
         uses: jiro4989/build-deb-action@v2
