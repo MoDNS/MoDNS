@@ -37,6 +37,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/cache
+      with:
+        key: ci-build-x86_64-${{ hashFiles('**/Cargo.toml')}}
     - uses: actions/download-artifact@v3
       with:
         name: backend-build-x86_64
