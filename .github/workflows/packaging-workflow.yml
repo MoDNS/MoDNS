@@ -7,8 +7,8 @@ on:
       - 'v*.*.*'
 
 jobs:
-  build-backend:
-    uses: MoDNS/MoDNS/.github/workflow/backend-workdflow.yml@main
+  backend:
+    uses: MoDNS/MoDNS/.github/workflows/backend-workflow.yml@main
     strategy:
       matrix:
         architecture: [x86_64, aarch64, arm]
@@ -29,36 +29,38 @@ jobs:
       rust_toolchain: ${{ matrix.rust_toolchain }}
       gcc: ${{ matrix.gcc }}
 
-  build-frontend:
-    uses: MoDNS/MoDNS/.github/workflow/react-workflow.yml@main
+  frontend:
+    uses: MoDNS/MoDNS/.github/workflows/react-workflow.yml@main
 
   package:
-    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
     strategy:
       matrix:
         architecture: [x86_64, aarch64, arm]
         include:
           - architecture: x86_64
             debian_arch: amd64
-            rust_toolchain: x86_64-unknown-linux-gnu
           - architecture: aarch64
             debian_arch: arm64
             gcc: gcc-aarch64-linux-gnu
-            rust_toolchain: aarch64-unknown-linux-gnu
           - architecture: arm
             debian_arch: arm
             gcc: gcc-arm-linux-gnueabi
-            rust_toolchain: arm-unknown-linux-gnueabi
-    outputs:
-      package-file-x86_64: ${{ steps.get_file.outputs.filename_x86_64 }}
-      package-file-arm: ${{ steps.get_file.outputs.filename_arm }}
-      package-file-aarch32: ${{ steps.get_file.outputs.filename_aarch32 }}
-    runs-on: ubuntu-latest
-      - name: Copy Files Into Package
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get backend build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-build-${{ matrix.architecture }}
+      - name: Get frontend build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+      - name: Copy Files into Package
         run: |
           make install MODNS_INSTALL_PKGDIR=.debpkg ARCH=${{ matrix.architecture }}
-          cp frontend/dns_frontend/build/* .debpkg/usr/share/web
-          mkdir -p .debpkg/usr/lib/modns
+          cp -r frontend/dns_frontend/build/* .debpkg/usr/share/web
       
       - name: Create Debian Package
         uses: jiro4989/build-deb-action@v2
@@ -70,17 +72,11 @@ jobs:
           arch: ${{ matrix.debian_arch }}
           depends: 'libc6'
           desc: 'Modular DNS Server (MoDNS).'
-      - name: Get File
-        run: echo ${{ matrix.arch }}=${{ steps.create_debian_package.outputs.file_name }} >> $GITHUB_OUTPUT
-  
-  create-artifact:
-    needs: package
-      - name: Upload package file
+
+      - name: Upload package artifact
         uses: actions/upload-artifact@v3
         with:
-          name: modns-deb-release-${{ github.ref }}
+          name: deb-release-${{ matrix.debian_arch }}-${{ github.ref }}
           path: |
-            ${{ jobs.package.outputs.package-file-x86_64 }}
-            ${{ jobs.package.outputs.package-file-arm }}
-            ${{ jobs.package.outputs.package-file-aarch64 }}
+            ${{ steps.create_debian_package.outputs.file_name }}
 

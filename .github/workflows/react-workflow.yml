@@ -19,15 +19,15 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [19.x]
-
     steps:
       - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: latest
       - run: npm ci
       - run: npm run build --if-present
+      - uses: actions/upload-artifacts@v3
+        with:
+          name: frontend-build
+          path: frontend/dns_frontend/build
