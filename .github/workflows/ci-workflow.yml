@@ -13,7 +13,6 @@ on:
 
 jobs:
   build:
-    uses: MoDNS/MoDNS/.github/workflows/backend-workflow.yml@main
     strategy:
       matrix:
         architecture: [x86_64, aarch64, arm]
@@ -27,6 +26,7 @@ jobs:
           - architecture: arm
             gcc: gcc-arm-linux-gnueabi
             rust_toolchain: arm-unknown-linux-gnueabi
+    uses: MoDNS/MoDNS/.github/workflows/backend-workflow.yml@main
     with:
       architecture: ${{ matrix.architecture }}
       rust_toolchain: ${{ matrix.rust_toolchain }}
@@ -36,4 +36,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v3
+    - uses: actions/download-artifact@v3
+      with:
+        name: backend-build-x86_64-${{ github.ref }}
     - run: make test ARCH=${{ matrix.architecture }}

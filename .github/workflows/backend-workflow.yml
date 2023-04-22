@@ -2,53 +2,82 @@ name: Build Backend
 
 on:
   workflow_dispatch:
+    inputs:
+      architecture:
+        required: true
+        type: choice
+        options: [x86_64, arm, aarch64]
+        default: x86_64
+      rust_toolchain:
+        required: true
+        type: choice
+        options:
+          - x86_64-unknown-linux-gnu
+          - arm-unknown-linux-gnu
+          - aarch64-unknown-linux-gnueabi
+        default: x86_64-unknown-linux-gnu
+      gcc:
+        required: true
+        type: choice
+        options:
+          - gcc-x86-64-linux-gnu
+          - gcc-arm-linux-gnueabi
+          - gcc-aarch64-linux-gnu
   workflow_call:
     inputs:
       architecture:
         required: true
-        type: string
+        type: choice
+        options: [x86_64, arm, aarch64]
+        default: x86_64
       rust_toolchain:
         required: true
-        type: string
+        type: choice
+        options:
+          - x86_64-unknown-linux-gnu
+          - arm-unknown-linux-gnu
+          - aarch64-unknown-linux-gnueabi
+        default: x86_64-unknown-linux-gnu
       gcc:
-        required: false
-        type: string
-
+        required: true
+        type: choice
+        options:
+          - gcc-x86-64-linux-gnu
+          - gcc-arm-linux-gnueabi
+          - gcc-aarch64-linux-gnu
 
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -D warnings
 
 jobs:
-  
   build:
-    
     runs-on: ubuntu-latest
-
     steps:
-
     - uses: actions/checkout@v3
     - uses: actions/cache@v3
       with:
         key: ci-build-${{ inputs.architecture }}
         path: target/${{ inputs.rust_toolchain }}
-
     - name: Install coresponding Rust toolchain
-      if: inputs.rust_toolchain != ''
       uses: actions-rs/toolchain@v1
       with:
         profile: minimal
         toolchain: stable
         target: ${{ inputs.rust_toolchain }}
-
     - name: Install gcc cross-compiler
       run: sudo apt-get install ${{ inputs.gcc }}
-
     - name: Build server
       run: make server ARCH=${{ inputs.architecture }}
-
     - name: Build CLI
       run: make cli ARCH=${{ inputs.architecture }}
-
     - name: Build plugins
       run: make plugins test-plugins ARCH=${{ inputs.architecture }}
+    - name: Save artifacts
+      uses: actions/upload-artifacts@v3
+      with:
+        name: backend-build-${{ inputs.architecture }}-${{ github.ref }}
+        path: |
+          target/${{ rust_toolchain }}/debug/modns
+          target/${{ rust_toolchain }}/debug/modnsd
+          plugins/*/plugin_${{ inputs.architecture }}.so
