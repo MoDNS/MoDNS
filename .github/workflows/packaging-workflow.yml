@@ -82,7 +82,7 @@ jobs:
       - name: Upload package artifact
         uses: actions/upload-artifact@v3
         with:
-          name: deb-release-${{ matrix.debian_arch }}
+          name: deb-release
           path: |
             ${{ steps.deb.outputs.file_name }}
 
