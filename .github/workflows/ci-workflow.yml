@@ -40,4 +40,4 @@ jobs:
     - uses: actions/download-artifact@v3
       with:
         name: backend-build-x86_64
-    - run: make test ARCH=${{ matrix.architecture }}
+    - run: make test ARCH=x86_64
