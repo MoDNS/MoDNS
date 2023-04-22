@@ -59,7 +59,7 @@ export const setInterceptOrderAPI = async (uuidList) => {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: uuidList,
+        body: {"data": uuidList},
     });
 }
 
@@ -84,8 +84,6 @@ export const getPluginConfig = async (uuid, key) => {
     }).then(response => {
         if (response.ok) {
             return response.json().data;
-        } else {
-            return null;
         }
     });
 }
@@ -98,9 +96,7 @@ export const getDashboardData = async (uuid, key) => {
         }
     }).then(response => {
         if (response.ok) {
-            return response.json().data;
-        } else {
-            return undefined;
+            return response.json();
         }
     })
 }
@@ -120,10 +116,8 @@ export const getPluginCustomSettings = async (uuid) => {
     }).then(response => {
         if (response.ok) {
             return response.json().data;
-        } else {
-            return [];
         }
-    });
+    })
 }
 
 export const getPluginLogo = async (uuid) => {
@@ -169,13 +163,23 @@ export const getServerConfig = async (key) => {
     })
 }
 
-export const getServerDashboard = async () => {
+export const getDashboardLayoutAPI = async () => {
     return await fetch(`${window.location.origin}/api/dashboard`).then(response => {
         if (response.ok) {
             return response.json().data;
         } else {
             return [];
         }
+    });
+}
+
+export const setDashboardLayoutAPI = async (dashboard) => {
+    return await fetch(`${window.location.origin}/api/dashboard`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: {'data': dashboard},
     });
 }
 

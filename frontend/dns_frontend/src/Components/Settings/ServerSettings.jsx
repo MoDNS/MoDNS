@@ -1,6 +1,6 @@
 import { Button, Icon, InputAdornment, Switch, TextField, Typography } from '@mui/material';
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ErrorIcon from '@mui/icons-material/Error';
 
 import { getServerConfig, setServerConfig } from '../../API/getsetAPI';
@@ -11,11 +11,23 @@ const ServerSettings = () => {
         return /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/.test(ip)
     }
 
-    const [webAddress, setWebAddress] = useState( getServerConfig('web_address') );
-    const [staticIP, setStaticIP] = useState( getServerConfig('static_ip') );
+    const [webAddress, setWebAddress] = useState('');
+    const [staticIP, setStaticIP] = useState('');
+    const [useStaticIP, setUseStaticIP] = useState('');
+    
+    useEffect(() => {
+        getServerConfig('web_address').then(res => {
+            setWebAddress(res);
+        })
+        getServerConfig('static_ip').then(res => {
+            setStaticIP(res);
+        })
+        getServerConfig('static_ip').then(res => {
+            setUseStaticIP(res);
+        })
+    }, [])
+    
     const [errorStaticIP, setErrorStaticIP] = useState( staticIP ? !checkStaticIP(staticIP) : true );
-    const [useStaticIP, setUseStaticIP] = useState( getServerConfig('use_static_ip') );
-
     const inputStaticIP = (ip) => {
         setStaticIP(ip);
         if (!checkStaticIP(ip)) {

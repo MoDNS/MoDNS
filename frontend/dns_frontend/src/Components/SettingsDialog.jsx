@@ -260,4 +260,9 @@ SettingsDialog.propTypes = {
     togglePlugin: PropTypes.func.isRequired,            // Function to toggle a plugin
     dialogOpen: PropTypes.bool.isRequired,              // Dialog open close status
     setDialogStatus: PropTypes.func.isRequired,         // Function to open and close dialog
+    settingsPage: PropTypes.array,
+};
+
+SettingsDialog.defaultProps = {
+    settingsPage: []
 };

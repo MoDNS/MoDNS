@@ -2,7 +2,7 @@ import { Button } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import MainBox from "../Components/MainBox";
 import { ParseDashboardPage } from "../scripts/ParseDashboardPage";
-import { getServerConfig, getServerDashboard, setServerConfig } from "../API/getsetAPI";
+import { getServerConfig, setServerConfig, getDashboardLayoutAPI, setDashboardLayoutAPI,  } from "../API/getsetAPI";
 import { getDashboardLayout, setDashboardLayout } from "../scripts/getsetLocalStorage";
 
 
@@ -16,9 +16,8 @@ const Dashboard = () => {
   useEffect(() => {
     getServerConfig('use_global_dashboard').then(useGlobDash => {
       setUseGlobDash(useGlobDash);
-      console.log(useGlobDash);
       if (useGlobDash) {
-        getServerDashboard().then(res => {
+        getDashboardLayoutAPI().then(res => {
           setDashboardJson([...res]);
         })
       } else {
@@ -36,9 +35,8 @@ const Dashboard = () => {
             <Button variant="contained" sx={{ marginLeft: 'auto', marginY: 'auto' }} onClick={() => {
               if (editMode) {
                 if (useGlobalDashboard) {
-                  setServerConfig('dashboard', dashboardJson);
+                  setDashboardLayoutAPI('dashboard', dashboardJson);
                 } else {
-                  console.log(dashboardJson);
                   setDashboardLayout(dashboardJson);
                 }
               }
