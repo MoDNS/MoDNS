@@ -76,7 +76,7 @@ jobs:
           maintainer: MoDNS
           version: ${{ inputs.version || github.ref_name }} # refs/tags/v*.*.*
           arch: ${{ matrix.debian_arch }}
-          depends: 'libc6 (>=2.32)'
+          depends: 'libc6 (>=2.31)'
           desc: 'Modular DNS Server (MoDNS).'
 
       - name: Upload package artifact
