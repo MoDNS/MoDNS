@@ -47,7 +47,12 @@ jobs:
     - uses: actions/cache@v3
       with:
         key: ci-build-${{ inputs.architecture }}-${{ hashFiles('**/Cargo.toml')}}
-        path: target/${{ inputs.rust_toolchain }}
+        path: |
+          target/${{ inputs.rust_toolchain }}
+          ~/.cargo/registry
+          ~/.cargo/git
+        restore-keys: |
+          ci-build-${{ inputs.architecture }}
     - name: Install corresponding Rust toolchain
       uses: actions-rs/toolchain@v1
       with:
