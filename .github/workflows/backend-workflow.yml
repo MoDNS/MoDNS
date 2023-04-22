@@ -67,6 +67,6 @@ jobs:
       with:
         name: backend-build-${{ inputs.architecture }}-${{ github.ref }}
         path: |
-          target/${{ rust_toolchain }}/debug/modns
-          target/${{ rust_toolchain }}/debug/modnsd
+          target/${{ inputs.rust_toolchain }}/debug/modns
+          target/${{ inputs.rust_toolchain }}/debug/modnsd
           plugins/*/plugin_${{ inputs.architecture }}.so
