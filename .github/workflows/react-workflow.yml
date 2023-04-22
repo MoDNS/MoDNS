@@ -30,4 +30,5 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: frontend-build
-          path: frontend/dns_frontend/build
+          path: |
+            frontend/dns_frontend/build/

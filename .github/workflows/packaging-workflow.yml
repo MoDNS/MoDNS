@@ -2,6 +2,10 @@ name: Package for Debian
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: true
   push:
     tags:
       - 'v*.*.*'
@@ -57,18 +61,20 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: frontend-build
+          path: frontend/dns_frontend/build/
       - name: Copy Files into Package
         run: |
           make install MODNS_INSTALL_PKGDIR=.debpkg ARCH=${{ matrix.architecture }}
-          cp -r frontend/dns_frontend/build/* .debpkg/usr/share/web
+          cp -r frontend/dns_frontend/build/ .debpkg/usr/share/modns/web
       
       - name: Create Debian Package
+        id: deb
         uses: jiro4989/build-deb-action@v2
         with:
           package: modns
           package_root: .debpkg
           maintainer: MoDNS
-          version: ${{ github.ref }} # refs/tags/v*.*.*
+          version: ${{ inputs.version || github.ref_name }} # refs/tags/v*.*.*
           arch: ${{ matrix.debian_arch }}
           depends: 'libc6'
           desc: 'Modular DNS Server (MoDNS).'
@@ -76,7 +82,7 @@ jobs:
       - name: Upload package artifact
         uses: actions/upload-artifact@v3
         with:
-          name: deb-release-${{ matrix.debian_arch }}-${{ github.ref }}
+          name: deb-release
           path: |
-            ${{ steps.create_debian_package.outputs.file_name }}
+            ${{ steps.deb.outputs.file_name }}
 
