@@ -56,7 +56,7 @@ jobs:
       - name: Get frontend build artifacts
         uses: actions/download-artifact@v3
         with:
-          name: frontend-build-${{ github.ref }}
+          name: frontend-build
       - name: Copy Files into Package
         run: |
           make install MODNS_INSTALL_PKGDIR=.debpkg ARCH=${{ matrix.architecture }}
