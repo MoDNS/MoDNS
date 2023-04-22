@@ -68,6 +68,7 @@ jobs:
           cp -r frontend/dns_frontend/build/ .debpkg/usr/share/web
       
       - name: Create Debian Package
+        id: deb
         uses: jiro4989/build-deb-action@v2
         with:
           package: modns
@@ -83,5 +84,5 @@ jobs:
         with:
           name: deb-release-${{ matrix.debian_arch }}-${{ github.ref }}
           path: |
-            ${{ steps.create_debian_package.outputs.file_name }}
+            ${{ steps.deb.outputs.file_name }}
 
