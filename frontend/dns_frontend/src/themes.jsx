@@ -138,14 +138,17 @@ const themeOne = createTheme({
     MuiMenu: {
       styleOverrides: {
         list: {
-          backgroundColor: t1_b,
+          backgroundColor: t1_pd,
           borderRadius: 0,
-        }
+        },
       },
     },
     MuiSelect: {
       defaultProps: {
         variant: 'standard',
+        margin: 'dense',
+        size: 'small',
+        color: 'text',
       },
       styleOverrides: {
         root: {
@@ -172,6 +175,7 @@ const themeOne = createTheme({
         margin: 'dense',
         size: 'small',
         color: 'text',
+        autoComplete: 'off',
       },
       styleOverrides: {
         root: {
@@ -482,7 +486,7 @@ const themeTwo = createTheme({
     MuiMenu: {
       styleOverrides: {
         list: {
-          backgroundColor: t2_b,
+          backgroundColor: t2_pd,
           borderRadius: 0,
         }
       },
@@ -513,9 +517,13 @@ const themeTwo = createTheme({
         }
       },
     },
-    MuiTextField:{
+    MuiTextField: {
       defaultProps: {
         variant: 'standard',
+        margin: 'dense',
+        size: 'small',
+        color: 'text',
+        autoComplete: 'off',
       },
       styleOverrides: {
         root: {

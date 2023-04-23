@@ -1,66 +1,77 @@
-name: Rust & Make CI
+name: Build Backend
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches: [main]
-    paths:
-      - '**'
-      - '!docs/**'
-      - '!frontend/**'
-      - '!**Dockerfile**'
-      - '!**docker**'
-
+    inputs:
+      architecture:
+        required: true
+        type: choice
+        options: [x86_64, arm, aarch64]
+        default: x86_64
+      rust_toolchain:
+        required: true
+        type: choice
+        options:
+          - x86_64-unknown-linux-gnu
+          - arm-unknown-linux-gnu
+          - aarch64-unknown-linux-gnueabi
+        default: x86_64-unknown-linux-gnu
+      gcc:
+        required: true
+        type: choice
+        options:
+          - gcc-x86-64-linux-gnu
+          - gcc-arm-linux-gnueabi
+          - gcc-aarch64-linux-gnu
+  workflow_call:
+    inputs:
+      architecture:
+        required: true
+        type: string
+      rust_toolchain:
+        required: true
+        type: string
+      gcc:
+        required: true
+        type: string
 
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -D warnings
 
 jobs:
-  
   build:
-    strategy:
-      matrix:
-        architecture: [x86_64, aarch64, arm]
-        include:
-          - architecture: aarch64
-            gcc: gcc-aarch64-linux-gnu
-            rust_toolchain: aarch64-unknown-linux-gnu
-          - architecture: arm
-            gcc: gcc-arm-linux-gnueabi
-            rust_toolchain: arm-unknown-linux-gnueabi
-
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-20.04
     steps:
-
     - uses: actions/checkout@v3
     - uses: actions/cache@v3
       with:
-        key: ci-build-${{ matrix.architecture }}
-        path: target
-
-    - name: Install coresponding Rust toolchain
-      if: matrix.rust_toolchain != ''
+        key: ci-build-${{ inputs.architecture }}-${{ hashFiles('**/Cargo.toml')}}
+        path: |
+          target/${{ inputs.rust_toolchain }}
+          ~/.cargo/registry
+          ~/.cargo/git
+        restore-keys: |
+          ci-build-${{ inputs.architecture }}
+    - name: Install corresponding Rust toolchain
       uses: actions-rs/toolchain@v1
       with:
         profile: minimal
         toolchain: stable
-        target: ${{ matrix.rust_toolchain }}
-
+        target: ${{ inputs.rust_toolchain }}
     - name: Install gcc cross-compiler
-      run: sudo apt-get install ${{ matrix.gcc }}
-
+      run: sudo apt-get install ${{ inputs.gcc }}
     - name: Build server
-      run: make server ARCH=${{ matrix.architecture }}
-
+      run: make server ARCH=${{ inputs.architecture }}
     - name: Build CLI
-      run: make cli ARCH=${{ matrix.architecture }}
-
+      run: make cli ARCH=${{ inputs.architecture }}
     - name: Build plugins
-      run: make plugins test-plugins ARCH=${{ matrix.architecture }}
-
-    - name: Run tests
-      if: matrix.architecture == 'x86_64'
-      run: make test ARCH=${{ matrix.architecture }}
-
+      run: make plugins test-plugins ARCH=${{ inputs.architecture }}
+    - name: Save artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: backend-build-${{ inputs.architecture }}
+        path: |
+          target/${{ inputs.rust_toolchain }}/debug/modns
+          target/${{ inputs.rust_toolchain }}/debug/modnsd
+          plugins/*/plugin_${{ inputs.architecture }}.so

@@ -14,5 +14,8 @@ $(PLUGINFILE): export CGO_LDFLAGS=$(LDFLAGS)
 $(PLUGINFILE): $(SRC)
 	go build -buildmode c-shared -o $@ modns/simple_cache
 
+install: $(PLUGINFILE) manifest.yaml
+	install -D -t $(PKGDIR)/usr/share/modns/default-plugins/base-cache $^
+
 clean:
 	$(RM) $(wildcard plugin*.so)

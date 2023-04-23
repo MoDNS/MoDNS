@@ -2,7 +2,7 @@ import { Button } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import MainBox from "../Components/MainBox";
 import { ParseDashboardPage } from "../scripts/ParseDashboardPage";
-import { getServerConfig, setServerConfig, getDashboardLayoutAPI, setDashboardLayoutAPI,  } from "../API/getsetAPI";
+import { getDashboardLayoutAPI, getServerConfig, setDashboardLayoutAPI } from "../API/getsetAPI";
 import { getDashboardLayout, setDashboardLayout } from "../scripts/getsetLocalStorage";
 
 
@@ -46,6 +46,7 @@ const Dashboard = () => {
         ]
         } 
         divider
+        allowScroll
       >
         { dashboardJson && <ParseDashboardPage editMode={editMode} dashboardJson={dashboardJson} setDashboardJson={setDashboardJson} />}
       </MainBox>
