@@ -4,7 +4,7 @@ import { PropTypes } from 'prop-types';
 import Title from './Title';
 
 
-const MainBox = ({ children, sx, title, divider, titleCentered }) => {
+const MainBox = ({ children, sx, title, divider, titleCentered, allowScroll }) => {
 
     const pt = divider ? 20 : 0;
     const pb = divider ? 30 : 0;
@@ -21,7 +21,7 @@ const MainBox = ({ children, sx, title, divider, titleCentered }) => {
                 <Title titleCentered={titleCentered} divider={divider}>
                     {title}
                 </Title>
-                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', paddingTop: pt, paddingBottom: pb, overflowY: 'auto', overflowX: 'hidden' }} >
+                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', paddingTop: pt, paddingBottom: pb, overflowY: allowScroll ? 'auto': 'hidden', overflowX: 'hidden' }} >
                     {children}
                 </div>
             </Box>
@@ -36,6 +36,7 @@ MainBox.propTypes = {
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
     divider: PropTypes.bool,
     titleCentered: PropTypes.bool,
+    allowScroll: PropTypes.bool,
 };
 
 MainBox.defaultProps = {
@@ -51,4 +52,5 @@ MainBox.defaultProps = {
     title: 'Title Here',
     divider: false,
     titleCentered: false,
+    allowScroll: false,
 };

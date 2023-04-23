@@ -8,17 +8,85 @@ export const setServerConfig = (key, value) => {
 
 export const getServerConfig = (key) => {
     if (key === 'static_ip') {
-        return "192.168.0.101";
+        return {
+          overridden: false,
+          value: "192.168.0.101"
+        }
     }
     if (key === 'use_static_ip') {
-        return true;
+        return {
+          overridden: false,
+          value: false
+        }
     }
     if (key === 'use_global_dashboard') {
-        return false;
+        return {
+          overridden: false,
+          value: false,
+        }
     }
-    if (key === 'dashboard') {
-        return [];
+    if (key === "plugin_paths") {
+      return [
+        {
+          overridden: true,
+          value: "/plugins"
+        },
+        {
+          overridden: false,
+          value: "/more_plugins"
+        }
+      ];
     }
+    if (key === "log_filter") {
+      return {
+        overridden: false,
+        value: "modns=trace,info"
+      }
+    }
+    if (key === "database_type") {
+      return {
+        overridden: false,
+        value: 'postgres'
+      }
+    }
+    if (key === "sqlite_file_path") {
+      return {
+        overridden: false,
+        value: '/database/file.sql'
+      }
+    }
+    if (key === 'postgres_ip') {
+      return {
+        overridden: false,
+        value: '192.168.0.101'
+      }
+    }
+    if (key === 'postgres_port') {
+      return {
+        overridden: false,
+        value: 1234
+      }
+    }
+    if (key === 'sqlite_password') {
+      return {
+        overridden: false,
+        value: "password"
+      }
+    }
+    if (key === 'postgres_password') {
+      return {
+        overridden: false,
+        value: 'password'
+      }
+    }
+}
+
+export const getDashboardLayoutAPI = () => {
+  return [];
+}
+
+export const setDashboardLayoutAPI = (layout) => {
+  
 }
 
 export const restartServer = () => {
