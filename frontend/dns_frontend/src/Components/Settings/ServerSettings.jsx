@@ -1,6 +1,6 @@
 import { Button, Checkbox, FormControlLabel, Icon, IconButton, InputAdornment, List, ListItem, MenuItem, Select, Switch, TextField, Tooltip, Typography } from '@mui/material';
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ErrorIcon from '@mui/icons-material/Error';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
@@ -15,29 +15,49 @@ const ServerSettings = () => {
     const loggingOptions = ["error", "warn", "info", "debug", "trace"];
 
 
-    const parseLogFilter = () => {
+    const parseLogFilter = (content) => {
         try {
-            let list = logFilter.value.split("=");
+            let list = content.value.split("=");
             list = list[1].split(",");
             return [...list]
         } catch (error) {
             return ["", ""];
         }
     }
+    
 
+    const [useGlobDash, setUseGlobDash] = useState({});
+    const [staticIP, setStaticIP] = useState({});
+    const [useStaticIP, setUseStaticIP] = useState({});
+    const [pluginPaths, setPluginPaths] = useState([]);
 
-    const [useGlobDash, setUseGlobDash] = useState( getServerConfig('use_global_dashboard') );
-    const [staticIP, setStaticIP] = useState( getServerConfig('static_ip') );
-    const [useStaticIP, setUseStaticIP] = useState( getServerConfig('use_static_ip') );
-    const [pluginPaths, setPluginPaths] = useState( getServerConfig('plugin_paths'));
+    const [logFilter, setLogFilter] = useState({});
+    const [selectLogFilter, setSelectLogFilter] = useState(["", ""]);
+    
+    useEffect(() => {
+        getServerConfig('use_global_dashboard').then(res => {
+            setUseGlobDash(res);
+        })
+        getServerConfig('use_static_ip').then(res => {
+            setUseStaticIP(res);
+        })
+        getServerConfig('static_ip').then(res => {
+            setStaticIP(res);
+        })
+        getServerConfig('plugin_paths').then(res => {
+            setPluginPaths(res.data || []);
+        })
+        getServerConfig('log_filter').then(res => {
+            setLogFilter(res);
+            setSelectLogFilter(parseLogFilter(res));
+        })
 
-    const [logFilter, setLogFilter] = useState( getServerConfig('log_filter') );
-    const [selectLogFilter, setSelectLogFilter] = useState(parseLogFilter());
+    }, [])
+    
 
-
-    const [errorStaticIP, setErrorStaticIP] = useState( staticIP.value ? !IPInputValidation(staticIP.value) : true );
+    const [errorStaticIP, setErrorStaticIP] = useState( staticIP && staticIP.value ? !IPInputValidation(staticIP.value) : true );
     const [addPath, setAddPath] = useState("");
-    const [useCustLogFilt, setUseCustLogFilt] = useState(!(loggingOptions.includes(selectLogFilter[0]) && loggingOptions.includes(selectLogFilter[1])));
+    const [useCustLogFilt, setUseCustLogFilt] = useState(!(loggingOptions.includes(selectLogFilter[0] || "") && loggingOptions.includes(selectLogFilter[1] || "")));
 
     const inputStaticIP = (ip) => {
         setStaticIP(ip);
@@ -72,19 +92,19 @@ const ServerSettings = () => {
         if (useCustLogFilt) {
             setServerConfig('log_filter', logFilter.value);
         } else {
-            setServerConfig('log_filter', `modns=${selectLogFilter[0]},${selectLogFilter[1]}`)
+            setServerConfig('log_filter', `modns=${selectLogFilter[0] || ""},${selectLogFilter[1] || ""}`)
         }
     }
 
 
     const applyChanges = () => {
-        !useGlobDash.overridden && handleSetUseGlobDash();
-        !useStaticIP.overridden && handleStaticIPSwitch();
+        !(useGlobDash && useGlobDash.overridden) && handleSetUseGlobDash();
+        !(useStaticIP && useStaticIP.overridden) && handleStaticIPSwitch();
         if (useStaticIP.value) {
-            !staticIP.overridden && handleSetStaticIP();
+            !(staticIP && staticIP.overridden) && handleSetStaticIP();
         }
         handleSetPluginPaths();
-        !logFilter.overridden && handleSetLogFilter();
+        !(logFilter && logFilter.overridden) && handleSetLogFilter();
     }
 
 
@@ -94,7 +114,7 @@ const ServerSettings = () => {
                 sx={{ paddingLeft: 1 }}
                 secondaryAction={
                     <IconButton edge="end"
-                        disabled={path.overridden}
+                        disabled={path && path.overridden}
                         onClick={() => {
                             let x = [...pluginPaths];
                             x.splice(index, 1);
@@ -136,8 +156,8 @@ const ServerSettings = () => {
                         </Tooltip>
 
                         <Select
-                            disabled={useGlobDash.overridden}
-                            value={useGlobDash.value ? 'use_global_dashboard' : 'use_local_dashboard'}
+                            disabled={useGlobDash && useGlobDash.overridden}
+                            value={useGlobDash && useGlobDash.value ? 'use_global_dashboard' : 'use_local_dashboard'}
                             onChange={(e) => {
                                 let x = {...useGlobDash}
                                 x.value = e.target.value === "use_global_dashboard" ? true : false;
@@ -159,8 +179,8 @@ const ServerSettings = () => {
                             Use Static IP:
                         </Typography>
                         <Switch 
-                            disabled={useStaticIP.overridden}
-                            checked={useStaticIP.value}
+                            disabled={useStaticIP && useStaticIP.overridden}
+                            checked={(useStaticIP && useStaticIP.value) || false}
                             onChange={ () => {
                                 let x = {...useStaticIP};
                                 x.value = !useStaticIP.value;
@@ -181,8 +201,8 @@ const ServerSettings = () => {
 
                         <TextField
                             onFocus={ (e) => e.target.select() }
-                            defaultValue={staticIP.value}
-                            disabled={!useStaticIP.value || staticIP.overridden}
+                            value={(staticIP && staticIP.value) || ""}
+                            disabled={!(useStaticIP && useStaticIP.value) || (staticIP && staticIP.overridden)}
                             inputProps={{style: { textAlign: 'right', paddingRight: 0, }}}
                             placeholder={ useStaticIP ? 'xxx.xxx.xxx.xxx' : null }
                             onInput={ e => {
@@ -294,8 +314,8 @@ const ServerSettings = () => {
                                 } 
                             />
                             <TextField
-                                value={logFilter.value}
-                                disabled={logFilter.overridden || !useCustLogFilt}
+                                value={(logFilter && logFilter.value) || ""}
+                                disabled={(logFilter && logFilter.overridden) || !useCustLogFilt}
                                 onChange={(e) => {
                                     let x = logFilter;
                                     x.value = e.target.value;
@@ -311,7 +331,7 @@ const ServerSettings = () => {
                                 modns=
                             </Typography>
                             <Select
-                                disabled={logFilter.overridden || useCustLogFilt}
+                                disabled={(logFilter && logFilter.overridden) || useCustLogFilt}
                                 value={selectLogFilter[0] || ""}
                                 sx={{ width: 100, marginTop: 'auto' }} 
                                 onChange={(e) => {
@@ -335,7 +355,7 @@ const ServerSettings = () => {
                                 ,
                             </Typography>
                             <Select
-                                disabled={logFilter.overridden || useCustLogFilt}
+                                disabled={(logFilter && logFilter.overridden) || useCustLogFilt}
                                 sx={{ width: 100, marginTop: 'auto' }} 
                                 value={selectLogFilter[1] || ""}
                                 onChange={(e) => {
@@ -354,7 +374,7 @@ const ServerSettings = () => {
                             </Select>
                             <TextField
                                 value={`modns=${selectLogFilter[0]},${selectLogFilter[1]}`}
-                                disabled={logFilter.overridden || useCustLogFilt}
+                                disabled={(logFilter && logFilter.overridden) || useCustLogFilt}
                                 sx={{ marginTop: 'auto', marginBottom: 0 }}
                                 InputProps={{
                                     readOnly: true,

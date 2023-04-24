@@ -1,5 +1,5 @@
 import { Button } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import MainBox from "../Components/MainBox";
 import { ParseDashboardPage } from "../scripts/ParseDashboardPage";
 import { getDashboardLayoutAPI, getServerConfig, setDashboardLayoutAPI } from "../API/getsetAPI";
@@ -8,18 +8,24 @@ import { getDashboardLayout, setDashboardLayout } from "../scripts/getsetLocalSt
 
 const Dashboard = () => {
   const [editMode, setEditMode] = useState(false);
+  const [useGlobalDashboard, setUseGlobDash] = useState(true);
+  
+  const [dashboardJson, setDashboardJson] = useState();
 
-  const useGlobalDashboard = getServerConfig('use_global_dashboard').value;
 
-    let json;
-    if (useGlobalDashboard) {
-      json = getDashboardLayoutAPI();
-    } else {
-      json = getDashboardLayout();
-      console.log(json);
-    }
-
-    const [dashboardJson, setDashboardJson] = useState([...json]);
+  useEffect(() => {
+    getServerConfig('use_global_dashboard').then(useGlobDash => {
+      setUseGlobDash(useGlobDash);
+      if (useGlobDash) {
+        getDashboardLayoutAPI().then(res => {
+          let x = (res && res.data) || [];
+          setDashboardJson([...x]);
+        })
+      } else {
+        setDashboardJson(getDashboardLayout());
+      }
+    })
+  }, [] );
 
   return (
     <>
@@ -32,7 +38,6 @@ const Dashboard = () => {
                 if (useGlobalDashboard) {
                   setDashboardLayoutAPI('dashboard', dashboardJson);
                 } else {
-                  console.log(dashboardJson);
                   setDashboardLayout(dashboardJson);
                 }
               }
@@ -44,7 +49,7 @@ const Dashboard = () => {
         divider
         allowScroll
       >
-        <ParseDashboardPage editMode={editMode} dashboardJson={dashboardJson} setDashboardJson={setDashboardJson} />
+        { dashboardJson && <ParseDashboardPage editMode={editMode} dashboardJson={dashboardJson} setDashboardJson={setDashboardJson} />}
       </MainBox>
 
       

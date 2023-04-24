@@ -2,10 +2,10 @@ import { Button, Dialog, DialogContent, DialogTitle, Divider, FormControlLabel, 
 import React, { useState } from 'react';
 import { PropTypes } from 'prop-types';
 import CloseIcon from '@mui/icons-material/Close';
-import { getPluginCustomSettings, uninstallPlugin } from '../API/getsetAPI';
+import { uninstallPlugin } from '../API/getsetAPI';
 import { ParseCustomSettings } from '../scripts/ParseCustomSettings';
 
-const SettingsDialog = ({ uuid, friendlyName, description, home, is_listener, is_interceptor, is_resolver, is_validator, is_inspector, interceptPosition, setInterceptOrder, numInterceptors, pluginState, togglePlugin, dialogOpen, setDialogStatus, }) => {
+const SettingsDialog = ({ uuid, friendlyName, description, home, is_listener, is_interceptor, is_resolver, is_validator, is_inspector, interceptPosition, setInterceptOrder, numInterceptors, pluginState, togglePlugin, dialogOpen, setDialogStatus, settingsPage }) => {
     const theme = useTheme();
 
     const [interceptPosState, setInterceptPositionState] = useState(interceptPosition);
@@ -195,7 +195,7 @@ const SettingsDialog = ({ uuid, friendlyName, description, home, is_listener, is
 
                     <Divider />
 
-                    <ParseCustomSettings uuid={uuid} settingsJson={getPluginCustomSettings()} />
+                    <ParseCustomSettings uuid={uuid} settingsJson={settingsPage} />
 
                 </div>
             </DialogContent>
@@ -260,4 +260,9 @@ SettingsDialog.propTypes = {
     togglePlugin: PropTypes.func.isRequired,            // Function to toggle a plugin
     dialogOpen: PropTypes.bool.isRequired,              // Dialog open close status
     setDialogStatus: PropTypes.func.isRequired,         // Function to open and close dialog
+    settingsPage: PropTypes.array,
+};
+
+SettingsDialog.defaultProps = {
+    settingsPage: []
 };

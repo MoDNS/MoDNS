@@ -14,7 +14,7 @@ const PieChart = ({ label, data, height }) => {
         {label}
       </Typography>
       <ResponsivePie
-        data={data}
+        data={data.data || []}
         height={height}
         margin={{ top: 20, right: 100, bottom: 10, left: 0 }}
         innerRadius={0.5}
@@ -83,12 +83,12 @@ export default PieChart;
 
 PieChart.propTypes = {
   label: PropTypes.string,
-  data: PropTypes.array,
+  data: PropTypes.object,
   height: PropTypes.number,
 };
 
 PieChart.defaultProps = {
   label: "Insert Label",
-  data: [],
+  data: {},
   height: 300,
 };

@@ -30,7 +30,6 @@ export const setPluginViewStorage = (view) => {
 export const getDashboardLayout = () => {
     var dashboard_layout = localStorage.getItem('dashboardLayout');
     if (dashboard_layout) {
-        console.log()
         return JSON.parse(dashboard_layout);
     } else {
         return [];
