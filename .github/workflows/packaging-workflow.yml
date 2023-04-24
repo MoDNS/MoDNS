@@ -58,7 +58,7 @@ jobs:
       - name: Get backend build artifacts
         uses: actions/download-artifact@v3
         with:
-          name: backend-build-${{ matrix.architecture }}
+          name: backend-build
       - name: Get frontend build artifacts
         uses: actions/download-artifact@v3
         with:

@@ -48,5 +48,5 @@ jobs:
           ci-build-x86_64-
     - uses: actions/download-artifact@v3
       with:
-        name: backend-build-x86_64
+        name: backend-build
     - run: make test ARCH=x86_64

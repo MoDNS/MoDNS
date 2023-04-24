@@ -70,7 +70,7 @@ jobs:
     - name: Save artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: backend-build-${{ inputs.architecture }}
+        name: backend-build
         path: |
           target/${{ inputs.rust_toolchain }}/debug/modns
           target/${{ inputs.rust_toolchain }}/debug/modnsd
