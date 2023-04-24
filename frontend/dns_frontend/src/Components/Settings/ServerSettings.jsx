@@ -201,7 +201,7 @@ const ServerSettings = () => {
 
                         <TextField
                             onFocus={ (e) => e.target.select() }
-                            value={staticIP.value || ""}
+                            value={(staticIP && staticIP.value) || ""}
                             disabled={!(useStaticIP && useStaticIP.value) || (staticIP && staticIP.overridden)}
                             inputProps={{style: { textAlign: 'right', paddingRight: 0, }}}
                             placeholder={ useStaticIP ? 'xxx.xxx.xxx.xxx' : null }
@@ -314,7 +314,7 @@ const ServerSettings = () => {
                                 } 
                             />
                             <TextField
-                                value={logFilter.value || ""}
+                                value={(logFilter && logFilter.value) || ""}
                                 disabled={(logFilter && logFilter.overridden) || !useCustLogFilt}
                                 onChange={(e) => {
                                     let x = logFilter;

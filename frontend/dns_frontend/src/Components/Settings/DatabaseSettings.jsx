@@ -99,7 +99,7 @@ const DatabaseSettings = () => {
                         </Typography>
                         <Select
                             disabled={dataBaseType && dataBaseType.overridden}
-                            value={dataBaseType.value || ""}
+                            value={(dataBaseType && dataBaseType.value) || ""}
                             onChange={(e) => {
                                 let x = dataBaseType;
                                 x.value = e.target.value
@@ -127,7 +127,7 @@ const DatabaseSettings = () => {
                             </Typography>
                             <TextField
                                 disabled={sqlitePath && sqlitePath.overridden}
-                                value={sqlitePath.value || ""}
+                                value={(sqlitePath && sqlitePath.value) || ""}
                                 onChange={(e) => {
                                     let x = sqlitePath;
                                     x.value = e.target.value;
@@ -148,9 +148,9 @@ const DatabaseSettings = () => {
                                 SQLite Password:
                             </Typography>
                             <TextField
-                                disabled={sqlitePassword.overridden}
+                                disabled={sqlitePassword && sqlitePassword.overridden}
                                 type={ showPass ? 'text' : 'password' }
-                                value={sqlitePassword.value || ""}
+                                value={(sqlitePassword && sqlitePassword.value) || ""}
                                 onInput={ e => {
                                     let x = sqlitePassword;
                                     x.value = e.target.value;
@@ -186,8 +186,8 @@ const DatabaseSettings = () => {
                                 IP Address:
                             </Typography>
                             <TextField
-                                disabled={postgresIP.overridden}
-                                value={postgresIP.value || ""}
+                                disabled={postgresIP && postgresIP.overridden}
+                                value={(postgresIP && postgresIP.value) || ""}
                                 onChange={(e) => {
                                     let x = postgresIP;
                                     x.value = e.target.value;
@@ -219,8 +219,8 @@ const DatabaseSettings = () => {
                                 Port:
                             </Typography>
                             <TextField
-                                disabled={postgresPort.overridden}
-                                value={postgresPort.value || ""}
+                                disabled={postgresPort && postgresPort.overridden}
+                                value={(postgresPort && postgresPort.value) || ""}
                                 inputProps={{ maxLength: 5, style: { textAlign: 'right', paddingRight: 0, }}}
 
                                 onChange={(e) => {
@@ -246,9 +246,9 @@ const DatabaseSettings = () => {
                                 Postgres Password:
                             </Typography>
                             <TextField
-                                disabled={postgresPassword.overridden}
+                                disabled={postgresPassword && postgresPassword.overridden}
                                 type={ showPass ? 'text' : 'password' }
-                                value={postgresPassword.value || ""}
+                                value={(postgresPassword && postgresPassword.value) || ""}
                                 onInput={ e => {
                                     let x = postgresPassword;
                                     x.value = e.target.value;

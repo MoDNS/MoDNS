@@ -158,7 +158,10 @@ export const getServerConfig = async (key) => {
         if (response.ok) {
             return response;
         } else {
-            return null;
+            return {
+                overridden: true,
+                value: ""
+            };
         }
     })
 }
