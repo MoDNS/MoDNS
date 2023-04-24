@@ -88,3 +88,18 @@ jobs:
           path: |
             ${{ steps.deb.outputs.file_name }}
 
+  release:
+    runs-on: ubuntu-latest
+    needs: package
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: deb-release
+      - uses: ncipollo/release-action@v1
+        with:
+          name: Release ${{ github.ref_name }}
+          files: '*.deb'
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta')}}
+
