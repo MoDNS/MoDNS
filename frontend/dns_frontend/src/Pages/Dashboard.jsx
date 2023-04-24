@@ -1,14 +1,61 @@
-import React from 'react';
+import { Button } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import MainBox from "../Components/MainBox";
+import { ParseDashboardPage } from "../scripts/ParseDashboardPage";
+import { getDashboardLayoutAPI, getServerConfig, setDashboardLayoutAPI } from "../API/getsetAPI";
+import { getDashboardLayout, setDashboardLayout } from "../scripts/getsetLocalStorage";
 
-import MainBox from '../Components/MainBox';
 
 const Dashboard = () => {
-    return (
-        <MainBox
-            title={"Dashboard"}
-        >
-        </MainBox>
-    );
+  const [editMode, setEditMode] = useState(false);
+  const [useGlobalDashboard, setUseGlobDash] = useState(true);
+  
+  const [dashboardJson, setDashboardJson] = useState();
+
+
+  useEffect(() => {
+    getServerConfig('use_global_dashboard').then(useGlobDash => {
+      setUseGlobDash(useGlobDash);
+      if (useGlobDash) {
+        getDashboardLayoutAPI().then(res => {
+          let x = (res && res.data) || [];
+          setDashboardJson([...x]);
+        })
+      } else {
+        setDashboardJson(getDashboardLayout());
+      }
+    })
+  }, [] );
+
+  return (
+    <>
+      <MainBox title={
+        [
+          <div key={1} style={{ display: 'flex', flexDirection: 'row'}} >
+            Dashboard
+            <Button variant="contained" sx={{ marginLeft: 'auto', marginY: 'auto' }} onClick={() => {
+              if (editMode) {
+                if (useGlobalDashboard) {
+                  setDashboardLayoutAPI('dashboard', dashboardJson);
+                } else {
+                  setDashboardLayout(dashboardJson);
+                }
+              }
+              setEditMode(!editMode);
+              }} > { editMode ? "Save" : "Edit" } </Button>
+          </div>
+        ]
+        } 
+        divider
+        allowScroll
+      >
+        { dashboardJson && <ParseDashboardPage editMode={editMode} dashboardJson={dashboardJson} setDashboardJson={setDashboardJson} />}
+      </MainBox>
+
+      
+
+    </>
+  );
 };
 
 export default Dashboard;

@@ -36,10 +36,10 @@ const DB_PORT_KEY: &str = "db_port";
 const LOG_KEY: &str = "log_filter";
 const ADMIN_PW_KEY: &str = "admin_pw_hash";
 
-const DEFAULT_PLUGIN_PATH: &str = "/usr/share/modnsd/default-plugins";
+const DEFAULT_PLUGIN_PATH: &str = "/usr/share/modns/default-plugins";
 const DEFAULT_UNIX_SOCKET: &str = "/run/modnsd.sock";
-const DEFAULT_DATA_DIR: &str = "/var/lib/modnsd";
-const DEFAULT_FRONTEND_DIR: &str = "/usr/share/modnsd/web";
+const DEFAULT_DATA_DIR: &str = "/var/lib/modns";
+const DEFAULT_FRONTEND_DIR: &str = "/usr/share/modns/web";
 const DEFAULT_SQLITE_FILE: &str = "modns.sqlite";
 const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const DEFAULT_MYSQL_PORT: u16 = 3306;
