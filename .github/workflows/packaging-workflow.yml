@@ -1,5 +1,7 @@
 name: Package for Debian
 
+run-name: Package release ${{ inputs.version || github.ref_name }}
+
 on:
   workflow_dispatch:
     inputs:
@@ -56,7 +58,7 @@ jobs:
       - name: Get backend build artifacts
         uses: actions/download-artifact@v3
         with:
-          name: backend-build-${{ matrix.architecture }}
+          name: backend-build
       - name: Get frontend build artifacts
         uses: actions/download-artifact@v3
         with:
@@ -85,4 +87,19 @@ jobs:
           name: deb-release
           path: |
             ${{ steps.deb.outputs.file_name }}
+
+  release:
+    runs-on: ubuntu-latest
+    needs: package
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: deb-release
+      - uses: ncipollo/release-action@v1
+        with:
+          name: Release ${{ github.ref_name }}
+          files: '*.deb'
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta')}}
 

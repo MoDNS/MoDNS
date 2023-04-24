@@ -1,5 +1,7 @@
 name: Node.js CI
 
+run-name: Test frontend for PR ${{ github.ref }} by ${{ github.actor }}
+
 on:
   workflow_dispatch:
   workflow_call:
@@ -30,5 +32,6 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: frontend-build
+          retention-days: 1
           path: |
             frontend/dns_frontend/build/
