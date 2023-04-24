@@ -71,6 +71,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: backend-build
+        retention-days: 1
         path: |
           target/${{ inputs.rust_toolchain }}/debug/modns
           target/${{ inputs.rust_toolchain }}/debug/modnsd

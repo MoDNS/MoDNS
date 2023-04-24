@@ -32,5 +32,6 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: frontend-build
+          retention-days: 1
           path: |
             frontend/dns_frontend/build/
