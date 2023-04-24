@@ -5,12 +5,25 @@
 #include <jsoncpp/json/value.h>
 #include <jsoncpp/json/json.h>
 
-bool is_empty(std::ifstream& pFile)
+bool is_empty(std::ifstream &pFile)
 {
     return pFile.peek() == std::ifstream::traits_type::eof();
 }
 
-int main() {
+extern uint8_t impl_inspect_resp(const struct DnsMessage *req,
+                                 const struct DnsMessage *resp,
+                                 uint8_t source,
+                                 const void *plugin_state)
+{
+
+    std::cout << req;
+    std::cout << resp;
+
+    return 1;
+}
+
+int main()
+{
     // Prompt the user for some data
     std::string name;
     int age;
@@ -34,12 +47,13 @@ int main() {
         inputFile.close();
 
         // Iterate over the JSON data and add each map to the list
-        for (const auto& map : myData) {
+        for (const auto &map : myData)
+        {
             dataList.push_back(map);
         }
     }
 
-    while(true)
+    while (true)
     {
         std::cout << "Enter your name: ";
         std::cin >> name;
@@ -49,15 +63,19 @@ int main() {
         std::cin >> std::boolalpha >> isMarried;
 
         // Create a map to store the user's input
-        Json::Value myMap;;
+        Json::Value myMap;
+        ;
         myMap["name"] = name;
         myMap["age"] = std::to_string(age);
         myMap["isMarried"] = isMarried ? "true" : "false";
 
         // Add the map to the list
-         if (dataList.size() <= 10000) {
+        if (dataList.size() <= 10000)
+        {
             dataList.push_back(myMap);
-        } else {
+        }
+        else
+        {
             dataList.pop_front();
             dataList.push_back(myMap);
         }
@@ -67,7 +85,8 @@ int main() {
 
         // Create a JSON object to store the list of maps
         int index = 0;
-        for (const auto& map : dataList) {
+        for (const auto &map : dataList)
+        {
             myData[index++] = map;
         }
 
@@ -81,7 +100,6 @@ int main() {
         std::cout << "Data has been written to myData.json" << std::endl;
 
         std::cout << dataList.size() << std::endl;
-
     }
 
     return 0;
