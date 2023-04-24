@@ -6,7 +6,7 @@
 /////////////////////////////// PLUGIN MANAGE ///////////////////////////////
 
 export const getPluginDict = async (filter) => {
-    return await fetch(`${window.location.origin}/api/plugins${filter ? `?modules=${filter}` : ''}`, {
+    return await fetch(`${window.location.origin}/api/plugins${filter ? `?module=${filter}` : ''}`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
