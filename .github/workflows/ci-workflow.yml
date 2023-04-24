@@ -1,5 +1,7 @@
 name: CI Workflow
 
+run-name: Test PR ${{ github.ref }} by ${{ github.actor }}
+
 on:
   workflow_dispatch:
   pull_request:

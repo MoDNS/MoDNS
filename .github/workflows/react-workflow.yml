@@ -1,5 +1,7 @@
 name: Node.js CI
 
+run-name: Test frontend for PR ${{ github.ref }} by ${{ github.actor }}
+
 on:
   workflow_dispatch:
   workflow_call:

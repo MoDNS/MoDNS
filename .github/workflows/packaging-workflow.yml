@@ -1,5 +1,7 @@
 name: Package for Debian
 
+run-name: Package release ${{ inputs.version || github.ref_name }}
+
 on:
   workflow_dispatch:
     inputs:
