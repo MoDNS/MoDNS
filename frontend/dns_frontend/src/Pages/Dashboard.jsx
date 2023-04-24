@@ -18,7 +18,8 @@ const Dashboard = () => {
       setUseGlobDash(useGlobDash);
       if (useGlobDash) {
         getDashboardLayoutAPI().then(res => {
-          setDashboardJson([...res]);
+          let x = (res && res.data) || [];
+          setDashboardJson([...x]);
         })
       } else {
         setDashboardJson(getDashboardLayout());

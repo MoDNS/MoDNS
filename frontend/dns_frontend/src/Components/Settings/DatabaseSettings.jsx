@@ -1,5 +1,5 @@
 import { Button, Icon, IconButton, InputAdornment, MenuItem, Select, TextField, Typography } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getServerConfig, setServerConfig } from '../../API/getsetAPI';
 
 import ErrorIcon from '@mui/icons-material/Error';
@@ -9,21 +9,41 @@ import Visibility from '@mui/icons-material/Visibility';
 
 const DatabaseSettings = () => {
 
-    const [dataBaseType, setDataBaseType] = useState( getServerConfig('database_type') );
+    const [dataBaseType, setDataBaseType] = useState({});
 
-    const [sqlitePath, setSQLitePath] = useState( getServerConfig('sqlite_file_path') );
-    const [sqlitePassword, setSqlitePassword] = useState( getServerConfig('sqlite_password') );
+    const [sqlitePath, setSQLitePath] = useState({});
+    const [sqlitePassword, setSqlitePassword] = useState({});
 
-    const [postgresIP, setPostgresIP] = useState( getServerConfig('postgres_ip') );
-    const [postgresPort, setPostgresPort] = useState( getServerConfig('postgres_port') );
-    const [postgresPassword, setPostgresPassword] = useState( getServerConfig('postgres_password') );
+    const [postgresIP, setPostgresIP] = useState({});
+    const [postgresPort, setPostgresPort] = useState({});
+    const [postgresPassword, setPostgresPassword] = useState({});
 
+    useEffect(() => {
+        getServerConfig('database_type').then(res => {
+            setDataBaseType(res);
+        });
+        getServerConfig('sqlite_file_path').then(res => {
+            setSQLitePath(res);
+        });
+        getServerConfig('postgres_ip').then(res => {
+            setPostgresIP(res);
+        })
+        getServerConfig('postgres_port').then(res => {
+            setPostgresPort(res);
+        })
+        getServerConfig('postgres_password').then(res => {
+            setPostgresPassword(res);
+        })
+        getServerConfig('sqlite_password').then(res => {
+            setSqlitePassword(res);
+        })
+
+    }, []);
 
     const [showPass, setShowPass] = useState(false);
-    const [errorPostgresIP, setErrorPostgresIP] = useState( postgresIP.value ? !IPInputValidation(postgresIP.value) : true );
+    const [errorPostgresIP, setErrorPostgresIP] = useState( postgresIP && postgresIP.value ? !IPInputValidation(postgresIP.value) : true );
     const inputPostgresIP = (ip) => {
         setPostgresIP(ip);
-        console.log(ip);
         if (!IPInputValidation(ip.value)) {
             setErrorPostgresIP(true);
         }
@@ -48,12 +68,12 @@ const DatabaseSettings = () => {
 
 
     const applyChanges = () => {
-        !dataBaseType.overridden && handleSetDataBaseType();
-        if (dataBaseType.value === "sqlite") {
+        !(dataBaseType && dataBaseType.overridden) && handleSetDataBaseType();
+        if (dataBaseType && dataBaseType.value === "sqlite") {
             !sqlitePath.overridden && handleSetSQLitepath();
-        } else {
-            !postgresIP.overridden && handleSetPostgresIP()
-            !postgresPort.overridden && handleSetPostgresPort();
+        } else if (dataBaseType && dataBaseType.value === "postgres") {
+            !(postgresIP && postgresIP.overridden) && handleSetPostgresIP()
+            !(postgresPort && postgresPort.overridden) && handleSetPostgresPort();
         }
     }
 
@@ -78,8 +98,8 @@ const DatabaseSettings = () => {
                             Database Type:
                         </Typography>
                         <Select
-                            disabled={dataBaseType.overridden}
-                            value={dataBaseType.value}
+                            disabled={dataBaseType && dataBaseType.overridden}
+                            value={dataBaseType.value || ""}
                             onChange={(e) => {
                                 let x = dataBaseType;
                                 x.value = e.target.value
@@ -94,7 +114,7 @@ const DatabaseSettings = () => {
                 </div>
 
                 {
-                    dataBaseType.value === "sqlite" ? <>
+                    dataBaseType && dataBaseType.value === "sqlite" ? <>
                         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35 }}>
                             <Typography
                                 sx={{
@@ -106,8 +126,8 @@ const DatabaseSettings = () => {
                                 File Path:
                             </Typography>
                             <TextField
-                                disabled={sqlitePath.overridden}
-                                value={sqlitePath.value}
+                                disabled={sqlitePath && sqlitePath.overridden}
+                                value={sqlitePath.value || ""}
                                 onChange={(e) => {
                                     let x = sqlitePath;
                                     x.value = e.target.value;
@@ -130,7 +150,7 @@ const DatabaseSettings = () => {
                             <TextField
                                 disabled={sqlitePassword.overridden}
                                 type={ showPass ? 'text' : 'password' }
-                                value={sqlitePassword.value}
+                                value={sqlitePassword.value || ""}
                                 onInput={ e => {
                                     let x = sqlitePassword;
                                     x.value = e.target.value;
@@ -167,7 +187,7 @@ const DatabaseSettings = () => {
                             </Typography>
                             <TextField
                                 disabled={postgresIP.overridden}
-                                value={postgresIP.value}
+                                value={postgresIP.value || ""}
                                 onChange={(e) => {
                                     let x = postgresIP;
                                     x.value = e.target.value;
@@ -200,7 +220,7 @@ const DatabaseSettings = () => {
                             </Typography>
                             <TextField
                                 disabled={postgresPort.overridden}
-                                value={postgresPort.value}
+                                value={postgresPort.value || ""}
                                 inputProps={{ maxLength: 5, style: { textAlign: 'right', paddingRight: 0, }}}
 
                                 onChange={(e) => {
@@ -228,7 +248,7 @@ const DatabaseSettings = () => {
                             <TextField
                                 disabled={postgresPassword.overridden}
                                 type={ showPass ? 'text' : 'password' }
-                                value={postgresPassword.value}
+                                value={postgresPassword.value || ""}
                                 onInput={ e => {
                                     let x = postgresPassword;
                                     x.value = e.target.value;
