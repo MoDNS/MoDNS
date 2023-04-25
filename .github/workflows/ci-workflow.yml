@@ -1,0 +1,52 @@
+name: CI Workflow
+
+run-name: Test PR ${{ github.ref }} by ${{ github.actor }}
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.rs'
+      - 'plugins/**'
+      - '**/Cargo.toml'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        architecture: [x86_64, aarch64, arm]
+        include:
+          - architecture: x86_64
+            rust_toolchain: x86_64-unknown-linux-gnu
+            gcc: gcc-x86-64-linux-gnu
+          - architecture: aarch64
+            gcc: gcc-aarch64-linux-gnu
+            rust_toolchain: aarch64-unknown-linux-gnu
+          - architecture: arm
+            gcc: gcc-arm-linux-gnueabi
+            rust_toolchain: arm-unknown-linux-gnueabi
+    uses: MoDNS/MoDNS/.github/workflows/backend-workflow.yml@main
+    with:
+      architecture: ${{ matrix.architecture }}
+      rust_toolchain: ${{ matrix.rust_toolchain }}
+      gcc: ${{ matrix.gcc }}
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/cache@v3
+      with:
+        key: ci-build-x86_64-${{ hashFiles('**/Cargo.toml') }}
+        path: |
+          target/x86_64-unknown-linux-gnu
+          ~/.cargo/registry
+          ~/.cargo/git
+        restore-keys:
+          ci-build-x86_64-
+    - uses: actions/download-artifact@v3
+      with:
+        name: backend-build
+    - run: make test ARCH=x86_64

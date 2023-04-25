@@ -2,7 +2,7 @@ import React from 'react';
 import { PropTypes } from 'prop-types';
 import PluginOverview from '../PluginOverview';
 
-const Overview = ({ pluginDict, numInterceptors, pluginsEnabledDict, togglePlugin, interceptorUuidOrder, setInterceptOrder }) => {
+const Overview = ({ pluginDict, numInterceptors, pluginsEnabledDict, togglePlugin, interceptorUuidOrder, setInterceptOrder, settingsPagesDict }) => {
 
     return (
         <div 
@@ -33,6 +33,7 @@ const Overview = ({ pluginDict, numInterceptors, pluginsEnabledDict, togglePlugi
                         numInterceptors={numInterceptors}
                         pluginState={pluginsEnabledDict[key]}
                         togglePlugin={togglePlugin}
+                        settingsPage={settingsPagesDict[key]}
                     />
                 ))
             }

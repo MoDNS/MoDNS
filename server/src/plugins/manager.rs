@@ -88,7 +88,7 @@ impl PluginManager {
                     for subdir in dirs {
                         log::trace!("Checking {}", subdir.display());
 
-                        let so_path = subdir.join("plugin.so");
+                        let so_path = subdir.join(super::PLUGIN_FILE_NAME);
 
                         if !so_path.is_file() { continue; }
 

@@ -1,5 +1,5 @@
 
-use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn, SdkInitFn, InterceptorFn, ValidatorFn, InspectorFn, ResponseSource};
+use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn, SdkInitFn, InterceptorFn, ValidatorFn, InspectorFn, ResponseSource, PLUGIN_FILE_NAME};
 use modns_sdk::types::conversion::FfiVector;
 use modns_sdk::{types::ffi, PluginState};
 
@@ -288,7 +288,7 @@ impl DnsPlugin {
             None => return Err(PluginLoaderError::InvalidName),
         };
 
-        let lib = unsafe { Library::new(home_dir.join("plugin.so")) }?;
+        let lib = unsafe { Library::new(home_dir.join(PLUGIN_FILE_NAME)) }?;
 
         let log_name = home_dir.file_name()
             .unwrap_or(&OsString::from("unknown"))

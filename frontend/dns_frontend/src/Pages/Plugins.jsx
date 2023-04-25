@@ -2,10 +2,10 @@ import React, { useRef } from 'react';
 
 import MainBox from '../Components/MainBox';
 import { Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SequentialView from '../Components/Plugins/SequentialView';
 import Overview from '../Components/Plugins/Overview';
-import { enabledisablePlugin, getPluginDict, setPluginOrder } from '../API/getsetAPI';
+import { enabledisablePlugin, getPluginCustomSettings, getPluginDict, setInterceptOrderAPI } from '../API/getsetAPI';
 import { getPluginViewStorage, setPluginViewStorage } from '../scripts/getsetLocalStorage';
 
 
@@ -13,6 +13,9 @@ const Plugins = () => {
 
     // sets sequential or overview
     const [view, setView] = useState(getPluginViewStorage());
+
+    const [pluginDicts, setPluginDicts] = useState({});
+    const [settingsPagesDict, setSettingsPagesDict] = useState({});
 
     // switch for sequential or overview
     const handleViewSwitch = (e, newView) => {
@@ -32,26 +35,51 @@ const Plugins = () => {
         'inspector': false,
     }
 
+
     ////////////////////// Plugin Lists //////////////////////
-    const pluginDicts = {
-        'all' : getPluginDict(),
-        'listener': getPluginDict('listener'),
-        'interceptor': getPluginDict('interceptor'),
-        'resolver': getPluginDict('resolver'),
-        'validator': getPluginDict('validator'),
-        'inspector': getPluginDict('inspector'),
+
+    const makePluginDict = async () => {
+        return await {
+            'all': await getPluginDict(),
+            'listener': await getPluginDict('listener'),
+            'interceptor': await getPluginDict('interceptor'),
+            'resolver': await getPluginDict('resolver'),
+            'validator': await getPluginDict('validator'),
+            'inspector': await getPluginDict('inspector'),
+        }
     }
 
-    /////////////////////////////////////////////////////// ENABLE / DISABLE ///////////////////////////////////////////////////////
-    let pluginsEnabled = {}
-    Object.keys(pluginDicts['all']).forEach(uuid => {
-        pluginsEnabled[uuid] = pluginDicts['all'][uuid]['enabled'];
-    });
-    const [pluginsEnabledDict, setPluginsEnabledDict] = useState(pluginsEnabled);
-    pluginsEnabled = null;
+    /////////////////////////////////////////////////////// CUSTOM SETTINGS //////////////////////////////////////////////////////
+    const makeSettingsPageDict = async (dict) => {
+        let settingsDict = {}
+        Object.keys(dict).forEach(async uuid => {
+            settingsDict[uuid] = await getPluginCustomSettings(uuid);
+        })
+        return await settingsDict;
+    }
 
+    const [pluginsEnabledDict, setPluginsEnabledDict] = useState({});
+
+    useEffect(() => {
+        makePluginDict().then(dicts => {
+            setPluginDicts({...dicts})
+            makeSettingsPageDict(dicts['all']).then(settingsPages => {
+                setSettingsPagesDict({...settingsPages});
+            })
+            let pluginsEnabled = {}
+            Object.keys(dicts['all'] || {}).forEach(uuid => {
+                pluginsEnabled[uuid] = dicts['all'][uuid]['enabled'];
+            });
+            setPluginsEnabledDict({...pluginsEnabled})
+        })
+    }, []);
+
+
+    /////////////////////////////////////////////////////// ENABLE / DISABLE ///////////////////////////////////////////////////////
+
+    
     const togglePlugin = (uuid) => {
-        let pluginsEnabled = pluginsEnabledDict;
+        let pluginsEnabled = {...pluginsEnabledDict};
         if (!pluginsEnabled[uuid]) {
             Object.keys(onlyOneEnabledDict).forEach(module => {
                 if (pluginDicts['all'][`is_${module}`] && onlyOneEnabledDict[module]) {
@@ -72,8 +100,10 @@ const Plugins = () => {
     }
 
     ////////////////////////////////////////////////////// INTERCEPTOR ORDER //////////////////////////////////////////////////////
-    
-    const [interceptorUuidOrder, setInterceptorUuidOrder] = useState(Object.keys(pluginDicts['interceptor']));
+
+    let keys = Object.keys(pluginDicts['interceptor'] || {});
+    const [interceptorUuidOrder, setInterceptorUuidOrder] = useState([...keys]);
+    keys = null;
 
     const setInterceptOrder = (old_pos, new_pos) => {
         let uuidList = interceptorUuidOrder;
@@ -82,9 +112,12 @@ const Plugins = () => {
         uuidList.splice(new_pos, 0, uuid);
 
         setInterceptorUuidOrder([...uuidList]);
-        setPluginOrder(uuidList);
+        setInterceptOrderAPI(uuidList);
     }
 
+
+    //////////////////////////////////////////////////////////// MAIN ///////////////////////////////////////////////////////////
+    
     const inputFile = useRef(null);
 
     return (
@@ -129,21 +162,23 @@ const Plugins = () => {
                 view === 's' ? 
                     <SequentialView 
                         pluginDicts={pluginDicts}
-                        numInterceptors={Object.keys(pluginDicts['interceptor']).length}
+                        numInterceptors={Object.keys(pluginDicts['interceptor'] || {}).length}
                         pluginsEnabledDict={pluginsEnabledDict}
                         togglePlugin={togglePlugin}
                         interceptorUuidOrder={interceptorUuidOrder}
                         setInterceptOrder={setInterceptOrder}
+                        settingsPagesDict={settingsPagesDict}
 
                     /> 
                     : 
                     <Overview 
                         pluginDict={pluginDicts['all']}                         // list of all plugins                        
-                        numInterceptors={Object.keys(pluginDicts['interceptor']).length}
+                        numInterceptors={Object.keys(pluginDicts['interceptor'] || {}).length}
                         pluginsEnabledDict={pluginsEnabledDict}
                         togglePlugin={togglePlugin}
                         interceptorUuidOrder={interceptorUuidOrder}
                         setInterceptOrder={setInterceptOrder}
+                        settingsPagesDict={settingsPagesDict}
 
                     />
             }
