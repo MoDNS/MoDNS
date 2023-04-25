@@ -245,6 +245,9 @@ const ServerSettings = () => {
                                     if (e.key !== "Enter") {
                                         return;                                        
                                     }
+                                    if (addPath.trim() === "") {
+                                        return;
+                                    }
                                     let x = [...pluginPaths];
                                     x.push(
                                         {
@@ -262,6 +265,9 @@ const ServerSettings = () => {
                                                 <IconButton 
                                                 sx={{ marginRight: 0.5 }}
                                                 onClick={() => {
+                                                    if (addPath.trim() === "") {
+                                                        return;
+                                                    }
                                                     let x = [...pluginPaths];
                                                     x.push(
                                                         {

@@ -42,6 +42,7 @@ const DatabaseSettings = () => {
 
     const [showPass, setShowPass] = useState(false);
     const [errorPostgresIP, setErrorPostgresIP] = useState( postgresIP && postgresIP.value ? !IPInputValidation(postgresIP.value) : true );
+
     const inputPostgresIP = (ip) => {
         setPostgresIP(ip);
         if (!IPInputValidation(ip.value)) {
@@ -60,10 +61,18 @@ const DatabaseSettings = () => {
         setServerConfig('sqlite_file_path', sqlitePath.value);
     }
     const handleSetPostgresIP = () => {
-        setServerConfig('postgres_ip', postgresIP.value);
+        if (errorPostgresIP) {
+            alert("Postgres IP format not correct")
+        } else {
+            setServerConfig('postgres_ip', postgresIP.value);
+        }
     }
     const handleSetPostgresPort = () => {
-        setServerConfig('postgres_port', postgresPort.value);
+        if (postgresPort.value !== "") {
+            setServerConfig('postgres_port', postgresPort.value);
+        } else {
+            alert("No port provided");
+        }
     }
 
 

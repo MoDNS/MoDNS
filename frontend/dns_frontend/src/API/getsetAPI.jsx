@@ -6,7 +6,7 @@
 /////////////////////////////// PLUGIN MANAGE ///////////////////////////////
 
 export const getPluginDict = async (filter) => {
-    return await fetch(`${window.location.origin}/api/plugins${filter ? `?modules=${filter}` : ''}`, {
+    return await fetch(`${window.location.origin}/api/plugins${filter ? `?module=${filter}` : ''}`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
@@ -64,7 +64,7 @@ export const setInterceptOrderAPI = async (uuidList) => {
 }
 
 export const enabledisablePlugin = async (uuid, enabled) => {
-    await fetch(`${window.location.origin}/api/plugins/${uuid}/enable?enabled=${enabled}`, {
+    await fetch(`${window.location.origin}/api/plugins/${uuid}/${enabled ? "enable" : "disable"}`, {
         method: 'POST',
     });
 }
@@ -152,7 +152,7 @@ export const setServerConfig = async (key, value) => {
 }
 
 export const getServerConfig = async (key) => {
-    return await fetch(`${window.location.origin}/api/config?${key}`, {
+    return await fetch(`${window.location.origin}/api/server/config?${key}`, {
         method: 'GET'
     }).then(response => {
         if (response.ok) {

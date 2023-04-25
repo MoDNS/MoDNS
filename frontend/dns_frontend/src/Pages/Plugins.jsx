@@ -58,27 +58,28 @@ const Plugins = () => {
         return await settingsDict;
     }
 
+    const [pluginsEnabledDict, setPluginsEnabledDict] = useState({});
+
     useEffect(() => {
         makePluginDict().then(dicts => {
             setPluginDicts({...dicts})
             makeSettingsPageDict(dicts['all']).then(settingsPages => {
                 setSettingsPagesDict({...settingsPages});
             })
+            let pluginsEnabled = {}
+            Object.keys(dicts['all'] || {}).forEach(uuid => {
+                pluginsEnabled[uuid] = dicts['all'][uuid]['enabled'];
+            });
+            setPluginsEnabledDict({...pluginsEnabled})
         })
-
     }, []);
 
+
     /////////////////////////////////////////////////////// ENABLE / DISABLE ///////////////////////////////////////////////////////
-    let pluginsEnabled = {}
-    Object.keys(pluginDicts['all'] || {}).forEach(uuid => {
-        pluginsEnabled[uuid] = pluginDicts['all'][uuid]['enabled'];
-    });
 
-    const [pluginsEnabledDict, setPluginsEnabledDict] = useState({...pluginsEnabled});
-    pluginsEnabled = null;
-
+    
     const togglePlugin = (uuid) => {
-        let pluginsEnabled = pluginsEnabledDict;
+        let pluginsEnabled = {...pluginsEnabledDict};
         if (!pluginsEnabled[uuid]) {
             Object.keys(onlyOneEnabledDict).forEach(module => {
                 if (pluginDicts['all'][`is_${module}`] && onlyOneEnabledDict[module]) {
