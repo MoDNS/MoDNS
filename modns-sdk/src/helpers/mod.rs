@@ -1,6 +1,7 @@
 pub mod memory;
 pub mod logging;
 pub mod database;
+pub mod strings;
 
 use std::sync::Once;
 
