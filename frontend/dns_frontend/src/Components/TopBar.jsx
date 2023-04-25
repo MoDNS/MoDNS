@@ -5,7 +5,7 @@ import { PropTypes } from 'prop-types';
 
 
 const TopBar = ({ isLoggedIn, setLoggedIn }) => {
-    const links = isLoggedIn ? ["Dashboard", "Plugins", "Settings", "About"] : null;
+    const links = isLoggedIn ? ["Dashboard", "Plugins", "Tools", "Settings", "About"] : null;
 
     return (
         <AppBar 

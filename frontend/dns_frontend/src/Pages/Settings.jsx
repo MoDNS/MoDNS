@@ -9,6 +9,7 @@ import MainBox from '../Components/MainBox';
 import ServerSettings from '../Components/Settings/ServerSettings';
 import ThemeSelector from '../Components/Settings/ThemeSelector';
 import ChangePassword from '../Components/Settings/ChangePassword';
+import DatabaseSettings from '../Components/Settings/DatabaseSettings';
 
 
 
@@ -20,7 +21,8 @@ const Settings = ({ setTheme }) => {
     const pages = {
         0: <ServerSettings />,
         1: <ThemeSelector setTheme={setTheme} />,
-        2: <ChangePassword />,
+        2: <DatabaseSettings />,
+        3: <ChangePassword />,
     }
 
     return (
@@ -28,10 +30,10 @@ const Settings = ({ setTheme }) => {
             title={"Settings"}
             divider
         >
-            <div style={{display:'flex', flexDirection:'row', flexGrow: 1, }}>
+            <div style={{display:'flex', flexDirection:'row', height: '100%' }}>
                 <div 
                     style={{ 
-                        width: '50%',
+                        width: '45%',
                         paddingRight: 80,
                         paddingLeft: 20,
                         paddingTop: 24,
@@ -48,7 +50,7 @@ const Settings = ({ setTheme }) => {
                         }} 
                     >
                         <Typography  sx={{ fontSize: 25 }}>
-                            Server
+                            General
                         </Typography>
 
                         <Button
@@ -90,7 +92,7 @@ const Settings = ({ setTheme }) => {
                         }} 
                     >
                         <Typography  sx={{ fontSize: 25 }}>
-                            Change Password
+                            Database Settings
                         </Typography>
 
                         <Button
@@ -100,7 +102,28 @@ const Settings = ({ setTheme }) => {
                         >
                             Open
                         </Button>
-                    </div>                    
+                    </div>     
+
+                    <div 
+                        style={{ 
+                            display: 'flex', 
+                            flexDirection: 'row', 
+                            alignItems: 'center', 
+                            marginBottom: 30,
+                        }} 
+                    >
+                        <Typography  sx={{ fontSize: 25 }}>
+                            Frontend Authentication
+                        </Typography>
+
+                        <Button
+                            variant='contained'
+                            sx={{ marginLeft: 'auto' }}
+                            onClick={ () => { setBox(3) } }
+                        >
+                            Open
+                        </Button>
+                    </div>                
 
                 </div>
 
@@ -108,12 +131,10 @@ const Settings = ({ setTheme }) => {
                     sx={{
                         borderRadius: 8, 
                         padding: 3,
-                        width: '50%',
+                        width: '55%',
                         display: 'flex',
                         flexDirection: 'column',
-                        flexGrow: 1,
                         alignItems: 'center',
-                        overflowY: 'auto',
                         overflowX: 'hidden',
                         border: `4px solid ${theme.palette.primary.dark}`,
                     }}

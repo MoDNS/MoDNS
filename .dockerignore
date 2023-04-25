@@ -1,0 +1,10 @@
+# Ignore everything
+**
+
+# Add files & directories that should be included
+!cli/**
+!server/**
+!modns-sdk/**
+!plugins/**
+!Cargo.toml
+!Makefile

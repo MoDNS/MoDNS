@@ -1,2 +1,5 @@
 /target
-Cargo.lock
+/Cargo.lock
+/backend_build
+.vscode
+/modns-data

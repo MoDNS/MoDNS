@@ -3,12 +3,12 @@ import { Box } from '@mui/system';
 import React from 'react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import Visibility from '@mui/icons-material/Visibility';
 import { PropTypes } from 'prop-types';
 import MainBox from '../Components/MainBox';
 import { getAuthentication } from '../API/getsetAPI';
 
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import Visibility from '@mui/icons-material/Visibility';
 
 const Login = ({ setLoggedIn }) => {
     const theme = useTheme();
@@ -43,7 +43,6 @@ const Login = ({ setLoggedIn }) => {
             sx={{ position: 'relative', top: 150, marginLeft: 'auto', marginRight: 'auto', width: 415, }} 
             title={'Login'}
             titleCentered
-            noDivider
         >
 
             <Box 
@@ -76,8 +75,7 @@ const Login = ({ setLoggedIn }) => {
                             </InputAdornment>
                         )
                     }}
-                >
-                </TextField>
+                />
                 <Box 
                     display='flex'
                     justifyContent="right"
