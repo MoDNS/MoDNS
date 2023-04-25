@@ -216,6 +216,9 @@ impl ImmutableServerConfig {
         let data_dir = data_dir.as_path().canonicalize()
             .with_context(|| format!("Data directory {} was not found", data_dir.as_path().display()))?;
 
+        fs::create_dir(data_dir.join("plugin_data"))
+            .with_context(|| format!("Failed to create plugin data directory at {}", data_dir.join("plugin_data").display()))?;
+
         let join_data_dir = |p: &Path| {
             if p.is_absolute() {
                 p.canonicalize()

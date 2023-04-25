@@ -293,7 +293,7 @@ impl DnsPlugin {
                     &log_name,
                     log::logger(),
                     config.db_info(),
-                    config.data_dir().join("plugin-data").join(&log_name)
+                    config.data_dir().join("plugin_data").join(&log_name)
                 ) {
 
                     log::error!("Failed to initialize SDK for {log_name}");
