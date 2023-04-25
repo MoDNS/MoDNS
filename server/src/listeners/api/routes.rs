@@ -57,6 +57,7 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
     let disable_pm = pm.clone();
     let config_set_pm = pm.clone();
     let config_get_pm = pm.clone();
+    let intercept_pm = pm.clone();
 
     warp::path("api")
         .and(warp::path!("plugins").and(warp::query::<PluginQuery>())
@@ -79,6 +80,13 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             set_plugin_stat(pm, uuid, false)
             })
         )
+        // .or(warp::path!("plugins" / "interceptorder")
+        // .then(move || {
+        //     let pm = intercept_pm.clone();
+        //     log::trace!("Plugin intercept order requested");
+        //     // set_plugin_stat(pm, uuid, false)
+        //     })
+        // )
         .or(warp::path!("server" / "config").and(warp::query::<ConfigGetQuery>()).and(warp::get())
         .then(move |cq: ConfigGetQuery| {
             let pm = config_get_pm.clone();
@@ -196,11 +204,23 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
         "postgres_password" => {
             // resp.insert(cq.key.unwrap(), pm.config().query_admin_pw());            
         },
+        "all" => {
+            // resp.insert(cq.key.unwrap(), pm.config().query_plugin_path());
+            // resp.insert(cq.key.unwrap(), pm.config().query_db_type());
+            // resp.insert(cq.key.unwrap(), pm.config().query_db_path());
+            // resp.insert(cq.key.unwrap(), pm.config().query_db_addr());            
+            // resp.insert(cq.key.unwrap(), pm.config().query_db_port());            
+            // resp.insert(cq.key.unwrap(), pm.config().query_admin_pw());
+        }
         &_ => {},
     }
 
     let json = json(&resp);
 
     Box::new(json)
+}
+
+pub async fn get_intercept_order(pm: Arc<RwLock<PluginManager>>) -> impl Reply {
+    
 }
 
