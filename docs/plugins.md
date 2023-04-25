@@ -78,7 +78,7 @@ See [below](#interacting-with-provided-types) for information about the provided
 structs
 
 Both functions also recieve a `plugin_state` argument, discussed
-[below](#using-shared-state)
+[below](#non-persistent-shared-state)
 
 ##### Return Value
 
@@ -207,7 +207,7 @@ arrays using the Rust allocator.
 
 To maintain memory safety, all data which originates from the MoDNS server (i.e., any data passed as
 an argument to one of the implementation functions) should be allocated by Rust rather than by the
-plugin's native allocator. This is discussed in more detail [below](#allocating-vectorized-data). 
+plugin's native allocator. This is discussed in more detail [below](#working-with-vectorized-data). 
 
 ### Handling DNS Messages
 
@@ -415,7 +415,7 @@ string up to length `size`.
 
 Essentially, changing `ptr` or `capacity`, or expanding the buffer past `capacity`, require using the
 Rust allocator. The `resize_byte_vec` helper function is provided for this purpose. See documentation
-for `resize` functions [above](#working_with_vectorized_data)
+for `resize` functions [above](#working-with-vectorized-data)
 
 ## Shared & Persistent State
 
@@ -553,7 +553,7 @@ writes, such as with mutex locks or atomic operations.
 
 Generally, a function signature where `plugin_state` is `const` is an indication that
 the function may be called concurrently. This is the case for all module implementation
-functions. Some API control functions, discussed [below](#providing-plugin-settings),
+functions. Some API control functions, discussed [below](#plugin-configuration-options-not-yet-implemented),
 are run with a global write lock, meaning it is safe to mutate state in these functions.
 
 ### 
