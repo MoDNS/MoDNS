@@ -19,6 +19,19 @@ pub struct PluginQuery
     enabled: Option<bool>
 }
 
+#[derive(Deserialize)]
+pub struct ConfigGetQuery
+{
+    key: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct ConfigSetQuery
+{
+    key: Option<String>,
+    value: Option<bool>
+}
+
 pub fn root_redirect() -> BoxedFilter<(impl Reply,)> {
     warp::path::end().map(|| warp::redirect(Uri::from_static("/manage"))).boxed()
 }
@@ -42,6 +55,9 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
     let metadata_pm = pm.clone();
     let enable_pm = pm.clone();
     let disable_pm = pm.clone();
+    let config_set_pm = pm.clone();
+    let config_get_pm = pm.clone();
+
     warp::path("api")
         .and(warp::path!("plugins").and(warp::query::<PluginQuery>())
         .then(move |pq: PluginQuery| {
@@ -61,6 +77,20 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             let pm = disable_pm.clone();
             log::trace!("Plugin enabled status change requested");
             set_plugin_stat(pm, uuid, false)
+            })
+        )
+        .or(warp::path!("server" / "config").and(warp::query::<ConfigGetQuery>()).and(warp::get())
+        .then(move |cq: ConfigGetQuery| {
+            let pm = config_get_pm.clone();
+            log::trace!("Server config requested");
+            get_server_config(pm, cq)
+            })
+        )
+        .or(warp::path!("server" / "config").and(warp::query::<ConfigSetQuery>()).and(warp::post())
+        .then(move |cq: ConfigSetQuery| {
+            let pm = config_set_pm.clone();
+            log::trace!("Server config requested");
+            set_server_config(pm, cq)
             })
         )
     ).boxed()
@@ -109,3 +139,56 @@ pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, enable:
 
     }
 }
+
+pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigSetQuery) -> Box<dyn Reply> {
+
+    let resp: BTreeMap<String, String> = BTreeMap::new();
+
+    match cq.key.unwrap().as_ref() {
+        "static_ip" => {},
+        "use_static_ip" => {},
+        "use_global_dashboard" => {},
+        "plugin_paths" => {},
+        "log_filter" => {},
+        "database_type" => {},
+        "sqlite_file_path" => {},
+        "postgres_ip" => {},
+        "postgres_port" => {},
+        "sqlite_password" => {},
+        "postgres_password" => {},
+        &_ => {},
+    }
+
+    let json = json(&resp);
+
+    Box::new(json)
+}
+
+pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuery) -> Box<dyn Reply> {
+    
+    //let mut cm = pm.read().await.config().query_plugin_path();
+
+    let resp: BTreeMap<String, String> = BTreeMap::new();
+
+    match cq.key.unwrap().as_ref() {
+        "static_ip" => {},
+        "use_static_ip" => {},
+        "use_global_dashboard" => {},
+        "plugin_paths" => {},
+        "log_filter" => {},
+        "database_type" => {
+            //pm.config().query
+        },
+        "sqlite_file_path" => {},
+        "postgres_ip" => {},
+        "postgres_port" => {},
+        "sqlite_password" => {},
+        "postgres_password" => {},
+        &_ => {},
+    }
+
+    let json = json(&resp);
+
+    Box::new(json)
+}
+
