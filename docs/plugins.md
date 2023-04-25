@@ -518,9 +518,45 @@ The primary way to do this is to make sure that all of your data is stored in a 
 your plugin. In SQLite, prefix any tables created by your plugin with an identifier unique to your
 plugin, such as `basecache_dnscache`. In Postgres, create a database named for your plugin.
 
-### Storing files on the filesystem
+### Storing Files on the filesystem
 
-TODO
+If your plugin needs more felxible storage than can be provided by the built-in database system, you
+can store files on the server's filesystem. Similarly to databases, this is implemented by simply
+providing you with the path to a directory in the server's `data-dir`, in which you are free to do as
+you please.
+
+#### Retrieving the Plugin Data Directory
+
+To retrieve the name of your plugin's directory, call the `modns_plugin_data_dir` function, which returns
+a `ByteVector`.
+
+Notice that the server does not guarantee that the directory exists on the system. Your plugin should
+create this directory itself (likely in the `impl_plugin_setup()` function, discussed
+[below](#initializing-plugin-state)).
+
+For example:
+
+```C
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include "modns-sdk.h"
+
+// Get the plugin directory
+struct ByteVector plugin_dir_bv = modns_plugin_data_dir();
+
+// Convert the ByteVec to a C string
+char *plugin_dir = malloc(256);
+modns_strdup_from_bytevec(&plugin_dir_bv, plugin_dir);
+modns_free_bytevec(plugin_dir_bv);
+
+// Ensure the plugin directory is created
+struct stat st = {0};
+if (stat(plugin_dir, &st) == -1) {
+    mkdir(plugin_dir, 0700);
+}
+
+```
 
 ### Non-Persistent Shared State
 
@@ -528,7 +564,15 @@ Your plugin will likely need some in-memory state that does not persist between 
 be a database connection, a bound socket, or an in-memory cache.
 
 All interface functions include a `void * plugin_state` argument. This argument is for the plugin to
-store any managed state between calls. Additionally, plugins can export the following functions to
+store any managed state between calls.
+
+The server is unaware of the contents of the `plugin_state` pointer, meaning its memory
+should be managed by the plugin (i.e., it is safe to `malloc` and `free` data stored in
+this pointer, or to allow it to be managed by Go garbage collection).
+
+#### Initializing Plugin State
+
+Additionally, plugins can export the following functions to
 initialize their state:
 
 ```C
@@ -539,10 +583,6 @@ impl_plugin_teardown(void *);
 These functions are called when the plugin is enabled and disabled, respectively.
 The return value of the `setup` function is passed as `plugin_state` to all further
 calls to the plugin, and should be freed by the `teardown` function.
-
-The server is unaware of the contents of the `plugin_state` pointer, meaning its memory
-should be managed by the plugin (i.e., it is safe to `malloc` and `free` data stored in
-this pointer, or to allow it to be managed by Go garbage collection).
 
 #### Notes About Concurrency
 
