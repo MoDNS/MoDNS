@@ -338,6 +338,85 @@ uint8_t rc = resize_question_vec(&my_vec, 4);
 
 A non-zero return code indicates an error.
 
+### Working with Strings
+
+Strings in DNS messages are represented as `ByteVector`s, which are an FFI-safe version
+of Rust's `String` type. They are not directly compatible with functions which expect
+C-style strings.
+
+Helper functions are provided to duplicate `ByteVector` data into C-style strings, and
+vice-versa. Alternatively, you can mutate the strings directly or convert them into your
+language's built-in string types. Either method is discussed below.
+
+#### Using Helper Functions
+
+Two helper functions are provided to interface between `ByteVector`s and C-style strings.
+
+To copy a `ByteVector` string into a C-style string, use `modns_strdup_from_bytevec`. The
+destination string must be allocated to at least the length of the `ByteVec` plus one.
+
+For example, in C:
+
+```C
+// struct ByteVector source_string = "foo"
+char * my_c_string = malloc(sizeof(uint8_t) * 256);
+
+uintptr_t my_c_string_len = modns_strdup_from_bytevec(&source_string, my_c_string, 256);
+// my_c_string_leng== 4
+```
+
+To copy a C-style string back to a `ByteVec`, use `modns_strdup_to_bytevec`. The destination
+`ByteVec` will be reallocated if needed to fit the string. You must free the string's memory
+yourself (if using C or another language with manual memory management)
+
+For example, in C:
+
+```C
+// struct ByteVector dest_string;
+char * my_c_string = "bar";
+
+uintptr_t new_bytevec_len = modns_strdup_to_bytevec(source_string, &dest_string);
+// new_bytevec_len = 3;
+```
+
+#### Interacting with ByteVectors Directly
+
+As stated above, `ByteVector`s are thin wrappers around Rust's `String` type (which, in turn, is
+simply a vector of bytes). The struct itself looks like this:
+
+```Rust
+struct ByteVector {
+    ptr: *mut u8,
+    size: usize,
+    capacity: usize
+}
+```
+
+Or, in C:
+
+```C
+typedef struct ByteVector {
+    uint8_t *ptr,
+    uintptr_t size,
+    uintptr_t capacity
+} ByteVector;
+```
+
+`ptr` points to the buffer, `size` refers to the length of the string, and `capacity` refers to the
+allocated size of the buffer.
+
+The following actions are safe to do without calling any SDK helper functions:
+
+- Read data from `ptr`, without the length of read data exceeding `size` bytes,
+- Write data to `ptr`, without the length of written data exceeding `capacity` bytes,
+- Decrease `size`, and
+- Increase `size`, so long as `size` doesn't exceed `capacity` and the data in `ptr` is a valid UTF-8
+string up to length `size`.
+
+Essentially, changing `ptr` or `capacity`, or expanding the buffer past `capacity`, require using the
+Rust allocator. The `resize_byte_vec` helper function is provided for this purpose. See documentation
+for `resize` functions [above](#working_with_vectorized_data)
+
 ## Using Shared State
 
 Most plugins will require sharing state between calls to the plugin's funcitons. For
