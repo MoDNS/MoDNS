@@ -510,7 +510,13 @@ struct NativeDatabaseConnection init_db() {
 
 #### Best Practices for Using the Database
 
-TODO
+The main downside of this approach to database support is that no safeguards are provided to prevent
+plugins from touching each other's data. Because of this, plugin authors should be extra careful to
+avoid database practices which might conflict with other plugins.
+
+The primary way to do this is to make sure that all of your data is stored in a namespace unique to
+your plugin. In SQLite, prefix any tables created by your plugin with an identifier unique to your
+plugin, such as `basecache_dnscache`. In Postgres, create a database named for your plugin.
 
 ### Storing files on the filesystem
 
