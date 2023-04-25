@@ -289,11 +289,15 @@ impl DnsPlugin {
 
                 log::trace!("Initializing SDK logger for {log_name}");
 
-                if let Err(e) = sdk_init(&log_name, log::logger(), config.db_info()) {
+                if let Err(e) = sdk_init(
+                    &log_name,
+                    log::logger(),
+                    config.db_info(),
+                    config.data_dir().join("plugin-data").join(&log_name)
+                ) {
 
-                    log::warn!("Failed to initialize SDK for {log_name}");
+                    log::error!("Failed to initialize SDK for {log_name}");
                     log::debug!("Got error while initializing SDK: {e:?}");
-
                 };
 
             }

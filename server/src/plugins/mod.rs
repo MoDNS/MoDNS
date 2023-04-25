@@ -1,5 +1,5 @@
 
-use std::ffi::c_void;
+use std::{ffi::c_void, path::PathBuf};
 
 use modns_sdk::types::{ffi, safe};
 
@@ -17,7 +17,7 @@ pub enum ResponseSource {
     Validator
 }
 
-type SdkInitFn = extern "Rust" fn(&str, &'static dyn log::Log, safe::DatabaseInfo) -> Result<(), log::SetLoggerError>;
+type SdkInitFn = extern "Rust" fn(&str, &'static dyn log::Log, safe::DatabaseInfo, PathBuf) -> Result<(), log::SetLoggerError>;
 
 type SetupFn = unsafe extern "C" fn() -> *mut c_void;
 
