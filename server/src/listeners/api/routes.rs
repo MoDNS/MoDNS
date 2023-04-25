@@ -166,7 +166,7 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigSetQuer
 
 pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuery) -> Box<dyn Reply> {
     
-    //let mut cm = pm.read().await.config().query_plugin_path();
+    // let mut cm = pm.read().await;
 
     let resp: BTreeMap<String, String> = BTreeMap::new();
 
@@ -174,16 +174,28 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
         "static_ip" => {},
         "use_static_ip" => {},
         "use_global_dashboard" => {},
-        "plugin_paths" => {},
+        "plugin_paths" => {
+            // resp.insert(cq.key.unwrap(), pm.config().query_plugin_path());
+        },
         "log_filter" => {},
         "database_type" => {
-            //pm.config().query
+            // resp.insert(cq.key.unwrap(), pm.config().query_db_type());
         },
-        "sqlite_file_path" => {},
-        "postgres_ip" => {},
-        "postgres_port" => {},
-        "sqlite_password" => {},
-        "postgres_password" => {},
+        "sqlite_file_path" => {
+            // resp.insert(cq.key.unwrap(), pm.config().query_db_path());
+        },
+        "postgres_ip" => {
+            // resp.insert(cq.key.unwrap(), pm.config().query_db_addr());            
+        },
+        "postgres_port" => {
+            // resp.insert(cq.key.unwrap(), pm.config().query_db_port());            
+        },
+        "sqlite_password" => {
+            // resp.insert(cq.key.unwrap(), pm.config().query_admin_pw());
+        },
+        "postgres_password" => {
+            // resp.insert(cq.key.unwrap(), pm.config().query_admin_pw());            
+        },
         &_ => {},
     }
 
