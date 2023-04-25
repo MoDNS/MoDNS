@@ -417,12 +417,113 @@ Essentially, changing `ptr` or `capacity`, or expanding the buffer past `capacit
 Rust allocator. The `resize_byte_vec` helper function is provided for this purpose. See documentation
 for `resize` functions [above](#working_with_vectorized_data)
 
-## Using Shared State
+## Shared & Persistent State
 
-Most plugins will require sharing state between calls to the plugin's funcitons. For
-this purpose, all interface functions include a `void * plugin_state` argument. This
-argument is for the plugin to store any managed state between calls. Additionally,
-plugins can export the following functions to initialize their state:
+Most plugins will require storing some form of state between function calls. Three methods are provided
+for doing so:
+
+- Use a database
+- Store files in an assigned directory
+- Share state between function calls with the `plugin_state` pointer
+
+### Using a Database
+
+MoDNS provides an end-user-configurable database connection for persisting structured data between restarts
+of the server. The default database backend is SQLite, but an end user may configure the server to use a
+Postgres database backend.
+
+Rather than managing connections and implementing a direct API interface to the database, which would likely
+not interact well with existing tools for the plugin's language, the SDK simply provides a single function
+to retrieve the end-user-provided settings for the database connection, so that plugins can manage their
+own database connections.
+
+This approach does have downsides, which plugin authors should be cognizant of
+when implementing databases into their plugins.
+
+#### Retrieving the Database Configuration
+
+The `modns_get_database()` function provides the database configuration as a pointer to the static `DatabaseInfo`
+struct.
+
+This struct is in reality a Rust enum with the following fields:
+
+```Rust
+enum DatabaseInfo {
+    Sqlite: {
+        file: ByteVector
+    },
+    Postgres: {
+        host: ByteVector,
+        port: u16,
+        username: ByteVector,
+        password: ByteVector,
+    }
+}
+```
+
+This is automatically compiled to a C structure known as a "tagged union" which looks like the following:
+
+```C
+typedef struct DatabaseInfo {
+  DatabaseInfo_Tag tag;
+  union {
+    SQLite_Body sq_lite;
+    Postgres_Body postgres;
+  };
+} DatabaseInfo;
+
+typedef enum DatabaseInfo_Tag {
+  SQLite,
+  Postgres,
+} DatabaseInfo_Tag;
+
+typedef struct SQLite_Body {
+  struct ByteVector file;
+} SQLite_Body;
+
+typedef struct Postgres_Body {
+  struct ByteVector host;
+  uint16_t port;
+  struct ByteVector username;
+  struct ByteVector password;
+} Postgres_Body;
+```
+
+Thus, a function to initialize a database connection might look like:
+
+```C
+struct NativeDatabaseConnection init_db() {
+    struct DatabaseInfo dbinfo = modns_get_database();
+
+    if (dbinfo.tag == SQLite) {
+        return init_native_sqlite_conn(dbinfo.sq_lite.file);
+    } else {
+        return init_native_postgres_conn(
+            dbinfo.postgres.host,
+            dbinfo.postgres.port,
+            dbinfo.postgres.username,
+            dbinfo.postgres.password
+        )
+    }
+}
+```
+
+#### Best Practices for Using the Database
+
+TODO
+
+### Storing files on the filesystem
+
+TODO
+
+### Non-Persistent Shared State
+
+Your plugin will likely need some in-memory state that does not persist between restarts. This may
+be a database connection, a bound socket, or an in-memory cache.
+
+All interface functions include a `void * plugin_state` argument. This argument is for the plugin to
+store any managed state between calls. Additionally, plugins can export the following functions to
+initialize their state:
 
 ```C
 void * impl_plugin_setup();
@@ -437,7 +538,7 @@ The server is unaware of the contents of the `plugin_state` pointer, meaning its
 should be managed by the plugin (i.e., it is safe to `malloc` and `free` data stored in
 this pointer, or to allow it to be managed by Go garbage collection).
 
-### Notes About Concurrency
+#### Notes About Concurrency
 
 The MoDNS server uses an asynchronous, multi-threaded architecture. This means that
 your plugin may be called multiple times at once, on different threads. Care should
@@ -448,6 +549,8 @@ Generally, a function signature where `plugin_state` is `const` is an indication
 the function may be called concurrently. This is the case for all module implementation
 functions. Some API control functions, discussed [below](#providing-plugin-settings),
 are run with a global write lock, meaning it is safe to mutate state in these functions.
+
+### 
 
 ## Plugin Configuration Options (Not Yet Implemented)
 
