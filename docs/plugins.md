@@ -711,19 +711,35 @@ MoDNS hosts a webpage for ease of maneagement.
 
 ### Dashboard Components
 
-#### Plugin Side
+Plugins can provide widgets for the web dashboard which display stats provided by the plugin.
 
-Any plugins that want to show data on the Dashboard Page should implement the C function:
+#### Implementing a Backend
+
+Data is pulled from your plugin by polling the API endpoint `/api/plugins/<uuid>/stats/<key>`. To implement
+a backend for this endpoint, expose the following C function:
 
 ```C
-uint8_t impl_statistics(const struct ByteVEctor *key,
+uint8_t impl_statistics(const struct ByteVector *key,
                         struct ByteVector *resp,
                         const void *plugin_state);
 ```
 
-This function should return data in JSON format specific to the type of Component the user wishes to display.
+This function should write a JSON response into `*resp` and return to indicate the appropriate response code.
+Function return codes and their associated API response codes are:
 
-##### Line Chart
+| rc | API response |
+| -- | ------------- |
+| 0 | `200 OK` |
+| 1 | `404 Not Found` |
+
+Any other return code becomes `500 Internal Server Error`.
+
+##### Formatting API Responses
+
+The format of the JSON response depends on the particular style of widget consuming the data. Sample responses
+for each style are provided below.
+
+###### Line Chart
 ```json
 {
   "x_axis_label": "Transportation",
@@ -771,7 +787,7 @@ This function should return data in JSON format specific to the type of Componen
   ]
 }
 ```
-##### Bar Chart
+###### Bar Chart
 ```json
 {
   "index_by": "country",
@@ -796,7 +812,7 @@ This function should return data in JSON format specific to the type of Componen
 }
 ```
 
-##### Pie Chart
+###### Pie Chart
 ```json
 {
   "data": [
@@ -824,7 +840,7 @@ This function should return data in JSON format specific to the type of Componen
 }
 ```
 
-##### Stat Box
+###### Stat Box
 ```json
 {
   "label": "Queries Blocked",
@@ -834,7 +850,7 @@ This function should return data in JSON format specific to the type of Componen
 }
 ```
 
-#### Status Box
+##### Status Box
 ```json
 {
   "status_label": "Running",    // label 
@@ -842,7 +858,7 @@ This function should return data in JSON format specific to the type of Componen
 }
 ```
 
-##### Table
+###### Table
 Note: one field needs to be labeled as `id`, (the label will show has the `headerName`) or else the chart will make one for you and display it as a number.
 
 ```json
@@ -885,7 +901,7 @@ Note: one field needs to be labeled as `id`, (the label will show has the `heade
 }
 ```
 
-#### Frontend Side
+#### Adding A Widget on the Frontend
 
 ##### Adding
 
