@@ -1,0 +1,47 @@
+---
+
+# Files to read from, will be combined into a single document
+input-files:
+- 1_intro.md
+- 2_designProcess.md
+- 3_hardware_software.md
+- 4_designConsiderations.md
+- 5_works_cited.md
+- appendices.md
+
+output-file: design_report.pdf
+standalone: true
+
+# Only allow pandoc access to this folder and its children
+sandbox: true
+
+# Table of Contents settings
+table-of-contents: true
+toc-depth: 3
+number-sections: true
+
+# Metadata passed to latex template
+metadata:
+  title: "MoDNS: A Modular DNS Solution"
+  subtitle: Winter Technical Report
+  author:
+  - Tim Huhn
+  - Bronson Jordan
+  - Aankit Pokhrel
+  - Carter Ray
+  - Seth Warren
+
+  abstract: |
+    Domain Name System (DNS) translates domain names into IP addresses. It allows people to access websites without memorizing IP addresses. DNS Servers respond to DNS requests made by devices with the IP address for the requested site. 
+    Some amazing things can be done through DNS, but combining any of these benefits often requires chaining multiple DNS servers to each other until one finally reaches an external DNS server. This is a complicated and messy process just to combine features such as SecureDNS, DNSSEC, DNS domain blocking, or download caching.
+    MoDNS offers a solution to the typical convoluted DNS approach. It allows user to write and load plugins that have the functionality to change how DNS requests on a local network are handled. The MoDNS Framework provides opporunities to combine many DNS benefits into one MoDNS Server.
+
+  documentclass: report
+  papersize: letter
+  geometry:
+  - margin=0.5in
+
+  fontfamily: bera
+  mainfont: Bera Sans
+
+...
