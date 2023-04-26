@@ -1,4 +1,4 @@
-import { Box, useTheme } from '@mui/material';
+import { Box, MenuItem, Select, useTheme } from '@mui/material';
 import React, { useState } from 'react';
 import MainBox from '../Components/MainBox';
 import CustomSettings from '../Components/Tools/CustomSettings/CustomSettings';
@@ -7,9 +7,8 @@ import CustomSettingsTools from '../Components/Tools/CustomSettings/CustomSettin
 const Tools = () => {
     const theme = useTheme();
 
-    // IMPLEMENENT WHEN MULTIPLE TOOLS EXIST
-    // const [buildBox, setBuildBox] = useState(0);
-    const buildBox = 0;
+    const [buildBox, setBuildBox] = useState(0);
+
     const [jsonPage, setJsonPage] = useState([]);
 
     const buildBoxes = [ 
@@ -21,7 +20,22 @@ const Tools = () => {
 
     return (
         <MainBox
-            title={"Tools"}
+            title={
+                [
+                    <div key={1} style={{ display: 'flex', flexDirection: 'row'}} >
+                      Tools
+                      <Select 
+                        value={buildBox}
+                        sx={{ marginLeft: 'auto', marginY: 'auto' }} 
+                        onChange={(e) => {
+                            setBuildBox(e.target.value);
+                        }}
+                      >
+                        <MenuItem value={0}> Custom Settings Page Builder</MenuItem>
+                      </Select>
+                    </div>
+                  ]
+            }
             divider
         >
             <div style={{ display: 'flex', flexDirection:'row', overflow: 'hidden', flexGrow: 1 }}>

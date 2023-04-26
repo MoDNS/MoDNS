@@ -9,6 +9,9 @@ use super::plugin::DnsPlugin;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PluginMetadata {
 
+    /// A short, uniquely identifiable name for the plugin
+    short_name: String,
+
     /// The plugin's display-friendly name, set in their manifest.yaml
     friendly_name: String,
 
@@ -82,11 +85,16 @@ impl PluginMetadata {
     pub fn enabled(&self) -> bool {
         self.enabled
     }
+
+    pub fn short_name(&self) -> &str {
+        self.short_name.as_ref()
+    }
 }
 
 impl DnsPlugin {
     pub fn metadata(&self) -> PluginMetadata {
         PluginMetadata {
+            short_name: self.short_name().to_owned(),
             friendly_name: self.friendly_name().to_owned(),
             description: self.description().to_owned(),
             home: self.home_dir().to_owned(),

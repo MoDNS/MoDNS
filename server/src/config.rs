@@ -42,10 +42,10 @@ const DB_PASS_KEY: &str = "db_pass";
 const LOG_KEY: &str = "log_filter";
 const ADMIN_PW_KEY: &str = "admin_pw_hash";
 
-const DEFAULT_PLUGIN_PATH: &str = "/usr/share/modnsd/default-plugins";
+const DEFAULT_PLUGIN_PATH: &str = "/usr/share/modns/default-plugins";
 const DEFAULT_UNIX_SOCKET: &str = "/run/modnsd.sock";
-const DEFAULT_DATA_DIR: &str = "/var/lib/modnsd";
-const DEFAULT_FRONTEND_DIR: &str = "/usr/share/modnsd/web";
+const DEFAULT_DATA_DIR: &str = "/var/lib/modns";
+const DEFAULT_FRONTEND_DIR: &str = "/usr/share/modns/web";
 const DEFAULT_SQLITE_FILE: &str = "modns.sqlite";
 const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const DEFAULT_POSTGRES_USER: &str = "postgres";
@@ -674,13 +674,13 @@ impl ServerConfig {
     }
 }
 
-#[derive(Debug, Serialize)]
-pub struct MutableConfigValue<T: Debug + Serialize> {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MutableConfigValue<T: Debug> {
     overridden: bool,
     value: T,
 }
 
-impl<T: Debug + Serialize> MutableConfigValue<T> {
+impl<T: Debug> MutableConfigValue<T> {
     fn overridden(value: T) -> Self {
         Self {
             overridden: true,
@@ -693,6 +693,18 @@ impl<T: Debug + Serialize> MutableConfigValue<T> {
             overridden: false,
             value
         } 
+    }
+
+    pub fn is_overridden(&self) -> bool {
+        self.overridden
+    }
+
+    pub fn value(&self) -> &T {
+        &self.value
+    }
+
+    pub fn into_value(self) -> T {
+        self.value
     }
 }
 

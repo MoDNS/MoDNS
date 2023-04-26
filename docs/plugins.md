@@ -829,12 +829,14 @@ This exposes the `/api/plugins/<your-plugin-uuid>/favicon` API endpoint.
 
 ## Compiling Plugins
 
-As mentioned above, plugins must be compiled into a shared object file named `plugin.so`.
+As mentioned above, plugins must be compiled into a shared object file named `plugin_<arch>.so`.
+
+`arch` refers to the architecture the plugin is compiled for. Accepted values are `x86_64`, `aarch64`, and `arm`
 
 A simple example of compiling a C plugin would look like this:
 
 ```bash
-gcc -shared -fPIC -I${MODNS_SDK_DIR} -u_init_modns_sdk -L${MODNS_SDK_DIR} -lmodns_sdk my-plugin.c -o plugin.so
+gcc -shared -fPIC -I${MODNS_SDK_DIR} -u_init_modns_sdk -L${MODNS_SDK_DIR} -lmodns_sdk my-plugin.c -o plugin_x86_64.so
 ```
 
 To compile a Go program:
@@ -843,7 +845,7 @@ To compile a Go program:
 export CGO_CFLAGS=-I${MODNS_SDK_DIR}
 export CGO_LDFLAGS=-u_init_modns_sdk -L${MODNS_SDK_DIR} -lmodns_sdk
 
-go build -buildmode c-shared -o plugin.so my-plugin-module/my-plugin
+go build -buildmode c-shared -o plugin_x86_64.so my-plugin-module/my-plugin
 ```
 
 The following flags are required:
@@ -894,7 +896,10 @@ TODO: Add information for frontend files
 
 On the MoDNS server, plugins are placed in a directory inside the server's
 plugin path. When loading plugins, the server searches that directory for
-subdirectories containing the required files (`plugin.so` and `manifest.yaml`).
+subdirectories containing the required files (`plugin_<arch>.so` and `manifest.yaml`).
+
+To support multiple architectures, include a `plugin_<arch>.so` file for each supported
+architecture.
 
 For example, on a MoDNS server which has `/opt/modns/plugins` on it's plugin
 path, that directory will look something like:
@@ -902,10 +907,10 @@ path, that directory will look something like:
 ```
 /opt/modns/plugins
 ├── plugin-1
-│   ├── plugin.so
+│   ├── plugin_x86_64.so
 │   └── manifest.yaml
 └── plugin-2
-    ├── plugin.so
+    ├── plugin_x86_64.so
     ├── favicon.ico
     └── manifest.yaml
 ```
@@ -917,10 +922,10 @@ place multiple plugins in one package. For example, this might look like:
 ```
 my-plugin-package.tar.gz
 ├── my-plugin-1
-│   ├── plugin.so
+│   ├── plugin_x86_64.so
 │   └── manifest.yaml
 └── my-plugin-2
-    ├── plugin.so
+    ├── plugin_x86_64.so
     └── manifest.yaml
 ```
 
