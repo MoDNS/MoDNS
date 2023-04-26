@@ -187,7 +187,7 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
 
     let mut reply = json(&());
 
-    match cq.key.unwrap().as_ref() {
+    match cq.key.unwrap_or_default().as_ref() {
         "static_ip" => {},
         "use_static_ip" => {},
         "use_global_dashboard" => {},
