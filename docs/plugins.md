@@ -709,13 +709,9 @@ In all cases, the contents of `*resp` are used as the body of the response.
 
 MoDNS hosts a webpage for ease of maneagement.
 
-### Dashboard Widgets
+### Dashboard Components
 
 Plugins can provide widgets for the web dashboard which display stats provided by the plugin.
-
-#### Implementing a Widget on the Frontend
-
-TODO: Frontend
 
 #### Implementing a Backend
 
@@ -740,18 +736,206 @@ Any other return code becomes `500 Internal Server Error`.
 
 ##### Formatting API Responses
 
-TODO: Frontend
+The format of the JSON response depends on the particular style of widget consuming the data. Sample responses
+for each style are provided below.
+
+###### Line Chart
+```json
+{
+  "x_axis_label": "Transportation",
+  "y_axis_label": "Count",
+  "data": [
+    {
+      "id": "japan",
+      "data": [
+        {
+          "x": "plane",
+          "y": 94
+        },
+        {
+          "x": "helicopter",
+          "y": 171
+        },
+      ]
+    },
+    {
+      "id": "france",
+      "data": [
+        {
+          "x": "plane",
+          "y": 177
+        },
+        {
+          "x": "helicopter",
+          "y": 204
+        },
+      ]
+    },
+    {
+      "id": "us",
+      "data": [
+        {
+          "x": "plane",
+          "y": 254
+        },
+        {
+          "x": "helicopter",
+          "y": 264
+        },
+      ]
+    },
+  ]
+}
+```
+###### Bar Chart
+```json
+{
+  "index_by": "country",
+  "x_axis_label": "Country",
+  "y_axis_label": "Food",
+  "data": [
+    {
+      "country": "AD",
+      "hot dog": 137,
+      "burger": 96,
+      "kebab": 72,
+      "donut": 140,
+    },
+    {
+      "country": "AE",
+      "hot dog": 55,
+      "burger": 28,
+      "kebab": 58,
+      "donut": 29,
+    },
+  ]
+}
+```
+
+###### Pie Chart
+```json
+{
+  "data": [
+    {
+      "id": "elixir",
+      "label": "elixir",
+      "value": 218,
+    },
+    {
+      "id": "javascript",
+      "label": "javascript",
+      "value": 533,
+    },
+    {
+      "id": "rust",
+      "label": "rust",
+      "value": 579,
+    },
+    {
+      "id": "php",
+      "label": "php",
+      "value": 120,
+    },
+  ]
+}
+```
+
+###### Stat Box
+```json
+{
+  "label": "Queries Blocked",
+  "progress": 20,                     // optional if you want to display percentage
+  "statistic": 123099,
+  "differenceFromLast": -150          // optional if want to display difference from last check
+}
+```
+
+##### Status Box
+```json
+{
+  "status_label": "Running",    // label 
+  "status_good": true,          // will show a check mark on true and an exclamation mark on false
+}
+```
+
+###### Table
+Note: one field needs to be labeled as `id`, (the label will show has the `headerName`) or else the chart will make one for you and display it as a number.
+
+```json
+{
+  "headers": [
+    {
+      "field": "id",
+      "headerName": "Name",
+      "width": 300,
+    },
+    {
+      "field": "email",
+      "headerName": "Email",
+      "width": 400,
+    },
+    {
+      "field": "age",
+      "headerName": "Age",
+      "type": "number",
+      "width": 100,
+    },
+  ],
+  "data": [
+    {
+      "id": "Jon Snow",
+      "email": "jonsnow@gmail.com",
+      "age": 35,
+    },
+    {
+      "id": "Cersei Lannister",
+      "email": "cerseilannister@gmail.com",
+      "age": 42,
+    },
+    {
+      "id": "Jaime Lannister",
+      "email": "jaimelannister@gmail.com",
+      "age": 45,
+    },
+  ]
+}
+```
+
+#### Adding A Widget on the Frontend
+
+##### Adding
+
+First, check the Server Settings and decide if you want a local or global dashboard.
+- A local dashboard will show a different dashboard for every device the administrator logs into.
+- A global dashboard will show the same dashboard accross all devices.
+
+On the Dashboard Page, use the `Edit` Button to add components and/or edit existing components.
+
+It will ask for:
+- The type of component
+- The uuid of the plugin providing the data
+- The keyy to use when requesting the data
+- The height as a number and the width as a percentage
+
+Be sure to click save.
+
+##### Editing
+
+Editing Features will come in the future
+
+
+##### Deleting
+
+Deleting is possible in the Edit Mode
+
 
 ### Settings Page
 
-To create a settings page for your plugin, you can simply use the Plugin Settings Page creation tool
-located under the `Tools` tab on the webserver.
-
+To create a settings page for your plugin, you can simply use the Plugin Settings Page creation tool located under the `Tools` tab on the webserver.
 
 You can add elements and link them to your plugin's configuration settings or send your plugin commands.
 
 Note: You do not need to add an enabled settings, the server will provide this one for you.
-
 
 Alternatively, you can use this JSON structure to write it manually. 
 Keep in mind the page will display your settings in the order you list them.

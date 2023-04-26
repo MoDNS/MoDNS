@@ -325,6 +325,18 @@ Returns:
 - `200 OK` with JSON object representing requested key-value pairs
 - `404 Not Found` if one or more requested keys do not exist
 
+
+#### Get the Layout of the Dashboard
+
+Endpoint: `GET /api/server/dashboard`
+
+CLI: `modns dashboard get`
+
+Returns:
+ - `200 OK` with JSON object of the Dashboards Layout.
+ - `404 Not Found` if no dashboard has been created
+
+
 ### Send a test DNS request and resolve the IP
 
 Endpoint: `GET /api/resolve?host=<hostname>[&record=<record type>]`
