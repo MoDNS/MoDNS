@@ -1,27 +1,5 @@
 
 #[repr(C)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DnsOpcode {
-    Query = 0,
-    InverseQuery,
-    Status,
-    Notify,
-    Update,
-    DSO
-}
-
-#[repr(C)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DnsResponseCode {
-    NoError,
-    FormatError,
-    ServerFailure,
-    NameError,
-    NotImplemented,
-    Refused
-}
-
-#[repr(C)]
 #[derive(Debug)]
 pub struct DnsQuestion {
     pub name: BytePtrVector,
@@ -95,12 +73,12 @@ impl Default for DnsResourceData {
 pub struct DnsMessage {
     pub id: u16,
     pub is_response: bool,
-    pub opcode: DnsOpcode,
+    pub opcode: u16,
     pub authoritative_answer: bool,
     pub truncation: bool,
     pub recursion_desired: bool,
     pub recursion_available: bool,
-    pub response_code: DnsResponseCode,
+    pub response_code: u16,
     pub questions: QuestionVector,
     pub answers: RRVector,
     pub authorities: RRVector,
@@ -112,12 +90,12 @@ pub struct DnsMessage {
 pub struct DnsHeader {
     pub id: u16,
     pub is_response: bool,
-    pub opcode: DnsOpcode,
+    pub opcode: u16,
     pub authoritative_answer: bool,
     pub truncation: bool,
     pub recursion_desired: bool,
     pub recursion_available: bool,
-    pub response_code: DnsResponseCode,
+    pub response_code: u16,
     pub qdcount: usize,
     pub ancount: usize,
     pub nscount: usize,
@@ -129,17 +107,7 @@ unsafe impl Send for DnsMessage {}
 impl DnsMessage {
     pub fn with_error_code(code: u8) -> Self {
         let mut rv = Self::default();
-
-        rv.response_code = match code {
-            0 => DnsResponseCode::NoError,
-            1 => DnsResponseCode::FormatError,
-            2 => DnsResponseCode::ServerFailure,
-            3 => DnsResponseCode::NameError,
-            4 => DnsResponseCode::NotImplemented,
-            5 => DnsResponseCode::Refused,
-            _ => DnsResponseCode::ServerFailure
-        };
-
+        rv.response_code = code.into();
         rv
     }
 
@@ -167,12 +135,12 @@ impl Default for DnsMessage {
         Self {
             id: 0,
             is_response: false,
-            opcode: DnsOpcode::Query,
+            opcode: 0,
             authoritative_answer: false,
             truncation: false,
             recursion_desired: false,
             recursion_available: false,
-            response_code: DnsResponseCode::ServerFailure,
+            response_code: 0,
             questions: QuestionVector::default(),
             answers: RRVector::default(),
             authorities: RRVector::default(),
@@ -250,5 +218,20 @@ impl Default for RRVector {
             size: 0,
             capacity: 0
         }
+    }
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub enum DatabaseInfo {
+    SQLite {
+        file: ByteVector,
+    },
+
+    Postgres {
+        host: ByteVector,
+        port: u16,
+        username: ByteVector,
+        password: ByteVector
     }
 }

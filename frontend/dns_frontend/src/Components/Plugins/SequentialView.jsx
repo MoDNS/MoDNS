@@ -7,7 +7,7 @@ import { PropTypes } from 'prop-types';
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
 
-const SequentialView = ({ pluginDicts, numInterceptors, pluginsEnabledDict, togglePlugin, interceptorUuidOrder, setInterceptOrder }) => {
+const SequentialView = ({ pluginDicts, numInterceptors, pluginsEnabledDict, togglePlugin, interceptorUuidOrder, setInterceptOrder, settingsPagesDict }) => {
 
     //////////////// Accordion Expansion ////////////////
     const [expanded, setExpanded] = useState([false, false, false, false, false]);
@@ -64,6 +64,7 @@ const SequentialView = ({ pluginDicts, numInterceptors, pluginsEnabledDict, togg
                         interceptorUuidOrder={interceptorUuidOrder}
                         setInterceptOrder={setInterceptOrder}
                         module={'listener'}
+                        settingsPagesDict={settingsPagesDict}
                         
                     />
                 </DropDown>
@@ -84,6 +85,7 @@ const SequentialView = ({ pluginDicts, numInterceptors, pluginsEnabledDict, togg
                         interceptorUuidOrder={interceptorUuidOrder}
                         setInterceptOrder={setInterceptOrder}
                         module={'interceptor'}
+                        settingsPagesDict={settingsPagesDict}
 
                     />
                 </DropDown>
@@ -102,6 +104,7 @@ const SequentialView = ({ pluginDicts, numInterceptors, pluginsEnabledDict, togg
                         interceptorUuidOrder={interceptorUuidOrder}
                         setInterceptOrder={setInterceptOrder}
                         module={'resolver'}
+                        settingsPagesDict={settingsPagesDict}
 
                     />
                 </DropDown>
@@ -121,6 +124,7 @@ const SequentialView = ({ pluginDicts, numInterceptors, pluginsEnabledDict, togg
                         interceptorUuidOrder={interceptorUuidOrder}
                         setInterceptOrder={setInterceptOrder}
                         module={'validator'}
+                        settingsPagesDict={settingsPagesDict}
 
                     />
                 </DropDown>
@@ -139,7 +143,8 @@ const SequentialView = ({ pluginDicts, numInterceptors, pluginsEnabledDict, togg
                         togglePlugin={togglePlugin}
                         interceptorUuidOrder={interceptorUuidOrder}
                         setInterceptOrder={setInterceptOrder}
-                        module={'inspector'}    
+                        module={'inspector'}
+                        settingsPagesDict={settingsPagesDict}
 
                     />
                 </DropDown>

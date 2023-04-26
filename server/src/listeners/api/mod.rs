@@ -11,7 +11,6 @@ use std::fmt::Display;
 use std::sync::Arc;
 use anyhow::Result;
 
-use crate::ServerConfig;
 use crate::plugins::manager::PluginManager;
 
 #[derive(Debug)]
@@ -48,13 +47,13 @@ impl Display for ApiListener {
     }
 }
 
-pub async fn listen_api(listeners: Vec<ApiListener>, shutdown_channel: broadcast::Sender<()>, pm: Arc<RwLock<PluginManager>>, cfg: &ServerConfig) -> Result<()>{
+pub async fn listen_api(listeners: Vec<ApiListener>, shutdown_channel: broadcast::Sender<()>, pm: Arc<RwLock<PluginManager>>) -> Result<()>{
     // let pm_arc = Arc::new(RwLock::new(PluginManager::new()));
     
-    let api_filter = api_filter(pm);
+    let api_filter = api_filter(pm.clone());
 
     let frontend_routes = root_redirect()
-        .or(frontend_filter(cfg.frontend_dir(), cfg.headless()))
+        .or(frontend_filter(pm.read().await.config().frontend_dir(), pm.read().await.config().headless()))
         .or(api_filter)
         .with(warp::log("modnsd::listeners::api"));
 

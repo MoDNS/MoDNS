@@ -3,7 +3,7 @@ import PluginTableRow from './PluginTableRow';
 import { useRef } from 'react';
 import { PropTypes } from 'prop-types';
 
-const PluginTable = ({ dragNDrop, pluginDict, numInterceptors, pluginsEnabledDict, togglePlugin, interceptorUuidOrder, setInterceptOrder, module }) => {
+const PluginTable = ({ dragNDrop, pluginDict, numInterceptors, pluginsEnabledDict, togglePlugin, interceptorUuidOrder, setInterceptOrder, module, settingsPagesDict }) => {
 
     const dragItem = useRef();
     const dragOverItem = useRef();
@@ -29,7 +29,7 @@ const PluginTable = ({ dragNDrop, pluginDict, numInterceptors, pluginsEnabledDic
                 <Table >
                     <TableBody >
                         {
-                            (module === 'interceptor' ? interceptorUuidOrder : Object.keys(pluginDict)).map((key, index) => (
+                            (module === 'interceptor' ? interceptorUuidOrder : Object.keys(pluginDict || {})).map((key, index) => (
                                 <PluginTableRow 
                                     key={index} 
                                     // plugin elements
@@ -56,6 +56,8 @@ const PluginTable = ({ dragNDrop, pluginDict, numInterceptors, pluginsEnabledDic
                                     dragStart={dragStart}
                                     dragEnter={dragEnter}
                                     dragDrop={dragDrop}
+
+                                    settingsPage={settingsPagesDict[key]}
                                     
                                     />
                                     ))

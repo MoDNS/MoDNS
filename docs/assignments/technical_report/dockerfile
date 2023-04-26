@@ -1,0 +1,5 @@
+FROM pandoc/latex
+
+ENTRYPOINT [ "pandoc", "-d", "settings.yaml" ]
+
+RUN tlmgr install bera

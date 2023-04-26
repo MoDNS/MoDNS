@@ -1,11 +1,11 @@
 
-use std::net::Ipv6Addr;
+use std::{net::Ipv6Addr, path::PathBuf};
 use std::ffi::c_char;
 use std::string::FromUtf8Error;
 use std::mem::ManuallyDrop;
 use std::net::Ipv4Addr;
-use std::panic::catch_unwind;
 
+use super::ffi::ByteVector;
 use super::{ffi, safe};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -84,64 +84,6 @@ S: FfiType
     }
 }
 
-impl FfiType for ffi::DnsOpcode {
-    type Safe = safe::DnsOpcode;
-
-    fn try_safe(self) -> Result<Self::Safe, FfiConversionError> {
-        catch_unwind(|| {
-            match self {
-                ffi::DnsOpcode::Query => safe::DnsOpcode::Query,
-                ffi::DnsOpcode::InverseQuery => safe::DnsOpcode::InverseQuery,
-                ffi::DnsOpcode::Status => safe::DnsOpcode::Status,
-                ffi::DnsOpcode::Notify => safe::DnsOpcode::Notify,
-                ffi::DnsOpcode::Update => safe::DnsOpcode::Update,
-                ffi::DnsOpcode::DSO => safe::DnsOpcode::DSO,
-            }
-        })
-        .or(Err(FfiConversionError::InvalidEnum))
-    }
-
-    fn from_safe(safe_val: Self::Safe) -> Self {
-        match safe_val {
-            safe::DnsOpcode::Query => ffi::DnsOpcode::Query,
-            safe::DnsOpcode::InverseQuery => ffi::DnsOpcode::InverseQuery,
-            safe::DnsOpcode::Status => ffi::DnsOpcode::Status,
-            safe::DnsOpcode::Notify => ffi::DnsOpcode::Notify,
-            safe::DnsOpcode::Update => ffi::DnsOpcode::Update,
-            safe::DnsOpcode::DSO => ffi::DnsOpcode::DSO,
-        }
-    }
-}
-
-impl FfiType for ffi::DnsResponseCode {
-    type Safe = safe::DnsResponseCode;
-
-    fn try_safe(self) -> Result<Self::Safe, FfiConversionError> {
-        catch_unwind(|| {
-            match self {
-                ffi::DnsResponseCode::NoError => safe::DnsResponseCode::NoError,
-                ffi::DnsResponseCode::FormatError => safe::DnsResponseCode::FormatError,
-                ffi::DnsResponseCode::ServerFailure => safe::DnsResponseCode::ServerFailure,
-                ffi::DnsResponseCode::NameError => safe::DnsResponseCode::NameError,
-                ffi::DnsResponseCode::NotImplemented => safe::DnsResponseCode::NotImplemented,
-                ffi::DnsResponseCode::Refused => safe::DnsResponseCode::Refused,
-            }
-        })
-        .or(Err(FfiConversionError::InvalidEnum))
-    }
-
-    fn from_safe(safe_val: Self::Safe) -> Self {
-        match safe_val {
-            safe::DnsResponseCode::NoError => ffi::DnsResponseCode::NoError,
-            safe::DnsResponseCode::FormatError => ffi::DnsResponseCode::FormatError,
-            safe::DnsResponseCode::ServerFailure => ffi::DnsResponseCode::ServerFailure,
-            safe::DnsResponseCode::NameError => ffi::DnsResponseCode::NameError,
-            safe::DnsResponseCode::NotImplemented => ffi::DnsResponseCode::NotImplemented,
-            safe::DnsResponseCode::Refused => ffi::DnsResponseCode::Refused,
-        }
-    }
-}
-
 impl FfiType for ffi::DnsResourceData {
     type Safe = safe::DnsResourceData;
 
@@ -212,12 +154,12 @@ impl FfiType for ffi::DnsMessage {
         let ffi::DnsMessage {
             id,
             is_response,
-            opcode: unsafe_opcode,
+            opcode,
             authoritative_answer,
             truncation,
             recursion_desired,
             recursion_available,
-            response_code: unsafe_response_code,
+            response_code,
             questions: unsafe_question,
             answers: unsafe_answer,
             authorities: unsafe_authority,
@@ -228,9 +170,6 @@ impl FfiType for ffi::DnsMessage {
         let answer = unsafe_answer.try_safe()?;
         let authority = unsafe_authority.try_safe()?;
         let additional = unsafe_additional.try_safe()?;
-
-        let opcode = unsafe_opcode.try_safe()?;
-        let response_code = unsafe_response_code.try_safe()?;
 
         Ok(safe::DnsMessage{
             id,
@@ -269,9 +208,6 @@ impl FfiType for ffi::DnsMessage {
         let answers = ffi::RRVector::from_safe(answer);
         let authorities = ffi::RRVector::from_safe(authority);
         let additional = ffi::RRVector::from_safe(additional);
-
-        let opcode = ffi::DnsOpcode::from_safe(opcode);
-        let response_code = ffi::DnsResponseCode::from_safe(response_code);
 
         Self {
             id,
@@ -495,3 +431,40 @@ impl TryInto<safe::DnsResourceRecord> for ffi::DnsResourceRecord {
     }
 }
 
+impl FfiType for ffi::DatabaseInfo {
+    type Safe = safe::DatabaseInfo;
+
+    fn try_safe(self) -> Result<Self::Safe, FfiConversionError> {
+        match self {
+            ffi::DatabaseInfo::SQLite { file } => {
+                let s: String = file.try_into()?;
+                Ok(safe::DatabaseInfo::Sqlite(PathBuf::from(s)))
+            },
+            ffi::DatabaseInfo::Postgres { host, port, username, password } => {
+                Ok(safe::DatabaseInfo::Postgres {
+                    host: host.try_into()?,
+                    port,
+                    username: username.try_into()?,
+                    password: password.try_into()?
+                })
+            },
+        }
+    }
+
+    fn from_safe(safe_val: Self::Safe) -> Self {
+        match safe_val {
+            safe::DatabaseInfo::Sqlite(file) => {
+                let bytes = Vec::from(file.as_path().to_string_lossy().as_bytes());
+                ffi::DatabaseInfo::SQLite { file: ByteVector::from_safe_vec(bytes) }
+            },
+            safe::DatabaseInfo::Postgres { host, port, username, password } => {
+                ffi::DatabaseInfo::Postgres {
+                    host: ByteVector::from(host.as_bytes()),
+                    port,
+                    username: ByteVector::from(username.as_bytes()),
+                    password: ByteVector::from(password.as_bytes())
+                }
+            },
+        }
+    }
+}

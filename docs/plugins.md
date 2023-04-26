@@ -78,7 +78,7 @@ See [below](#interacting-with-provided-types) for information about the provided
 structs
 
 Both functions also recieve a `plugin_state` argument, discussed
-[below](#using-shared-state)
+[below](#non-persistent-shared-state)
 
 ##### Return Value
 
@@ -207,7 +207,7 @@ arrays using the Rust allocator.
 
 To maintain memory safety, all data which originates from the MoDNS server (i.e., any data passed as
 an argument to one of the implementation functions) should be allocated by Rust rather than by the
-plugin's native allocator. This is discussed in more detail [below](#allocating-vectorized-data). 
+plugin's native allocator. This is discussed in more detail [below](#working-with-vectorized-data). 
 
 ### Handling DNS Messages
 
@@ -338,12 +338,242 @@ uint8_t rc = resize_question_vec(&my_vec, 4);
 
 A non-zero return code indicates an error.
 
-## Using Shared State
+### Working with Strings
 
-Most plugins will require sharing state between calls to the plugin's funcitons. For
-this purpose, all interface functions include a `void * plugin_state` argument. This
-argument is for the plugin to store any managed state between calls. Additionally,
-plugins can export the following functions to initialize their state:
+Strings in DNS messages are represented as `ByteVector`s, which are an FFI-safe version
+of Rust's `String` type. They are not directly compatible with functions which expect
+C-style strings.
+
+Helper functions are provided to duplicate `ByteVector` data into C-style strings, and
+vice-versa. Alternatively, you can mutate the strings directly or convert them into your
+language's built-in string types. Either method is discussed below.
+
+#### Using Helper Functions
+
+Two helper functions are provided to interface between `ByteVector`s and C-style strings.
+
+To copy a `ByteVector` string into a C-style string, use `modns_strdup_from_bytevec`. The
+destination string must be allocated to at least the length of the `ByteVec` plus one.
+
+For example, in C:
+
+```C
+// struct ByteVector source_string = "foo"
+char * my_c_string = malloc(sizeof(uint8_t) * 256);
+
+uintptr_t my_c_string_len = modns_strdup_from_bytevec(&source_string, my_c_string, 256);
+// my_c_string_leng== 4
+```
+
+To copy a C-style string back to a `ByteVec`, use `modns_strdup_to_bytevec`. The destination
+`ByteVec` will be reallocated if needed to fit the string. You must free the string's memory
+yourself (if using C or another language with manual memory management)
+
+For example, in C:
+
+```C
+// struct ByteVector dest_string;
+char * my_c_string = "bar";
+
+uintptr_t new_bytevec_len = modns_strdup_to_bytevec(source_string, &dest_string);
+// new_bytevec_len = 3;
+```
+
+#### Interacting with ByteVectors Directly
+
+As stated above, `ByteVector`s are thin wrappers around Rust's `String` type (which, in turn, is
+simply a vector of bytes). The struct itself looks like this:
+
+```Rust
+struct ByteVector {
+    ptr: *mut u8,
+    size: usize,
+    capacity: usize
+}
+```
+
+Or, in C:
+
+```C
+typedef struct ByteVector {
+    uint8_t *ptr,
+    uintptr_t size,
+    uintptr_t capacity
+} ByteVector;
+```
+
+`ptr` points to the buffer, `size` refers to the length of the string, and `capacity` refers to the
+allocated size of the buffer.
+
+The following actions are safe to do without calling any SDK helper functions:
+
+- Read data from `ptr`, without the length of read data exceeding `size` bytes,
+- Write data to `ptr`, without the length of written data exceeding `capacity` bytes,
+- Decrease `size`, and
+- Increase `size`, so long as `size` doesn't exceed `capacity` and the data in `ptr` is a valid UTF-8
+string up to length `size`.
+
+Essentially, changing `ptr` or `capacity`, or expanding the buffer past `capacity`, require using the
+Rust allocator. The `resize_byte_vec` helper function is provided for this purpose. See documentation
+for `resize` functions [above](#working-with-vectorized-data)
+
+## Shared & Persistent State
+
+Most plugins will require storing some form of state between function calls. Three methods are provided
+for doing so:
+
+- Use a database
+- Store files in an assigned directory
+- Share state between function calls with the `plugin_state` pointer
+
+### Using a Database
+
+MoDNS provides an end-user-configurable database connection for persisting structured data between restarts
+of the server. The default database backend is SQLite, but an end user may configure the server to use a
+Postgres database backend.
+
+Rather than managing connections and implementing a direct API interface to the database, which would likely
+not interact well with existing tools for the plugin's language, the SDK simply provides a single function
+to retrieve the end-user-provided settings for the database connection, so that plugins can manage their
+own database connections.
+
+This approach does have downsides, which plugin authors should be cognizant of
+when implementing databases into their plugins.
+
+#### Retrieving the Database Configuration
+
+The `modns_get_database()` function provides the database configuration as a pointer to the static `DatabaseInfo`
+struct.
+
+This struct is in reality a Rust enum with the following fields:
+
+```Rust
+enum DatabaseInfo {
+    Sqlite: {
+        file: ByteVector
+    },
+    Postgres: {
+        host: ByteVector,
+        port: u16,
+        username: ByteVector,
+        password: ByteVector,
+    }
+}
+```
+
+This is automatically compiled to a C structure known as a "tagged union" which looks like the following:
+
+```C
+typedef struct DatabaseInfo {
+  DatabaseInfo_Tag tag;
+  union {
+    SQLite_Body sq_lite;
+    Postgres_Body postgres;
+  };
+} DatabaseInfo;
+
+typedef enum DatabaseInfo_Tag {
+  SQLite,
+  Postgres,
+} DatabaseInfo_Tag;
+
+typedef struct SQLite_Body {
+  struct ByteVector file;
+} SQLite_Body;
+
+typedef struct Postgres_Body {
+  struct ByteVector host;
+  uint16_t port;
+  struct ByteVector username;
+  struct ByteVector password;
+} Postgres_Body;
+```
+
+Thus, a function to initialize a database connection might look like:
+
+```C
+struct NativeDatabaseConnection init_db() {
+    struct DatabaseInfo dbinfo = modns_get_database();
+
+    if (dbinfo.tag == SQLite) {
+        return init_native_sqlite_conn(dbinfo.sq_lite.file);
+    } else {
+        return init_native_postgres_conn(
+            dbinfo.postgres.host,
+            dbinfo.postgres.port,
+            dbinfo.postgres.username,
+            dbinfo.postgres.password
+        )
+    }
+}
+```
+
+#### Best Practices for Using the Database
+
+The main downside of this approach to database support is that no safeguards are provided to prevent
+plugins from touching each other's data. Because of this, plugin authors should be extra careful to
+avoid database practices which might conflict with other plugins.
+
+The primary way to do this is to make sure that all of your data is stored in a namespace unique to
+your plugin. In SQLite, prefix any tables created by your plugin with an identifier unique to your
+plugin, such as `basecache_dnscache`. In Postgres, create a database named for your plugin.
+
+### Storing Files on the filesystem
+
+If your plugin needs more felxible storage than can be provided by the built-in database system, you
+can store files on the server's filesystem. Similarly to databases, this is implemented by simply
+providing you with the path to a directory in the server's `data-dir`, in which you are free to do as
+you please.
+
+#### Retrieving the Plugin Data Directory
+
+To retrieve the name of your plugin's directory, call the `modns_plugin_data_dir` function, which returns
+a `ByteVector`.
+
+Notice that the server does not guarantee that the directory exists on the system. Your plugin should
+create this directory itself (likely in the `impl_plugin_setup()` function, discussed
+[below](#initializing-plugin-state)).
+
+For example:
+
+```C
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include "modns-sdk.h"
+
+// Get the plugin directory
+struct ByteVector plugin_dir_bv = modns_plugin_data_dir();
+
+// Convert the ByteVec to a C string
+char *plugin_dir = malloc(256);
+modns_strdup_from_bytevec(&plugin_dir_bv, plugin_dir);
+modns_free_bytevec(plugin_dir_bv);
+
+// Ensure the plugin directory is created
+struct stat st = {0};
+if (stat(plugin_dir, &st) == -1) {
+    mkdir(plugin_dir, 0700);
+}
+
+```
+
+### Non-Persistent Shared State
+
+Your plugin will likely need some in-memory state that does not persist between restarts. This may
+be a database connection, a bound socket, or an in-memory cache.
+
+All interface functions include a `void * plugin_state` argument. This argument is for the plugin to
+store any managed state between calls.
+
+The server is unaware of the contents of the `plugin_state` pointer, meaning its memory
+should be managed by the plugin (i.e., it is safe to `malloc` and `free` data stored in
+this pointer, or to allow it to be managed by Go garbage collection).
+
+#### Initializing Plugin State
+
+Additionally, plugins can export the following functions to
+initialize their state:
 
 ```C
 void * impl_plugin_setup();
@@ -354,11 +584,7 @@ These functions are called when the plugin is enabled and disabled, respectively
 The return value of the `setup` function is passed as `plugin_state` to all further
 calls to the plugin, and should be freed by the `teardown` function.
 
-The server is unaware of the contents of the `plugin_state` pointer, meaning its memory
-should be managed by the plugin (i.e., it is safe to `malloc` and `free` data stored in
-this pointer, or to allow it to be managed by Go garbage collection).
-
-### Notes About Concurrency
+#### Notes About Concurrency
 
 The MoDNS server uses an asynchronous, multi-threaded architecture. This means that
 your plugin may be called multiple times at once, on different threads. Care should
@@ -367,8 +593,10 @@ writes, such as with mutex locks or atomic operations.
 
 Generally, a function signature where `plugin_state` is `const` is an indication that
 the function may be called concurrently. This is the case for all module implementation
-functions. Some API control functions, discussed [below](#providing-plugin-settings),
+functions. Some API control functions, discussed [below](#plugin-configuration-options-not-yet-implemented),
 are run with a global write lock, meaning it is safe to mutate state in these functions.
+
+### 
 
 ## Plugin Configuration Options (Not Yet Implemented)
 
@@ -481,20 +709,233 @@ In all cases, the contents of `*resp` are used as the body of the response.
 
 MoDNS hosts a webpage for ease of maneagement.
 
-### Dashboard Widgets
+### Dashboard Components
 
-TODO
+Plugins can provide widgets for the web dashboard which display stats provided by the plugin.
+
+#### Implementing a Backend
+
+Data is pulled from your plugin by polling the API endpoint `/api/plugins/<uuid>/stats/<key>`. To implement
+a backend for this endpoint, expose the following C function:
+
+```C
+uint8_t impl_statistics(const struct ByteVector *key,
+                        struct ByteVector *resp,
+                        const void *plugin_state);
+```
+
+This function should write a JSON response into `*resp` and return to indicate the appropriate response code.
+Function return codes and their associated API response codes are:
+
+| rc | API response |
+| -- | ------------- |
+| 0 | `200 OK` |
+| 1 | `404 Not Found` |
+
+Any other return code becomes `500 Internal Server Error`.
+
+##### Formatting API Responses
+
+The format of the JSON response depends on the particular style of widget consuming the data. Sample responses
+for each style are provided below.
+
+###### Line Chart
+```json
+{
+  "x_axis_label": "Transportation",
+  "y_axis_label": "Count",
+  "data": [
+    {
+      "id": "japan",
+      "data": [
+        {
+          "x": "plane",
+          "y": 94
+        },
+        {
+          "x": "helicopter",
+          "y": 171
+        },
+      ]
+    },
+    {
+      "id": "france",
+      "data": [
+        {
+          "x": "plane",
+          "y": 177
+        },
+        {
+          "x": "helicopter",
+          "y": 204
+        },
+      ]
+    },
+    {
+      "id": "us",
+      "data": [
+        {
+          "x": "plane",
+          "y": 254
+        },
+        {
+          "x": "helicopter",
+          "y": 264
+        },
+      ]
+    },
+  ]
+}
+```
+###### Bar Chart
+```json
+{
+  "index_by": "country",
+  "x_axis_label": "Country",
+  "y_axis_label": "Food",
+  "data": [
+    {
+      "country": "AD",
+      "hot dog": 137,
+      "burger": 96,
+      "kebab": 72,
+      "donut": 140,
+    },
+    {
+      "country": "AE",
+      "hot dog": 55,
+      "burger": 28,
+      "kebab": 58,
+      "donut": 29,
+    },
+  ]
+}
+```
+
+###### Pie Chart
+```json
+{
+  "data": [
+    {
+      "id": "elixir",
+      "label": "elixir",
+      "value": 218,
+    },
+    {
+      "id": "javascript",
+      "label": "javascript",
+      "value": 533,
+    },
+    {
+      "id": "rust",
+      "label": "rust",
+      "value": 579,
+    },
+    {
+      "id": "php",
+      "label": "php",
+      "value": 120,
+    },
+  ]
+}
+```
+
+###### Stat Box
+```json
+{
+  "label": "Queries Blocked",
+  "progress": 20,                     // optional if you want to display percentage
+  "statistic": 123099,
+  "differenceFromLast": -150          // optional if want to display difference from last check
+}
+```
+
+##### Status Box
+```json
+{
+  "status_label": "Running",    // label 
+  "status_good": true,          // will show a check mark on true and an exclamation mark on false
+}
+```
+
+###### Table
+Note: one field needs to be labeled as `id`, (the label will show has the `headerName`) or else the chart will make one for you and display it as a number.
+
+```json
+{
+  "headers": [
+    {
+      "field": "id",
+      "headerName": "Name",
+      "width": 300,
+    },
+    {
+      "field": "email",
+      "headerName": "Email",
+      "width": 400,
+    },
+    {
+      "field": "age",
+      "headerName": "Age",
+      "type": "number",
+      "width": 100,
+    },
+  ],
+  "data": [
+    {
+      "id": "Jon Snow",
+      "email": "jonsnow@gmail.com",
+      "age": 35,
+    },
+    {
+      "id": "Cersei Lannister",
+      "email": "cerseilannister@gmail.com",
+      "age": 42,
+    },
+    {
+      "id": "Jaime Lannister",
+      "email": "jaimelannister@gmail.com",
+      "age": 45,
+    },
+  ]
+}
+```
+
+#### Adding A Widget on the Frontend
+
+##### Adding
+
+First, check the Server Settings and decide if you want a local or global dashboard.
+- A local dashboard will show a different dashboard for every device the administrator logs into.
+- A global dashboard will show the same dashboard accross all devices.
+
+On the Dashboard Page, use the `Edit` Button to add components and/or edit existing components.
+
+It will ask for:
+- The type of component
+- The uuid of the plugin providing the data
+- The keyy to use when requesting the data
+- The height as a number and the width as a percentage
+
+Be sure to click save.
+
+##### Editing
+
+Editing Features will come in the future
+
+
+##### Deleting
+
+Deleting is possible in the Edit Mode
+
 
 ### Settings Page
 
-To create a settings page for your plugin, you can simply use the Plugin Settings Page creation tool
-located under the `Tools` tab on the webserver.
-
+To create a settings page for your plugin, you can simply use the Plugin Settings Page creation tool located under the `Tools` tab on the webserver.
 
 You can add elements and link them to your plugin's configuration settings or send your plugin commands.
 
 Note: You do not need to add an enabled settings, the server will provide this one for you.
-
 
 Alternatively, you can use this JSON structure to write it manually. 
 Keep in mind the page will display your settings in the order you list them.
