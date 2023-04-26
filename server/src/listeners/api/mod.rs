@@ -11,7 +11,6 @@ use std::fmt::Display;
 use std::sync::Arc;
 use anyhow::Result;
 
-use crate::ServerConfig;
 use crate::plugins::manager::PluginManager;
 
 #[derive(Debug)]

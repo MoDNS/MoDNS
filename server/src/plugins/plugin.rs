@@ -1,6 +1,4 @@
 
-use crate::ServerConfig;
-
 use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn, SdkInitFn, InterceptorFn, ValidatorFn, InspectorFn, ResponseSource, PLUGIN_FILE_NAME};
 use modns_sdk::types::conversion::FfiVector;
 use modns_sdk::{types::ffi, PluginState};
@@ -281,7 +279,7 @@ impl DnsPlugin {
 
     }
 
-    pub fn load<P: AsRef<OsStr>>(home_dir: P, config: &ServerConfig) -> Result<Self, PluginLoaderError> {
+    pub fn load<P: AsRef<OsStr>>(home_dir: P) -> Result<Self, PluginLoaderError> {
 
         let home_dir = PathBuf::from(home_dir.as_ref());
 

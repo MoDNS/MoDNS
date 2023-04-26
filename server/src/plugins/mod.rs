@@ -1,7 +1,7 @@
 
-use std::{ffi::c_void, path::PathBuf};
+use std::{ffi::c_void};
 
-use modns_sdk::types::{ffi, safe};
+use modns_sdk::types::{ffi};
 
 pub mod manager;
 pub mod plugin;
