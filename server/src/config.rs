@@ -15,7 +15,6 @@ use scrypt::password_hash::{PasswordHasher, SaltString};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, Map};
-use warp::reply::Json;
 
 const PLUGIN_PATH_ENV: &str = "MODNS_PATH";
 const NO_DEFAULT_PLUGINS_ENV: &str = "MODNS_NO_DEFAULT_PLUGINS";
@@ -43,7 +42,6 @@ const DB_PASS_KEY: &str = "db_pass";
 const LOG_KEY: &str = "log_filter";
 const ADMIN_PW_KEY: &str = "admin_pw_hash";
 const USE_GLOBAL_DASH: &str = "use_global_dash";
-const GLOBAL_DASH: &str = "global_dash";
 
 const DEFAULT_PLUGIN_PATH: &str = "/usr/share/modns/default-plugins";
 const DEFAULT_UNIX_SOCKET: &str = "/run/modnsd.sock";
@@ -55,7 +53,6 @@ const DEFAULT_POSTGRES_USER: &str = "postgres";
 const DEFAULT_POSTGRES_PASS: &str = "postgres";
 const DEFAULT_LOG_FILTER: &str = "info";
 const DEFAULT_USE_GLOBAL_DASH: bool = true;
-const DEFAULT_GLOBAL_DASH: Vec<Vec<Json>> = Vec::<Vec::<Json>>::new();
 
 const CONFIG_LOCKFILE_NAME: &str = "config-lock.json";
 
@@ -403,10 +400,6 @@ impl MutableServerConfig {
     fn use_global_dash(&self) -> Option<bool> {
         self.get_config_obj(USE_GLOBAL_DASH)
     }
-
-    // fn global_dash(&self) -> Option<Vec<Vec<Json>>> {
-    //     self.get_config_obj(GLOBAL_DASH)
-    // }
 
     pub fn set_plugin_path(&mut self, plugin_path: Vec<PathBuf>) -> Result<()> {
         self.set_config_obj(PLUGIN_PATH_KEY, plugin_path)
