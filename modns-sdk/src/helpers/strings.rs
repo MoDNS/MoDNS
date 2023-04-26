@@ -11,7 +11,8 @@ use crate::types::{ffi::ByteVector, conversion::FfiVector};
 /// Returns new size of `dest`
 #[no_mangle]
 pub extern "C" fn modns_strdup_to_bytevec(src: *mut i8, dest: &mut ByteVector) -> usize {
-    let src_str = unsafe { CStr::from_ptr(src) };
+    // Cast to whatever signedness this arch uses for string pointers
+    let src_str = unsafe { CStr::from_ptr(src.cast_const().cast()) };
 
     // Drop the old string
     let _ = unsafe { String::from_raw_parts(dest.ptr, dest.size, dest.capacity) };
