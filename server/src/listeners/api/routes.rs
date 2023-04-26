@@ -1,5 +1,5 @@
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use serde::Deserialize;
@@ -9,6 +9,7 @@ use warp::reply::json;
 use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
 
+use crate::config::MutableConfigValue;
 use crate::plugins::manager::PluginManager;
 use crate::plugins::response::ApiResponse;
 
@@ -187,13 +188,15 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
 
     let mut reply = json(&());
 
-    match cq.key.unwrap_or_default().as_ref() {
+    match cq.key.unwrap_or("all".to_string()).as_ref() {
         "static_ip" => {},
         "use_static_ip" => {},
         "use_global_dashboard" => {},
         "plugin_paths" => {
             let path = cm.config().query_plugin_path();
-            reply = json(&path);
+            let mut resp: BTreeMap<&str, Vec<MutableConfigValue<PathBuf>>> = BTreeMap::new();
+            resp.insert("Data", path);
+            reply = json(&resp);
         },
         "log_filter" => {
             let log = cm.config().query_log();
@@ -231,10 +234,12 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
             // let db_path = cm.config().query_db_path();
 
             // json = json(&db_ip, &db_pass, &db_port, &db_path)
+            log::trace!("Sending all server configs");
             reply = json(&());
             
         }
         &_ => {
+            log::trace!("Default catch-all response");
             reply = json(&());
         },
     }
