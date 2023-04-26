@@ -10,6 +10,7 @@ crate-type = ["lib", "staticlib"]
 
 [dependencies]
 log = "0.4.17"
+serde = { version = "1.0.160", features = ["derive"] }
 
 [build-dependencies]
 cbindgen = "0.24.3"

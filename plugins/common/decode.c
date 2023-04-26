@@ -24,60 +24,8 @@ uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
     // Decode the opcode
     uint8_t opcode_char = (req.ptr[2] & 0b01111000) >> 3;
 
-    enum DnsOpcode opcode;
-
-    switch (opcode_char) {
-        case 0:
-            opcode = Query;
-            break;
-        case 1:
-            opcode = InverseQuery;
-            break;
-        case 2:
-            opcode = Status;
-            break;
-        case 4:
-            opcode = Notify;
-            break;
-        case 5:
-            opcode = Update;
-            break;
-        case 6:
-            opcode = DSO;
-            break;
-        default:
-            modns_log(1, 30, "didn't recognize opcode %d", opcode_char);
-            return 1;
-    }
-
     // Decode the response code
     uint8_t rcode_char = (req.ptr[3] & 0b00001111);
-
-    enum DnsResponseCode rcode;
-
-    switch (rcode_char) {
-        case 0:
-            rcode = NoError;
-            break;
-        case 1:
-            rcode = FormatError;
-            break;
-        case 2:
-            rcode = ServerFailure;
-            break;
-        case 3:
-            rcode = NameError;
-            break;
-        case 4:
-            rcode = NotImplemented;
-            break;
-        case 5:
-            rcode = Refused;
-            break;
-        default:
-            modns_log(1, 30, "didn't recognize rcode %d", rcode_char);
-            return 1;
-    }
 
     // Update header struct fields
     message->id = req_id;
@@ -86,8 +34,8 @@ uint8_t decode_bytes(struct ByteVector req, struct DnsMessage *message) {
     message->truncation = tc;
     message->recursion_desired = rd;
     message->recursion_available = ra;
-    message->opcode = opcode;
-    message->response_code = rcode;
+    message->opcode = opcode_char;
+    message->response_code = rcode_char;
 
     // Get the number of each field from the header
     uint16_t qdcount = ntohs(*(uint16_t *)(req.ptr + 4));
