@@ -96,7 +96,7 @@ impl PluginManager {
 
                         if !so_path.is_file() { continue; }
 
-                        if let Err(e) = self.load(subdir, true) {
+                        if let Err(e) = self.load(subdir, false) {
                             log::error!("Failed to load library at {}: {e:?}", so_path.display())
                         }
                     }
