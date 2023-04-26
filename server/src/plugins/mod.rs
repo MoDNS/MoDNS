@@ -1,7 +1,7 @@
 
-use std::ffi::c_void;
+use std::{ffi::c_void, path::PathBuf};
 
-use modns_sdk::types::ffi;
+use modns_sdk::types::{ffi, safe};
 
 pub mod manager;
 pub mod plugin;
@@ -17,48 +17,52 @@ pub enum ResponseSource {
     Validator
 }
 
+<<<<<<< HEAD
 const PLUGIN_FILE_NAME: &str = const_format::formatcp!("plugin_{}.so", std::env::consts::ARCH);
 
 type SdkInitFn = extern "Rust" fn(&str, &'static dyn log::Log) -> Result<(), log::SetLoggerError>;
+=======
+type SdkInitFn = extern "Rust" fn(&str, &'static dyn log::Log, safe::DatabaseInfo, PathBuf) -> Result<(), log::SetLoggerError>;
+>>>>>>> d2d3e5a03b4dc4ab03f07f7bad21b2b7bd5f1ecc
 
 type SetupFn = unsafe extern "C" fn() -> *mut c_void;
 
 type TeardownFn = unsafe extern "C" fn(*mut c_void);
 
 type ListenerDecodeFn = unsafe extern "C" fn(
-    ffi::ByteVector,
-    *mut ffi::DnsMessage,
-    *mut c_void
+    &ffi::ByteVector,
+    &mut ffi::DnsMessage,
+    *const c_void
 ) -> u8;
 
 type ListenerEncodeFn = unsafe extern "C" fn(
-    *const ffi::DnsMessage,
-    *mut ffi::ByteVector,
-    *mut c_void
+    &ffi::DnsMessage,
+    &mut ffi::ByteVector,
+    *const c_void
 ) -> u8;
 
 type InterceptorFn = unsafe extern "C" fn(
-    *const ffi::DnsMessage,
-    *mut ffi::DnsMessage,
-    *mut c_void
+    &ffi::DnsMessage,
+    &mut ffi::DnsMessage,
+    *const c_void
 ) -> u8;
 
 type ResolverFn = unsafe extern "C" fn(
-    *const ffi::DnsMessage,
-    *mut ffi::DnsMessage,
-    *mut c_void
+    &ffi::DnsMessage,
+    &mut ffi::DnsMessage,
+    *const c_void
 ) -> u8;
 
 type ValidatorFn = unsafe extern "C" fn(
-    *const ffi::DnsMessage,
-    *const ffi::DnsMessage,
-    *mut ffi::DnsMessage,
-    *mut c_void
+    &ffi::DnsMessage,
+    &ffi::DnsMessage,
+    &mut ffi::DnsMessage,
+    *const c_void
 ) -> u8;
 
 type InspectorFn = unsafe extern "C" fn(
-    *const ffi::DnsMessage,
-    *const ffi::DnsMessage,
+    &ffi::DnsMessage,
+    &ffi::DnsMessage,
     u8,
-    *mut c_void
+    *const c_void
 ) -> u8;

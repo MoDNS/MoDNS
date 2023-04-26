@@ -252,3 +252,18 @@ impl Default for RRVector {
         }
     }
 }
+
+#[repr(C)]
+#[derive(Debug)]
+pub enum DatabaseInfo {
+    SQLite {
+        file: ByteVector,
+    },
+
+    Postgres {
+        host: ByteVector,
+        port: u16,
+        username: ByteVector,
+        password: ByteVector
+    }
+}
