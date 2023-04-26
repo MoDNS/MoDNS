@@ -195,7 +195,7 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
         "plugin_paths" => {
             let path = cm.config().query_plugin_path();
             let mut resp: BTreeMap<&str, Vec<MutableConfigValue<PathBuf>>> = BTreeMap::new();
-            resp.insert("Data", path);
+            resp.insert("data", path);
             reply = json(&resp);
         },
         "log_filter" => {
