@@ -11,6 +11,7 @@ use std::fmt::Display;
 use std::sync::Arc;
 use anyhow::Result;
 
+use crate::ServerConfig;
 use crate::plugins::manager::PluginManager;
 
 #[derive(Debug)]
@@ -47,12 +48,7 @@ impl Display for ApiListener {
     }
 }
 
-<<<<<<< HEAD
 pub async fn listen_api(listeners: Vec<ApiListener>, shutdown_channel: broadcast::Sender<()>, pm: Arc<RwLock<PluginManager>>, cfg: &ServerConfig) -> Result<()>{
-=======
-pub async fn listen_api(listeners: Vec<ApiListener>, shutdown_channel: broadcast::Sender<()>, pm: Arc<RwLock<PluginManager>>) -> Result<()>{
-    // let pm_arc = Arc::new(RwLock::new(PluginManager::new()));
->>>>>>> d2d3e5a03b4dc4ab03f07f7bad21b2b7bd5f1ecc
     
     let api_filter = api_filter(pm.clone());
     let pm = pm.read().await;

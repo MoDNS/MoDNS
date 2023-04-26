@@ -17,13 +17,9 @@ pub enum ResponseSource {
     Validator
 }
 
-<<<<<<< HEAD
 const PLUGIN_FILE_NAME: &str = const_format::formatcp!("plugin_{}.so", std::env::consts::ARCH);
 
 type SdkInitFn = extern "Rust" fn(&str, &'static dyn log::Log) -> Result<(), log::SetLoggerError>;
-=======
-type SdkInitFn = extern "Rust" fn(&str, &'static dyn log::Log, safe::DatabaseInfo, PathBuf) -> Result<(), log::SetLoggerError>;
->>>>>>> d2d3e5a03b4dc4ab03f07f7bad21b2b7bd5f1ecc
 
 type SetupFn = unsafe extern "C" fn() -> *mut c_void;
 

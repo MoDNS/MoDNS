@@ -174,7 +174,7 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigSetQuer
 
 pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuery) -> Box<dyn Reply> {
     
-    // let mut cm = pm.read().await;
+    let mut cm = pm.write().await;
 
     let resp: BTreeMap<String, String> = BTreeMap::new();
 
@@ -183,34 +183,34 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
         "use_static_ip" => {},
         "use_global_dashboard" => {},
         "plugin_paths" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_plugin_path());
+            resp.insert(cq.key.unwrap(), cm.config().query_plugin_path());
         },
         "log_filter" => {},
         "database_type" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_type());
+            // resp.insert(cq.key.unwrap(), cm.config().query_db_type());
         },
         "sqlite_file_path" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_path());
+            // resp.insert(cq.key.unwrap(), cm.config().query_db_path());
         },
         "postgres_ip" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_addr());            
+            // resp.insert(cq.key.unwrap(), cm.config().query_db_addr());            
         },
         "postgres_port" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_port());            
+            // resp.insert(cq.key.unwrap(), cm.config().query_db_port());            
         },
         "sqlite_password" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_admin_pw());
+            // resp.insert(cq.key.unwrap(), cm.config().query_admin_pw());
         },
         "postgres_password" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_admin_pw());            
+            // resp.insert(cq.key.unwrap(), cm.config().query_admin_pw());            
         },
         "all" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_plugin_path());
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_type());
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_path());
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_addr());            
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_port());            
-            // resp.insert(cq.key.unwrap(), pm.config().query_admin_pw());
+            // resp.insert(cq.key.unwrap(), cm.config().query_plugin_path());
+            // resp.insert(cq.key.unwrap(), cm.config().query_db_type());
+            // resp.insert(cq.key.unwrap(), cm.config().query_db_path());
+            // resp.insert(cq.key.unwrap(), cm.config().query_db_addr());            
+            // resp.insert(cq.key.unwrap(), cm.config().query_db_port());            
+            // resp.insert(cq.key.unwrap(), cm.config().query_admin_pw());
         }
         &_ => {},
     }
