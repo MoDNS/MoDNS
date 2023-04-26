@@ -195,7 +195,10 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
             let path = cm.config().query_plugin_path();
             reply = json(&path);
         },
-        "log_filter" => {},
+        "log_filter" => {
+            let log = cm.config().query_log();
+            reply = json(&log);
+        },
         "database_type" => {
             let db_type = cm.config().query_db_type();
             reply = json(&db_type);
