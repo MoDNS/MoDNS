@@ -216,8 +216,12 @@ impl ImmutableServerConfig {
         let data_dir = data_dir.as_path().canonicalize()
             .with_context(|| format!("Data directory {} was not found", data_dir.as_path().display()))?;
 
-        fs::create_dir(data_dir.join("plugin_data"))
-            .with_context(|| format!("Failed to create plugin data directory at {}", data_dir.join("plugin_data").display()))?;
+        let plugin_data_dir = data_dir.join("plugin_data");
+
+        if !plugin_data_dir.is_dir() {
+            fs::create_dir(data_dir.join("plugin_data"))
+                .with_context(|| format!("Failed to create plugin data directory at {}", data_dir.join("plugin_data").display()))?;
+        }
 
         let join_data_dir = |p: &Path| {
             if p.is_absolute() {
@@ -574,6 +578,16 @@ impl ServerConfig {
             .or(self.settings.db_path())
             .unwrap_or(PathBuf::from(DEFAULT_SQLITE_FILE))
     }
+    
+    pub fn db_path_absolute(&self) -> PathBuf {
+        let p = self.db_path();
+
+        if p.is_absolute() {
+            p
+        } else {
+            self.data_dir().join(p)
+        }
+    }
 
     pub fn db_addr(&self) -> IpAddr {
         self.override_db_addr
@@ -601,7 +615,7 @@ impl ServerConfig {
     pub fn db_info(&self) -> safe::DatabaseInfo {
         match self.db_type() {
             DatabaseBackend::Sqlite => safe::DatabaseInfo::Sqlite(
-                self.db_path().to_path_buf()
+                self.db_path_absolute()
             ),
             DatabaseBackend::Postgres => safe::DatabaseInfo::Postgres{
                 host: self.db_addr().to_string(),
