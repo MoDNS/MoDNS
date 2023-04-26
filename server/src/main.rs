@@ -72,7 +72,7 @@ async fn main() -> anyhow::Result<()> {
         DnsListener::Udp(UdpSocket::bind(("0.0.0.0", 53)).await.context("Failed to bind DNS listener on port 5300/udp")?)
     ];
 
-    listeners::listen(apiaddrs, dnsaddrs, pm_arc, &config).await;
+    listeners::listen(apiaddrs, dnsaddrs, pm_arc).await;
 
     std::fs::remove_file(&socket_path)
     .with_context(|| format!("Failed to remove unix socket at {}", socket_path.display()))?;
