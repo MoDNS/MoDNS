@@ -191,7 +191,10 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
     match cq.key.unwrap_or_default().as_ref() {
         "static_ip" => {},
         "use_static_ip" => {},
-        "use_global_dashboard" => {},
+        "use_global_dashboard" => {
+            let bool = cm.config().query_use_global_dash();
+            reply = json(&bool);
+        },
         "plugin_paths" => {
             let path = cm.config().query_plugin_path();
             let mut resp: BTreeMap<&str, Vec<MutableConfigValue<PathBuf>>> = BTreeMap::new();
