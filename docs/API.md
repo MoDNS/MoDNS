@@ -268,6 +268,15 @@ Returns:
 - `200 OK` with the icon file as the body
 - `404 Not Found` if the plugin does not have an icon
 
+#### Get Statistics from a plugin
+
+Endpoint: `GET /api/plugins/<uuid>/stats/<key>`
+
+Query a plugin for dashboard statistics with `key`
+
+Passes directly to plugin's `impl_statistics` function. Return data and code
+are controlled by plugin, but should conform to expectations for associated dashboard widget
+
 ### Server Configuration
 
 Root: `/api/server`

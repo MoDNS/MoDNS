@@ -1,11 +1,11 @@
 use std::{path::PathBuf, env};
 
-use modnsd::plugins::manager::PluginManager;
+use modnsd::{plugins::manager::PluginManager, ServerConfig};
 
 
 #[test]
 fn plugins_init() {
-    let mut pm = PluginManager::new();
+    let mut pm = PluginManager::new(ServerConfig::new());
 
     let listener = pm.load(
         PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins/base-listener"),

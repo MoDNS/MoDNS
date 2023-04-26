@@ -1,6 +1,6 @@
 
-use std::collections::BTreeMap;
 use std::path::Path;
+use std::collections::BTreeMap;
 use std::sync::Arc;
 use serde::Deserialize;
 use tokio::sync::RwLock;
@@ -57,7 +57,7 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
     let disable_pm = pm.clone();
     let config_set_pm = pm.clone();
     let config_get_pm = pm.clone();
-    let intercept_pm = pm.clone();
+    // let intercept_pm = pm.clone();
 
     warp::path("api")
         .and(warp::path!("plugins").and(warp::query::<PluginQuery>())
@@ -149,10 +149,17 @@ pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, enable:
 }
 
 pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigSetQuery) -> Box<dyn Reply> {
+    
+    let cm = pm.write().await;
+
+    let key = cq.key;
+    let val = cq.value;
+
+    cm.config().db_info();
 
     let resp: BTreeMap<String, String> = BTreeMap::new();
 
-    match cq.key.unwrap().as_ref() {
+    match key.unwrap().as_ref() {
         "static_ip" => {},
         "use_static_ip" => {},
         "use_global_dashboard" => {},
@@ -164,7 +171,9 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigSetQuer
         "postgres_port" => {},
         "sqlite_password" => {},
         "postgres_password" => {},
-        &_ => {},
+        &_ => {
+            val.unwrap();
+        },
     }
 
     let json = json(&resp);
@@ -174,53 +183,63 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigSetQuer
 
 pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuery) -> Box<dyn Reply> {
     
-    // let mut cm = pm.read().await;
+    let cm = pm.write().await;
 
-    let resp: BTreeMap<String, String> = BTreeMap::new();
+    let mut reply = json(&());
 
     match cq.key.unwrap().as_ref() {
         "static_ip" => {},
         "use_static_ip" => {},
         "use_global_dashboard" => {},
         "plugin_paths" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_plugin_path());
+            let path = cm.config().query_plugin_path();
+            reply = json(&path);
         },
         "log_filter" => {},
         "database_type" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_type());
+            let db_type = cm.config().query_db_type();
+            reply = json(&db_type);
         },
         "sqlite_file_path" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_path());
+            let db_path = cm.config().query_db_path();
+            reply = json(&db_path);
         },
         "postgres_ip" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_addr());            
+            let db_ip = cm.config().query_db_addr();
+            reply = json(&db_ip);            
         },
         "postgres_port" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_port());            
+            let db_port = cm.config().query_db_port();
+            reply = json(&db_port);            
         },
         "sqlite_password" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_admin_pw());
+            let db_pass = cm.config().query_admin_pw();
+            reply = json(&db_pass);
         },
         "postgres_password" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_admin_pw());            
+            let db_pass = cm.config().query_plugin_path();
+            reply = json(&db_pass);            
         },
         "all" => {
-            // resp.insert(cq.key.unwrap(), pm.config().query_plugin_path());
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_type());
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_path());
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_addr());            
-            // resp.insert(cq.key.unwrap(), pm.config().query_db_port());            
-            // resp.insert(cq.key.unwrap(), pm.config().query_admin_pw());
+            // let db_type = cm.config().query_db_type();
+            // let db_pass = cm.config().query_plugin_path();
+            // let db_port = cm.config().query_db_port();
+            // let db_ip = cm.config().query_db_addr();
+            // let db_path = cm.config().query_db_path();
+
+            // json = json(&db_ip, &db_pass, &db_port, &db_path)
+            reply = json(&());
+            
         }
-        &_ => {},
+        &_ => {
+            reply = json(&());
+        },
     }
 
-    let json = json(&resp);
-
-    Box::new(json)
+    Box::new(reply)
 }
 
-pub async fn get_intercept_order(pm: Arc<RwLock<PluginManager>>) -> impl Reply {
+// pub async fn get_intercept_order(pm: Arc<RwLock<PluginManager>>) -> impl Reply {
     
-}
+// }
 

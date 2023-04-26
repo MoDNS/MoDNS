@@ -50,10 +50,11 @@ impl Display for ApiListener {
 
 pub async fn listen_api(listeners: Vec<ApiListener>, shutdown_channel: broadcast::Sender<()>, pm: Arc<RwLock<PluginManager>>, cfg: &ServerConfig) -> Result<()>{
     
-    let api_filter = api_filter(pm);
+    let api_filter = api_filter(pm.clone());
+    let pm = pm.read().await;
 
     let frontend_routes = root_redirect()
-        .or(frontend_filter(cfg.frontend_dir(), cfg.headless()))
+        .or(frontend_filter(pm.config().frontend_dir(), pm.config().headless()))
         .or(api_filter)
         .with(warp::log("modnsd::listeners::api"));
 
