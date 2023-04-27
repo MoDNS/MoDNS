@@ -4,14 +4,21 @@ import { PropTypes } from 'prop-types';
 import { Box } from '@mui/system';
 import { useTheme } from '@emotion/react';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SettingsDialog from './SettingsDialog';
-
-import defaultPluginLogo from '../images/default_plugin_logo.svg';
+import { getPluginLogo } from '../API/getsetAPI';
 
 const PluginOverview = ({ uuid, friendlyName, description, home, is_listener, is_interceptor, is_resolver, is_validator, is_inspector, interceptPosition, setInterceptOrder, numInterceptors, pluginState, togglePlugin }) => {
 
     const theme = useTheme();
+
+    const [logo, setLogo] = useState();
+
+    useEffect(() => {
+        getPluginLogo().then(res => {
+            setLogo(res);
+        })
+    }, [])
 
     const [dialogOpen, setDialogStatus] = useState(false);
 
@@ -51,7 +58,10 @@ const PluginOverview = ({ uuid, friendlyName, description, home, is_listener, is
                 marginRight: 2,
             }}
         >
-            <img src={defaultPluginLogo} alt="No Logo Found" width={65} height={65} style={{ margin: 10, marginLeft: 0 }}/>         { /* dummy logo */ }
+
+            <div style={{ display: 'flex', flexDirection: 'column', margin: 10 }} >
+                <img alt="No Logo Found" src={logo} width={65} height={65} style={{ marginBottom: 'auto' }} draggable={false}/>
+            </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1}} >
                 <div style={{ display: 'flex', flexDirection: 'row'}} >

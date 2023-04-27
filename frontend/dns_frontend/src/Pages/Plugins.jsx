@@ -1,4 +1,6 @@
 import React, { useRef } from 'react';
+import CircularProgress from '@mui/material/CircularProgress';
+
 
 import MainBox from '../Components/MainBox';
 import { Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
@@ -10,6 +12,9 @@ import { getPluginViewStorage, setPluginViewStorage } from '../scripts/getsetLoc
 
 
 const Plugins = () => {
+
+    const [loading, setLoading] = useState(true);
+
 
     // sets sequential or overview
     const [view, setView] = useState(getPluginViewStorage());
@@ -71,6 +76,7 @@ const Plugins = () => {
                 pluginsEnabled[uuid] = dicts['all'][uuid]['enabled'];
             });
             setPluginsEnabledDict({...pluginsEnabled})
+            setLoading(false);
         })
     }, []);
 
@@ -158,6 +164,7 @@ const Plugins = () => {
                 </ToggleButtonGroup>
             </div>
             { 
+                
                 // shoes sequential or overview
                 view === 's' ? 
                     <SequentialView 
@@ -171,16 +178,19 @@ const Plugins = () => {
 
                     /> 
                     : 
-                    <Overview 
-                        pluginDict={pluginDicts['all']}                         // list of all plugins                        
-                        numInterceptors={Object.keys(pluginDicts['interceptor'] || {}).length}
-                        pluginsEnabledDict={pluginsEnabledDict}
-                        togglePlugin={togglePlugin}
-                        interceptorUuidOrder={interceptorUuidOrder}
-                        setInterceptOrder={setInterceptOrder}
-                        settingsPagesDict={settingsPagesDict}
+                    loading ? <div style={{ width: '100%', height: '100%', display: 'flex' }} >
+                            <CircularProgress color="inherit" sx={{ margin: 'auto' }} />
+                        </div> :
+                        <Overview 
+                            pluginDict={pluginDicts['all']}                         // list of all plugins                        
+                            numInterceptors={Object.keys(pluginDicts['interceptor'] || {}).length}
+                            pluginsEnabledDict={pluginsEnabledDict}
+                            togglePlugin={togglePlugin}
+                            interceptorUuidOrder={interceptorUuidOrder}
+                            setInterceptOrder={setInterceptOrder}
+                            settingsPagesDict={settingsPagesDict}
 
-                    />
+                        />
             }
 
         </MainBox>

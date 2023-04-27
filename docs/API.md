@@ -252,7 +252,7 @@ Return code determined by plugin
 
 Endpoint : `GET /api/plugins/<uuid>/settingspage`
 
-Get the setting's page specified in a plugin's `manifest.yaml` file
+Get the setting's page `custom_settings.json` from your plugin's directory.
 
 Returns:
     - `200 OK` with the JSON object as the body

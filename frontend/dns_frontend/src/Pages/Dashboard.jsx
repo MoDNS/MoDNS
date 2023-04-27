@@ -1,5 +1,7 @@
 import { Button } from "@mui/material";
 import React, { useEffect, useState } from "react";
+import CircularProgress from '@mui/material/CircularProgress';
+
 import MainBox from "../Components/MainBox";
 import { ParseDashboardPage } from "../scripts/ParseDashboardPage";
 import { getDashboardLayoutAPI, getServerConfig, setDashboardLayoutAPI } from "../API/getsetAPI";
@@ -12,6 +14,8 @@ const Dashboard = () => {
   
   const [dashboardJson, setDashboardJson] = useState();
 
+  const [loading, setLoading] = useState(true);
+
 
   useEffect(() => {
     getServerConfig('use_global_dashboard').then(useGlobDash => {
@@ -20,9 +24,11 @@ const Dashboard = () => {
         getDashboardLayoutAPI().then(res => {
           let x = (res && res.data) || [];
           setDashboardJson([...x]);
+          setLoading(false);
         })
       } else {
         setDashboardJson(getDashboardLayout());
+        setLoading(false);
       }
     })
   }, [] );
@@ -49,7 +55,11 @@ const Dashboard = () => {
         divider
         allowScroll
       >
-        { dashboardJson && <ParseDashboardPage editMode={editMode} dashboardJson={dashboardJson} setDashboardJson={setDashboardJson} />}
+        { loading ? <div style={{ width: '100%', height: '100%', display: 'flex' }} >
+                        <CircularProgress color="inherit" sx={{ margin: 'auto' }} />
+                        </div> :
+          dashboardJson && <ParseDashboardPage editMode={editMode} dashboardJson={dashboardJson} setDashboardJson={setDashboardJson} />
+        }
       </MainBox>
 
       

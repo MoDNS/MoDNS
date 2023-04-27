@@ -1027,7 +1027,7 @@ There are two elements per row (unless one element is wide or  placeholder is us
 ]
 ```
 
-Place the downloaded or created file into your plugin folder and reference it in the `manifest.yaml`
+Place the downloaded or created file named `custom_settings.json` in your plugin directory.
 
 This exposes the `/api/plugins/<your-plugin-uuid>/settingspage` API endpoint.
 
