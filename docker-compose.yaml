@@ -22,10 +22,11 @@ services:
       context: .
       dockerfile: Dockerfile.Backend.Dev
     environment:
-      MODNS_LOG: modns=debug,info
+      MODNS_LOG: modns=trace,info
       MODNS_PATH: /rust-server/plugins
     ports:
       - "8080:80"
+      - "5300:53"
       - "5300:53/udp"
     volumes:
       - ./server:/rust-server/server
