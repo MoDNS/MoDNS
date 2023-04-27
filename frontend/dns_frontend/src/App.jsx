@@ -21,6 +21,7 @@ const App = () => {
   const [theme, setTheme] = useState(getThemeStorage());
 
   return (
+  gg ez
     <>
       <ThemeProvider theme={themes[theme]}>
         <CssBaseline>
@@ -28,21 +29,4 @@ const App = () => {
             <TopBar isLoggedIn={isLoggedIn} setLoggedIn={setLoggedIn} />
             
             <Routes>
-              <Route path='/manage' element={<Login setLoggedIn={setLoggedIn} />}/>
-              <Route exact path = '/manage/dashboard' element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Dashboard /> } /> } /> 
-              <Route exact path = '/manage/plugins'   element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Plugins /> } /> } />
-              <Route exact path = '/manage/settings'  element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Settings setTheme={setTheme} /> } /> } />
-              <Route exact path = '/manage/tools'     element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <Tools /> } /> } />
-              <Route exact path = '/manage/about'     element={ <ProtectedRoute isLoggedIn={isLoggedIn} element={ <About /> } /> } />
-
-              <Route exact path='/' element={ <Navigate to={isLoggedIn ? '/manage/dashboard' : '/manage'} /> } />
-              
-            </Routes>
-          </BrowserRouter>
-        </CssBaseline>
-      </ThemeProvider>
-    </>
-  );
-}
-
-export default App;
+              <Route path='/man
