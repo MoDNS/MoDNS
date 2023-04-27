@@ -41,6 +41,7 @@ plugins: sdk
 	$(MAKE) -C plugins/base-listener/
 	$(MAKE) -C plugins/base-resolver/
 	$(MAKE) -C plugins/base-cache/
+	$(MAKE) -C plugins/base-datacollector/
 
 .PHONY: test-plugins
 test-plugins: sdk
