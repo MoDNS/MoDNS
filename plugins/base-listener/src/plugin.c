@@ -91,7 +91,7 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
     }
 
     if (events > 0) {
-        modns_log(0, 255, "Got %d events, %d connections are active", events, state->num_connections);
+        modns_log(3, 255, "Got %d events, %d connections are active", events, state->num_connections);
     }
 
     int lock_rc = pthread_mutex_trylock(&state->connections_lock);
@@ -128,7 +128,7 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
         events--;
 
         if (pollfds[i].revents == POLLNVAL) {
-            modns_log(1, 40, "TCP connection at file descriptior %d closed unexpectedly", pollfds[i].fd);
+            modns_log(1, 70, "TCP connection at file descriptior %d closed unexpectedly", pollfds[i].fd);
             return 2;
         }
 
@@ -282,21 +282,32 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
     // Handle incoming TCP connections
     if (pollfds[num_polls-1].revents) {
 
-        modns_log_cstr(3, "Got event on TCP");
+        modns_log_cstr(4, "Got event on TCP");
 
         if (pollfds[num_polls-1].revents != POLLIN) {
-            modns_log(0, 64, "TCP Listener encountered an error (poll returned %d)", pollfds[num_polls-1].revents);
+            modns_log(0, 64, "TCP Listener encountered an error (poll returned 0x%4X)", pollfds[num_polls-1].revents);
             return 2;
         }
 
+        struct sockaddr remote;
+        socklen_t remotelen;
+
         pthread_mutex_lock(&state->connections_lock);
-        int conn_sock = accept(state->tcplistener, NULL, NULL);
+        int conn_sock = accept(state->tcplistener, &remote, &remotelen);
 
         if (conn_sock < 0) {
             modns_log(0, 255, "Failed to accept a TCP connection: %s", strerror(errno));
             pthread_mutex_unlock(&state->connections_lock);
             return 2;
         }
+
+        struct sockaddr_in *remote_ipv4 = (struct sockaddr_in *)&remote;
+        struct in_addr remote_ip = remote_ipv4->sin_addr;
+
+        char remotestr[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &remote_ip, remotestr, INET_ADDRSTRLEN);
+
+        modns_log(3, 256, "Got TCP request from %s on sock fd %d", remotestr, conn_sock);
 
         if (state->num_connections >= state->max_connections) {
             close(conn_sock);
@@ -314,7 +325,9 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
         state->connections[state->num_connections++] = new_conn;
         pthread_mutex_unlock(&state->connections_lock);
 
-        modns_log(4, 100, "TCP socket at fd %d added to connection queue, there are now %d open connections", new_conn.sock, state->num_connections);
+
+
+        modns_log(100, 3, "TCP socket at fd %d added to connection queue, there are now %d open connections", new_conn.sock, state->num_connections);
 
     }
 
@@ -332,6 +345,7 @@ uint8_t impl_listener_async_respond(const struct DnsMessage *resp, void *req_sta
     resp_bytes.size = 0;
     resp_bytes.capacity = 0;
 
+
     if (encode_bytes(*resp, &resp_bytes) != 0) {
         modns_log_cstr(1, "Failed to encode a response");
         drop_char_vec(resp_bytes);
@@ -341,7 +355,13 @@ uint8_t impl_listener_async_respond(const struct DnsMessage *resp, void *req_sta
     if (req_state->tcp) {
         modns_log_cstr(3, "Sending response over TCP");
         modns_log(4, 35, "Sending response over fd %d", req_state->tcp_conn.sock);
-        ssize_t rc = send(req_state->tcp_conn.sock, resp_bytes.ptr, resp_bytes.size, 0);
+
+        uint16_t msglen_header = htons(resp_bytes.size);
+        ssize_t rc = send(req_state->tcp_conn.sock, &msglen_header, 2, 0);
+
+        if (rc >= 0) {
+            rc = send(req_state->tcp_conn.sock, resp_bytes.ptr, resp_bytes.size, 0);
+        }
 
         if (rc < 0) {
             modns_log(1, 255, "Encountered an error sending a reply over TCP: %s", strerror(errno));
