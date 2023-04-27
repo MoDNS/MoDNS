@@ -34,21 +34,6 @@ const SAMPLE_REQUEST_HEADER: ffi::DnsHeader = ffi::DnsHeader{
     arcount: 0,
 };
 
-const SAMPLE_RESPONSE_HEADER: ffi::DnsHeader = ffi::DnsHeader {
-    id: 0x1e92,
-    is_response: true,
-    opcode: 0,
-    authoritative_answer: false,
-    truncation: false,
-    recursion_desired: true,
-    recursion_available: true,
-    response_code: 0,
-    qdcount: 1,
-    ancount: 1,
-    nscount: 0,
-    arcount: 1,
-};
-
 fn init_logger() {
     let _ = env_logger::builder()
         .is_test(true)
