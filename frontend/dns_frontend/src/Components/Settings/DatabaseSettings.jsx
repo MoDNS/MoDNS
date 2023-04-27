@@ -18,6 +18,9 @@ const DatabaseSettings = () => {
     const [postgresPort, setPostgresPort] = useState({});
     const [postgresPassword, setPostgresPassword] = useState({});
 
+    const [showPass, setShowPass] = useState(false);
+    const [errorPostgresIP, setErrorPostgresIP] = useState( postgresIP && postgresIP.value ? !IPInputValidation(postgresIP.value) : true );
+
     useEffect(() => {
         getServerConfig('database_type').then(res => {
             setDataBaseType(res);
@@ -27,6 +30,7 @@ const DatabaseSettings = () => {
         });
         getServerConfig('postgres_ip').then(res => {
             setPostgresIP(res);
+            setErrorPostgresIP(!IPInputValidation(res.value || ""));
         })
         getServerConfig('postgres_port').then(res => {
             setPostgresPort(res);
@@ -40,8 +44,6 @@ const DatabaseSettings = () => {
 
     }, []);
 
-    const [showPass, setShowPass] = useState(false);
-    const [errorPostgresIP, setErrorPostgresIP] = useState( postgresIP && postgresIP.value ? !IPInputValidation(postgresIP.value) : true );
 
     const inputPostgresIP = (ip) => {
         setPostgresIP(ip);
@@ -78,9 +80,9 @@ const DatabaseSettings = () => {
 
     const applyChanges = () => {
         !(dataBaseType && dataBaseType.overridden) && handleSetDataBaseType();
-        if (dataBaseType && dataBaseType.value === "sqlite") {
+        if (dataBaseType && dataBaseType.value === "Sqlite") {
             !sqlitePath.overridden && handleSetSQLitepath();
-        } else if (dataBaseType && dataBaseType.value === "postgres") {
+        } else if (dataBaseType && dataBaseType.value === "Postgres") {
             !(postgresIP && postgresIP.overridden) && handleSetPostgresIP()
             !(postgresPort && postgresPort.overridden) && handleSetPostgresPort();
         }
@@ -116,14 +118,14 @@ const DatabaseSettings = () => {
                             }}
                             sx={{ width: 100, marginTop: 'auto' }} 
                         >
-                            <MenuItem value={"sqlite"} > SQLite </MenuItem>
-                            <MenuItem value={"postgres"} > PostGres </MenuItem>
+                            <MenuItem value={"Sqlite"} > SQLite </MenuItem>
+                            <MenuItem value={"Postgres"} > PostGres </MenuItem>
                         </Select>
                     </div>
                 </div>
 
                 {
-                    dataBaseType && dataBaseType.value === "sqlite" ? <>
+                    dataBaseType && dataBaseType.value === "Sqlite" ? <>
                         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35 }}>
                             <Typography
                                 sx={{

@@ -27,8 +27,8 @@ const ServerSettings = () => {
     
 
     const [useGlobDash, setUseGlobDash] = useState({});
-    const [staticIP, setStaticIP] = useState({});
-    const [useStaticIP, setUseStaticIP] = useState({});
+    // const [staticIP, setStaticIP] = useState({});
+    // const [useStaticIP, setUseStaticIP] = useState({});
     const [pluginPaths, setPluginPaths] = useState([]);
 
     const [logFilter, setLogFilter] = useState({});
@@ -38,12 +38,12 @@ const ServerSettings = () => {
         getServerConfig('use_global_dashboard').then(res => {
             setUseGlobDash(res);
         })
-        getServerConfig('use_static_ip').then(res => {
-            setUseStaticIP(res);
-        })
-        getServerConfig('static_ip').then(res => {
-            setStaticIP(res);
-        })
+        // getServerConfig('use_static_ip').then(res => {
+        //     setUseStaticIP(res);
+        // })
+        // getServerConfig('static_ip').then(res => {
+        //     setStaticIP(res);
+        // })
         getServerConfig('plugin_paths').then(res => {
             setPluginPaths(res.data || []);
         })
@@ -54,39 +54,39 @@ const ServerSettings = () => {
 
     }, [])
     
+    
 
-    const [errorStaticIP, setErrorStaticIP] = useState( staticIP && staticIP.value ? !IPInputValidation(staticIP.value) : true );
+    // const [errorStaticIP, setErrorStaticIP] = useState( staticIP && staticIP.value ? !IPInputValidation(staticIP.value) : true );
     const [addPath, setAddPath] = useState("");
     const [useCustLogFilt, setUseCustLogFilt] = useState(!(loggingOptions.includes(selectLogFilter[0] || "") && loggingOptions.includes(selectLogFilter[1] || "")));
 
-    const inputStaticIP = (ip) => {
-        setStaticIP(ip);
-        console.log(ip);
-        if (!IPInputValidation(ip.value)) {
-            setErrorStaticIP(true);
-        }
-        else {
-            setErrorStaticIP(false);
-        }
-    }
+    // const inputStaticIP = (ip) => {
+    //     setStaticIP(ip);
+    //     if (!IPInputValidation(ip.value)) {
+    //         setErrorStaticIP(true);
+    //     }
+    //     else {
+    //         setErrorStaticIP(false);
+    //     }
+    // }
 
 
     ///// called when apply changes is pressed /////
     const handleSetUseGlobDash = () => {
-        setServerConfig('use_global_dashboard', useGlobDash.value);
+        setServerConfig('use_global_dashboard', useGlobDash && useGlobDash.value);
     }
-    const handleStaticIPSwitch = () => {
-        setServerConfig('use_static_ip', useStaticIP.value);
-    }
-    const handleSetStaticIP = () => {
-        if (IPInputValidation(staticIP.value)) {
-            setServerConfig('static_ip', staticIP.value);
-        } else {
-            alert("Static IP format not correct");
-        }
-    }
+    // const handleStaticIPSwitch = () => {
+    //     setServerConfig('use_static_ip', useStaticIP.value);
+    // }
+    // const handleSetStaticIP = () => {
+    //     if (IPInputValidation(staticIP.value)) {
+    //         setServerConfig('static_ip', staticIP.value);
+    //     } else {
+    //         alert("Static IP format not correct");
+    //     }
+    // }
     const handleSetPluginPaths = () => {
-        setServerConfig('plugin_paths', pluginPaths);
+        setServerConfig('plugin_paths', {data: pluginPaths});
     }
     const handleSetLogFilter = () => {
         if (useCustLogFilt) {
@@ -99,10 +99,10 @@ const ServerSettings = () => {
 
     const applyChanges = () => {
         !(useGlobDash && useGlobDash.overridden) && handleSetUseGlobDash();
-        !(useStaticIP && useStaticIP.overridden) && handleStaticIPSwitch();
-        if (useStaticIP.value) {
-            !(staticIP && staticIP.overridden) && handleSetStaticIP();
-        }
+        // !(useStaticIP && useStaticIP.overridden) && handleStaticIPSwitch();
+        // if (useStaticIP.value) {
+        //     !(staticIP && staticIP.overridden) && handleSetStaticIP();
+        // }
         handleSetPluginPaths();
         !(logFilter && logFilter.overridden) && handleSetLogFilter();
     }
@@ -169,7 +169,7 @@ const ServerSettings = () => {
                         </Select>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35, }}>
+                    {/* <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35, }}>
                         <Typography
                             sx={{
                                 fontSize: 25,
@@ -222,7 +222,7 @@ const ServerSettings = () => {
                                 )
                             }}
                         />
-                    </div>
+                    </div> */}
 
                     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35, }}>
                         <Tooltip title={"Where the server searches for plugins."} >
@@ -237,32 +237,31 @@ const ServerSettings = () => {
                             </Typography>
                         </Tooltip>
                             
-                        <div style={{ display: 'flex', flexDirection: 'column' }} >
-                            <TextField
-                                value={addPath}
-                                onChange={ (e) => setAddPath(e.target.value) }
-                                onKeyPress={(e) => {
-                                    if (e.key !== "Enter") {
-                                        return;                                        
+                        <TextField
+                            value={addPath}
+                            onChange={ (e) => setAddPath(e.target.value) }
+                            onKeyPress={(e) => {
+                                if (e.key !== "Enter") {
+                                    return;                                        
+                                }
+                                if (addPath.trim() === "") {
+                                    return;
+                                }
+                                let x = [...pluginPaths];
+                                x.push(
+                                    {
+                                        "overridden": false,
+                                        "value": addPath
                                     }
-                                    if (addPath.trim() === "") {
-                                        return;
-                                    }
-                                    let x = [...pluginPaths];
-                                    x.push(
-                                        {
-                                            "overridden": false,
-                                            "value": addPath
-                                        }
-                                    );
-                                    setPluginPaths([...x]);
-                                    setAddPath("");
-                                }} //this adds enter to submit
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position='end' >
-                                            { 
-                                                <IconButton 
+                                );
+                                setPluginPaths([...x]);
+                                setAddPath("");
+                            }} //this adds enter to submit
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position='end' >
+                                        { 
+                                            <IconButton 
                                                 sx={{ marginRight: 0.5 }}
                                                 onClick={() => {
                                                     if (addPath.trim() === "") {
@@ -278,21 +277,22 @@ const ServerSettings = () => {
                                                     setPluginPaths([...x]);
                                                     setAddPath("");
                                                 }}
-                                                >
-                                                    <AddIcon />
-                                                </IconButton>
-                                            }
-                                        </InputAdornment>
-                                    )
-                                }}
-                            />
-                            <List
-                                sx={{ backgroundColor: theme.palette.primary.dark, maxHeight: 150, overflowY: 'scroll' }}
-                                dense={true}
-                            >
-                                { makePluginPathList() }
-                            </List>
-                        </div>
+                                            >
+                                                <AddIcon />
+                                            </IconButton>
+                                        }
+                                    </InputAdornment>
+                                )
+                            }}
+                        />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'row' }}>
+                        <List
+                            sx={{ backgroundColor: theme.palette.primary.dark, maxHeight: 150, overflowY: 'auto', width: '100%', }}
+                            dense={true}
+                        >
+                            { makePluginPathList() }
+                        </List>
                         
                     </div>
 

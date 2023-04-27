@@ -146,28 +146,28 @@ export const shutdownServer = async () => {
 }
 
 export const setServerConfig = async (key, value) => {
-    await fetch(`${window.location.origin}/api/server/config?${key}=${value}`, {
+    await fetch(`${window.location.origin}/api/server/config?key=${key}&value=${value}`, {
         method: 'POST',
     });
 }
 
 export const getServerConfig = async (key) => {
-    return await fetch(`${window.location.origin}/api/server/config?${key}`, {
+    return await fetch(`${window.location.origin}/api/server/config?key=${key}`, {
         method: 'GET'
     }).then(response => {
         if (response.ok) {
-            return response;
-        } else {
-            return {
-                overridden: true,
-                value: ""
-            };
+            return response.json();
         }
     })
 }
 
 export const getDashboardLayoutAPI = async () => {
-    return await fetch(`${window.location.origin}/api/dashboard`).then(response => {
+    return await fetch(`${window.location.origin}/api/dashboard`,{
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json'
+        }
+    }).then(response => {
         if (response.ok) {
             return response.json().data;
         } else {
@@ -182,13 +182,15 @@ export const setDashboardLayoutAPI = async (dashboard) => {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: {'data': dashboard},
+        body: {'data': dashboard },
     });
 }
 
 ////////////////////////////// AUTHENTICATION ///////////////////////////////
 export const getAuthentication = (password) => {
-    return true
+    if (password !== "") {
+        return true
+    }
     // fetch(`${window.location.origin}/api/auth`);
 
 }

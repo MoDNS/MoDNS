@@ -52,7 +52,7 @@ const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const DEFAULT_POSTGRES_USER: &str = "postgres";
 const DEFAULT_POSTGRES_PASS: &str = "postgres";
 const DEFAULT_LOG_FILTER: &str = "info";
-const DEFAULT_USE_GLOBAL_DASH: bool = true;
+const DEFAULT_USE_GLOBAL_DASH: bool = false;
 
 const CONFIG_LOCKFILE_NAME: &str = "config-lock.json";
 
