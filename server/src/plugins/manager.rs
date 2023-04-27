@@ -313,6 +313,7 @@ impl PluginManager {
         let mut msg = ffi::DnsMessage::default();
 
         if let Some(request_ptr) = listener.poll(&mut msg)? {
+            log::trace!("Got request from listener");
             return Ok(Some((msg, Arc::clone(&listener), request_ptr)));
         };
 

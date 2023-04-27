@@ -3,12 +3,13 @@ use std::{sync::Arc, ffi::c_void};
 
 use modns_sdk::types::ffi;
 use tokio::sync::RwLock;
+use anyhow::Result;
 
 use super::{manager::PluginManager, ResponseSource};
 
 impl PluginManager {
 
-    pub async fn listen(pm_lock: Arc<RwLock<Self>>) {
+    pub async fn listen(pm_lock: Arc<RwLock<Self>>) -> Result<()> {
         loop {
             let self_lock = pm_lock.clone();
             let pm = self_lock.read().await;
@@ -34,7 +35,9 @@ impl PluginManager {
                     continue
                 },
                 Err(e) => {
-                    log::error!("Got an error while polling listeners: {e}")
+                    log::error!("Got an error while polling listeners: {e}");
+
+                    debug_assert_eq!(e.error_code().unwrap_or(1), 0);
                 }
             }
         }
