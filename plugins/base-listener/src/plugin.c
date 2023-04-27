@@ -53,10 +53,12 @@ void free_state(PluginState*);
 
 void end_connection(TcpConnection*);
 
+// Deprecated, leaving in for integration tests
 uint8_t impl_listener_sync_decode_req(const struct ByteVector *req, struct DnsMessage *message, const void *state) {
     return decode_bytes(*req, message);
 }
 
+// Deprecated, leaving in for integration tests
 uint8_t impl_listener_sync_encode_resp(const struct DnsMessage *resp, struct ByteVector *buf, const void *state) {
     return encode_bytes(*resp, buf);
 }
@@ -64,18 +66,22 @@ uint8_t impl_listener_sync_encode_resp(const struct DnsMessage *resp, struct Byt
 uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const void *state_ptr) {
 
     if (state_ptr == NULL) {
+        // it brokey :(
         return 2;
     }
 
     PluginState *state = (PluginState *)state_ptr;
 
+    // Start by polling for updates
     struct pollfd pollfds[state->num_connections + 2];
 
+    // Poll active TCP connections
     for (int i = 0; i < state->num_connections; i++) {
         pollfds[i].fd = state->connections[i].sock;
         pollfds[i].events = POLLIN;
     }
 
+    // Poll listeners last
     pollfds[state->num_connections].fd = state->udplistener;
     pollfds[state->num_connections].events = POLLIN;
     pollfds[state->num_connections + 1].fd = state->tcplistener;
@@ -94,6 +100,8 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
         modns_log(3, 255, "Got %d events, %d connections are active", events, state->num_connections);
     }
 
+    // The list of connections might change unexpectedly if a response is generated.
+    // Thus, mutex
     int lock_rc = pthread_mutex_trylock(&state->connections_lock);
     if (lock_rc < 0) {
 
@@ -117,7 +125,6 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
 
         
         if(pollfds[i].revents == 0) {
-
             modns_log(4, 40, "No events on connection %d", i);
             continue;
         }
@@ -127,9 +134,10 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
         // We've found one of the events, so decrement the counter of events to handle
         events--;
 
+        // Handle errors
         if (pollfds[i].revents == POLLNVAL) {
             modns_log(1, 70, "TCP connection at file descriptior %d closed unexpectedly", pollfds[i].fd);
-            return 2;
+            return 1;
         }
 
         if(pollfds[i].revents != POLLIN) {
@@ -137,16 +145,17 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
             end_connection(state->connections + i);
             state->connections[i--] = state->connections[--state->num_connections];
             pthread_mutex_unlock(&state->connections_lock);
-            return 2;
+            return 1;
 
         }
 
-        // First, get the size if we don't have it
+        // First, get the expected size of the message if we don't have it
         if (state->connections[i].size == 0) {
             uint16_t size = 0;
             ssize_t rc = recv(state->connections[i].sock, &size, 2, MSG_WAITALL | MSG_DONTWAIT);
 
             if (rc < 0) {
+                // recv() returned an error
                 if (errno == EWOULDBLOCK || errno == EAGAIN) {
                     continue;
                 }
@@ -172,6 +181,10 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
 
             state->connections[i].size = ntohs(size);
             state->connections[i].buf = malloc(state->connections[i].size);
+
+            if (size == 0) {
+                modns_log_cstr(3, "Got 0-length message");
+            }
         }
 
         // Then, read as much as we can into conn.buf
@@ -242,6 +255,7 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
             return 2;
         }
 
+        // Socket read here
         struct sockaddr addr;
         socklen_t addr_len = sizeof(addr);
         ssize_t rc = recvfrom(state->udplistener, state->udp_buf, state->buffer_len, MSG_DONTWAIT, &addr, &addr_len);
@@ -307,7 +321,7 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
         char remotestr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &remote_ip, remotestr, INET_ADDRSTRLEN);
 
-        modns_log(3, 256, "Got TCP request from %s on sock fd %d", remotestr, conn_sock);
+        modns_log(3, 256, "Got TCP request from %s:%d on sock fd %d", remotestr, remote_ipv4->sin_port, conn_sock);
 
         if (state->num_connections >= state->max_connections) {
             close(conn_sock);
@@ -346,13 +360,16 @@ uint8_t impl_listener_async_respond(const struct DnsMessage *resp, void *req_sta
     resp_bytes.capacity = 0;
 
 
+    // Encode the response
     if (encode_bytes(*resp, &resp_bytes) != 0) {
         modns_log_cstr(1, "Failed to encode a response");
+        end_connection(&req_state->tcp_conn);
         drop_char_vec(resp_bytes);
         return 1;
     }
 
     if (req_state->tcp) {
+        // Respond to the request over TCP
         modns_log_cstr(3, "Sending response over TCP");
         modns_log(4, 35, "Sending response over fd %d", req_state->tcp_conn.sock);
 
@@ -409,6 +426,7 @@ void *impl_plugin_setup() {
 
     struct sockaddr_in tcp_addr, udp_addr;
 
+    // Bind listener sockets
     udp_addr.sin_family = AF_INET;
     udp_addr.sin_addr.s_addr = INADDR_ANY;
     udp_addr.sin_port = htons(53);
@@ -423,6 +441,8 @@ void *impl_plugin_setup() {
         return NULL;
     }
 
+    modns_log_cstr(2, "Ready to receive requests on UDP port 53");
+
     if (bind(tcpfd, (struct sockaddr *)&tcp_addr, sizeof(tcp_addr)) < 0) {
         modns_log_cstr(0, "Failed to bind TCP listener");
         free_state(state);
@@ -434,6 +454,8 @@ void *impl_plugin_setup() {
         free_state(state);
         return NULL;
     }
+
+    modns_log_cstr(2, "Ready to receive requests on TCP port 53");
 
     state->udplistener = udpfd;
     state->tcplistener = tcpfd;
