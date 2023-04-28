@@ -6,11 +6,12 @@ import MainBox from "../Components/MainBox";
 import { ParseDashboardPage } from "../scripts/ParseDashboardPage";
 import { getDashboardLayoutAPI, getServerConfig, setDashboardLayoutAPI } from "../API/getsetAPI";
 import { getDashboardLayout, setDashboardLayout } from "../scripts/getsetLocalStorage";
+import { USE_GLOBAL_DASH_KEY } from "../Constants";
 
 
 const Dashboard = () => {
   const [editMode, setEditMode] = useState(false);
-  const [useGlobalDashboard, setUseGlobDash] = useState(true);
+  const [useGlobalDashboard, setUseGlobDash] = useState(false);
   
   const [dashboardJson, setDashboardJson] = useState();
 
@@ -18,11 +19,11 @@ const Dashboard = () => {
 
 
   useEffect(() => {
-    getServerConfig('use_global_dashboard').then(useGlobDash => {
-      setUseGlobDash(useGlobDash);
-      if (useGlobDash.value) {
+    getServerConfig(USE_GLOBAL_DASH_KEY).then(useGlobDash => {
+      setUseGlobDash(useGlobDash[USE_GLOBAL_DASH_KEY]);
+      if (useGlobDash[USE_GLOBAL_DASH_KEY].value) {
         getDashboardLayoutAPI().then(res => {
-          let x = (res && res.data) || [];
+          let x = (res && res["dashboard_layout"].data) || [];
           setDashboardJson([...x]);
           setLoading(false);
         })
