@@ -135,8 +135,10 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
         events--;
 
         // Handle errors
-        if (pollfds[i].revents == POLLNVAL) {
+        if (pollfds[i].revents == POLLHUP) {
             modns_log(1, 70, "TCP connection at file descriptior %d closed unexpectedly", pollfds[i].fd);
+            end_connection(state->connections + i);
+            state->connections[i--] = state->connections[--state->num_connections];
             return 1;
         }
 
@@ -163,6 +165,16 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
                 modns_log(0, 256, "Got error while reading message length from a TCP socket: %s", strerror(errno));
 
                 // Close the connection and remove it from the list of open connections
+                end_connection(state->connections + i);
+                state->connections[i--] = state->connections[--state->num_connections];
+                pthread_mutex_unlock(&state->connections_lock);
+                return 1;
+            }
+
+            // The socket may have just completed a request and closed
+            if (rc == 0) {
+                modns_log(3, 50, "TCP Connection closed by client (fd %d)", state->connections[i].sock);
+
                 end_connection(state->connections + i);
                 state->connections[i--] = state->connections[--state->num_connections];
                 pthread_mutex_unlock(&state->connections_lock);
@@ -198,6 +210,16 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
             modns_log(0, 256, "Got error while reading from a TCP socket: %s", strerror(errno));
 
             // Close the connection and remove it from the list of open connections
+            end_connection(state->connections + i);
+            state->connections[i--] = state->connections[--state->num_connections];
+            pthread_mutex_unlock(&state->connections_lock);
+            return 1;
+        }
+
+        // The socket may have just completed a request and closed
+        if (rc == 0) {
+            modns_log(3, 256, "Connection unexpectedly closed on TCP socket %d", state->connections[i].sock);
+
             end_connection(state->connections + i);
             state->connections[i--] = state->connections[--state->num_connections];
             pthread_mutex_unlock(&state->connections_lock);
