@@ -6,6 +6,7 @@ import MainBox from "../Components/MainBox";
 import { ParseDashboardPage } from "../scripts/ParseDashboardPage";
 import { getDashboardLayoutAPI, getServerConfig, setDashboardLayoutAPI } from "../API/getsetAPI";
 import { getDashboardLayout, setDashboardLayout } from "../scripts/getsetLocalStorage";
+import { USE_GLOBAL_DASH_KEY } from "../Constants";
 
 
 const Dashboard = () => {
@@ -18,7 +19,7 @@ const Dashboard = () => {
 
 
   useEffect(() => {
-    getServerConfig('use_global_dashboard').then(useGlobDash => {
+    getServerConfig(USE_GLOBAL_DASH_KEY).then(useGlobDash => {
       setUseGlobDash(useGlobDash);
       if (useGlobDash.value) {
         getDashboardLayoutAPI().then(res => {

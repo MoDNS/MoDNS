@@ -55,7 +55,7 @@ export const setInterceptOrderAPI = async (uuidList) => {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: {"data": uuidList},
+        body: uuidList,
     });
 }
 
@@ -79,7 +79,7 @@ export const getPluginConfig = async (uuid, key) => {
         }
     }).then(response => {
         if (response.ok) {
-            return response.json().data;
+            return response.json();
         }
     });
 }
@@ -158,7 +158,7 @@ export const getServerConfig = async (key) => {
         method: 'GET'
     }).then(response => {
         if (response.ok) {
-            return response.json();
+            return response.json().key;
         }
     })
 }

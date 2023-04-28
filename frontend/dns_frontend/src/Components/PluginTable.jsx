@@ -23,8 +23,6 @@ const PluginTable = ({ dragNDrop, pluginDict, numInterceptors, pluginsEnabledDic
         setInterceptOrder(dragItem.current, dragOverItem.current);
     };
 
-    console.log('here:', pluginDict);
-
     return (
         <div>
             {

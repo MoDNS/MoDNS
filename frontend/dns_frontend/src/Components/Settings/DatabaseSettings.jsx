@@ -6,6 +6,7 @@ import ErrorIcon from '@mui/icons-material/Error';
 import { IPInputValidation } from '../../scripts/scripts';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Visibility from '@mui/icons-material/Visibility';
+import { DB_TYPE_KEY, POSTGRES_IP_KEY, POSTGRES_PASS_KEY, POSTGRES_PORT_KEY, POSTGRES_USER_KEY, SQLITE_PATH_KEY } from '../../Constants';
 
 const DatabaseSettings = () => {
 
@@ -15,27 +16,34 @@ const DatabaseSettings = () => {
 
     const [postgresIP, setPostgresIP] = useState({});
     const [postgresPort, setPostgresPort] = useState({});
+    const [postgresUser, setPostgresUser] = useState({})
     const [postgresPassword, setPostgresPassword] = useState({});
 
     const [showPass, setShowPass] = useState(false);
     const [errorPostgresIP, setErrorPostgresIP] = useState( postgresIP && postgresIP.value ? !IPInputValidation(postgresIP.value) : true );
 
     useEffect(() => {
-        getServerConfig('database_type').then(res => {
+        getServerConfig(DB_TYPE_KEY).then(res => {
             setDataBaseType(res);
         });
-        getServerConfig('sqlite_file_path').then(res => {
+        getServerConfig(SQLITE_PATH_KEY).then(res => {
             setSQLitePath(res);
         });
-        getServerConfig('postgres_ip').then(res => {
+        getServerConfig(POSTGRES_IP_KEY).then(res => {
             setPostgresIP(res);
             setErrorPostgresIP(!IPInputValidation(res.value || ""));
         })
-        getServerConfig('postgres_port').then(res => {
+        getServerConfig(POSTGRES_PORT_KEY).then(res => {
             setPostgresPort(res);
         })
-        getServerConfig('postgres_password').then(res => {
-            setPostgresPassword(res);
+        getServerConfig(POSTGRES_USER_KEY).then(res => {
+            setPostgresUser(res);
+        })
+        getServerConfig(POSTGRES_PASS_KEY).then(res => {
+            setPostgresPassword({
+                overridden: res.overridden,
+                value: ""
+            });
         })
 
     }, []);
@@ -53,24 +61,29 @@ const DatabaseSettings = () => {
 
     ///// called when apply changes is pressed /////
     const handleSetDataBaseType = () => {
-        setServerConfig('database_type', dataBaseType.value)
+        setServerConfig(DB_TYPE_KEY, dataBaseType.value)
     }
     const handleSetSQLitepath = () => {
-        setServerConfig('sqlite_file_path', sqlitePath.value);
+        setServerConfig(SQLITE_PATH_KEY, sqlitePath.value);
     }
     const handleSetPostgresIP = () => {
         if (errorPostgresIP) {
             alert("Postgres IP format not correct")
         } else {
-            setServerConfig('postgres_ip', postgresIP.value);
+            setServerConfig(POSTGRES_IP_KEY, postgresIP.value);
         }
     }
     const handleSetPostgresPort = () => {
-        setServerConfig('postgres_port', postgresPort.value);
+        setServerConfig(POSTGRES_PORT_KEY, postgresPort.value);
+    }
+    const handleSetPostgresUser = () => {
+        if (postgresUser.value !== "" && postgresUser.value !== null && postgresUser.value !== undefined ) {
+            setServerConfig(POSTGRES_USER_KEY, postgresUser.value);
+        }
     }
     const handleSetPostgresPassword = () => {
         if (postgresPassword.value !== "" && postgresPassword.value !== null && postgresPassword.value !== undefined ) {
-            setServerConfig('postgres_password', postgresPassword.value);
+            setServerConfig(POSTGRES_PASS_KEY, postgresPassword.value);
         }
     }
 
@@ -82,6 +95,7 @@ const DatabaseSettings = () => {
         } else if (dataBaseType && dataBaseType.value === "Postgres") {
             !(postgresIP && postgresIP.overridden) && handleSetPostgresIP()
             !(postgresPort && postgresPort.overridden) && handleSetPostgresPort();
+            !(postgresUser.overridden) && handleSetPostgresUser();
             !(postgresPassword.overridden) && handleSetPostgresPassword();
         }
     }
@@ -202,6 +216,29 @@ const DatabaseSettings = () => {
                                         setPostgresPort({...x});
                                     }
                                 }}
+                            />
+                        </div>
+
+
+                        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35 }}>
+                            <Typography
+                                sx={{
+                                    fontSize: 25,
+                                    marginRight: 'auto',
+                                    marginBottom: 'auto'
+                                }}
+
+                            >
+                                Postgres Username:
+                            </Typography>
+                            <TextField
+                                disabled={postgresUser && postgresUser.overridden}
+                                value={(postgresUser && postgresUser.value) || ""}
+                                onInput={ e => {
+                                    let x = postgresUser;
+                                    x.value = e.target.value;
+                                    setPostgresUser({...x});
+                                } }
                             />
                         </div>
 
