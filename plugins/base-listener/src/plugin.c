@@ -43,12 +43,12 @@ typedef struct PluginState {
     uintptr_t buffer_len;
 
     TcpConnection *connections;
-    uint8_t num_connections;
-    uint8_t max_connections;
+    uint16_t num_connections;
+    uint16_t max_connections;
     pthread_mutex_t connections_lock;
 } PluginState;
 
-PluginState *allocate_state(uint8_t);
+PluginState *allocate_state(uint16_t);
 void free_state(PluginState*);
 
 void end_connection(TcpConnection*);
@@ -76,9 +76,9 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
     struct pollfd pollfds[state->num_connections + 2];
 
     // Poll active TCP connections
-    for (int i = 0; i < state->num_connections; i++) {
+    for (uint16_t i = 0; i < state->num_connections; i++) {
         pollfds[i].fd = state->connections[i].sock;
-        pollfds[i].events = POLLIN;
+        pollfds[i].events = POLLIN | POLLHUP;
     }
 
     // Poll listeners last
@@ -87,7 +87,7 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
     pollfds[state->num_connections + 1].fd = state->tcplistener;
     pollfds[state->num_connections + 1].events = POLLIN;
 
-    uint16_t num_polls = state->num_connections + 2;
+    uint32_t num_polls = state->num_connections + 2;
 
     int events = poll(pollfds, num_polls, -1);
 
@@ -326,7 +326,7 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
         }
 
         struct sockaddr remote;
-        socklen_t remotelen;
+        socklen_t remotelen = sizeof(remote);
 
         pthread_mutex_lock(&state->connections_lock);
         int conn_sock = accept(state->tcplistener, &remote, &remotelen);
@@ -440,7 +440,7 @@ uint8_t impl_listener_async_respond(const struct DnsMessage *resp, void *req_sta
 
 void *impl_plugin_setup() {
 
-    PluginState *state = allocate_state(2);
+    PluginState *state = allocate_state(512);
 
     int udpfd = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -510,7 +510,7 @@ void end_connection(TcpConnection *conn) {
     conn->recvd = 0;
 }
 
-PluginState *allocate_state(uint8_t max_connections) {
+PluginState *allocate_state(uint16_t max_connections) {
 
     PluginState *state = malloc(sizeof(PluginState));
 
