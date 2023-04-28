@@ -5,11 +5,12 @@ use std::sync::Arc;
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use uuid::Uuid;
+use warp::reject;
 use warp::reply::json;
 use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
 
-use crate::config::MutableConfigValue;
+use crate::config::{MutableConfigValue, PLUGIN_PATH_KEY, USE_GLOBAL_DASH, USE_GLOBAL_DASH_KEY, LOG_KEY, DB_TYPE_KEY, DB_PATH_KEY, DB_ADDR_KEY, DB_PASS_KEY, ADMIN_PW_KEY, DB_PORT_KEY};
 use crate::plugins::manager::PluginManager;
 use crate::plugins::response::ApiResponse;
 
@@ -58,6 +59,7 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
     let disable_pm = pm.clone();
     let config_set_pm = pm.clone();
     let config_get_pm = pm.clone();
+    // let favicon_pm = pm.clone();
     // let intercept_pm = pm.clone();
 
     warp::path("api")
@@ -81,6 +83,13 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             set_plugin_stat(pm, uuid, false)
             })
         )
+        // .or(warp::path!("plugins" / Uuid / "favicon")
+        // .then(move |uuid: Uuid| {
+        //     let pm = favicon_pm.clone();
+        //     log::trace!("Plugin enabled status change requested");
+        //     get_favicon(pm, uuid)
+        //     })
+        // )
         // .or(warp::path!("plugins" / "interceptorder")
         // .then(move || {
         //     let pm = intercept_pm.clone();
@@ -161,17 +170,15 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigSetQuer
     let resp: BTreeMap<String, String> = BTreeMap::new();
 
     match key.unwrap().as_ref() {
-        "static_ip" => {},
-        "use_static_ip" => {},
-        "use_global_dashboard" => {},
-        "plugin_paths" => {},
-        "log_filter" => {},
-        "database_type" => {},
-        "sqlite_file_path" => {},
-        "postgres_ip" => {},
-        "postgres_port" => {},
-        "sqlite_password" => {},
-        "postgres_password" => {},
+        USE_GLOBAL_DASH_KEY => {},
+        PLUGIN_PATH_KEY => {},
+        LOG_KEY => {},
+        DB_TYPE_KEY => {},
+        DB_PATH_KEY => {},
+        DB_ADDR_KEY => {},
+        DB_PORT_KEY => {},
+        DB_PASS_KEY => {},
+        ADMIN_PW_KEY => {},
         &_ => {
             val.unwrap();
         },
@@ -186,46 +193,45 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
     
     let cm = pm.write().await;
 
-    let mut reply = json(&());
+    let mut reply:BTreeMap<&str, serde_json::Value> = BTreeMap::new();
+    let mut reject;
 
     match cq.key.unwrap_or_default().as_ref() {
-        "static_ip" => {},
-        "use_static_ip" => {},
-        "use_global_dashboard" => {
+        USE_GLOBAL_DASH_KEY => {
             let bool = cm.config().query_use_global_dash();
-            reply = json(&bool);
+            reply.insert(cq.key.unwrap_or_default().as_ref(), serde_json::to_value(bool));
         },
-        "plugin_paths" => {
+        PLUGIN_PATH_KEY => {
             let path = cm.config().query_plugin_path();
             let mut resp: BTreeMap<&str, Vec<MutableConfigValue<PathBuf>>> = BTreeMap::new();
-            resp.insert("data", path);
+            resp.insert("plugin_path", path);
             reply = json(&resp);
         },
-        "log_filter" => {
+        LOG_KEY => {
             let log = cm.config().query_log();
             reply = json(&log);
         },
-        "database_type" => {
+        DB_TYPE_KEY => {
             let db_type = cm.config().query_db_type();
             reply = json(&db_type);
         },
-        "sqlite_file_path" => {
+        DB_PATH_KEY => {
             let db_path = cm.config().query_db_path();
             reply = json(&db_path);
         },
-        "postgres_ip" => {
+        DB_ADDR_KEY => {
             let db_ip = cm.config().query_db_addr();
             reply = json(&db_ip);            
         },
-        "postgres_port" => {
+        DB_PORT_KEY => {
             let db_port = cm.config().query_db_port();
             reply = json(&db_port);            
         },
-        "sqlite_password" => {
+        DB_PASS_KEY => {
             let db_pass = cm.config().query_admin_pw();
             reply = json(&db_pass);
         },
-        "postgres_password" => {
+        ADMIN_PW_KEY => {
             let db_pass = cm.config().query_plugin_path();
             reply = json(&db_pass);            
         },
@@ -242,13 +248,27 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
             
         }
         &_ => {
-            log::trace!("Default catch-all response");
-            reply = json(&());
+            reject = warp::reject();
         },
     }
 
-    Box::new(reply)
+    if reject.is_not_found() {
+        Box::new(reject)
+    } else {
+        Box::new(reply)
+    }
 }
+
+// pub async fn get_favicon(pm: Arc<RwLock<PluginManager>>, uuid: Uuid) -> impl Reply {
+
+//     let path = pm.read().await.get_plugin_path(&uuid);
+
+//     let resp = warp::filters::fs::dir(path)
+//         .map(|reply: warp::filters::fs::File| {
+//             reply.into_response()
+//         });
+    
+// }
 
 // pub async fn get_intercept_order(pm: Arc<RwLock<PluginManager>>) -> impl Reply {
     

@@ -32,16 +32,16 @@ const LOG_ENV: &str = "MODNS_LOG";
 const ADMIN_PW_ENV: &str = "MODNS_ADMIN_PW";
 const HEADLESS_ENV: &str = "MODNS_HEADLESS";
 
-const PLUGIN_PATH_KEY: &str = "plugin_path";
-const DB_TYPE_KEY: &str = "db_type";
-const DB_PATH_KEY: &str = "db_path";
-const DB_ADDR_KEY: &str = "db_addr";
-const DB_PORT_KEY: &str = "db_port";
-const DB_USER_KEY: &str = "db_user";
-const DB_PASS_KEY: &str = "db_pass";
-const LOG_KEY: &str = "log_filter";
-const ADMIN_PW_KEY: &str = "admin_pw_hash";
-const USE_GLOBAL_DASH: &str = "use_global_dash";
+pub const PLUGIN_PATH_KEY: &str = "plugin_path";
+pub const DB_TYPE_KEY: &str = "db_type";
+pub const DB_PATH_KEY: &str = "sqlite_path";
+pub const DB_ADDR_KEY: &str = "postgres_ip";
+pub const DB_PORT_KEY: &str = "postgres_port";
+pub const DB_USER_KEY: &str = "postgres_user";
+pub const DB_PASS_KEY: &str = "postgres_pw";
+pub const LOG_KEY: &str = "log_filter";
+pub const ADMIN_PW_KEY: &str = "admin_pw_hash";
+pub const USE_GLOBAL_DASH_KEY: &str = "use_global_dashboard";
 
 const DEFAULT_PLUGIN_PATH: &str = "/usr/share/modns/default-plugins";
 const DEFAULT_UNIX_SOCKET: &str = "/run/modnsd.sock";
@@ -398,7 +398,7 @@ impl MutableServerConfig {
     }
 
     fn use_global_dash(&self) -> Option<bool> {
-        self.get_config_obj(USE_GLOBAL_DASH)
+        self.get_config_obj(USE_GLOBAL_DASH_KEY)
     }
 
     pub fn set_plugin_path(&mut self, plugin_path: Vec<PathBuf>) -> Result<()> {
@@ -438,7 +438,7 @@ impl MutableServerConfig {
     }
 
     pub fn set_use_global_dash(&mut self, dash: bool) -> Result<()> {
-        self.set_config_obj(USE_GLOBAL_DASH, dash)
+        self.set_config_obj(USE_GLOBAL_DASH_KEY, dash)
     }
 }
 

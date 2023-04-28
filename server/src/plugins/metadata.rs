@@ -122,4 +122,10 @@ impl PluginManager {
             .metadata())
     }
 
+    pub fn get_plugin_path(&self, id: &Uuid) -> PathBuf {
+        self.plugins().get(id)
+            .unwrap()
+            .metadata().home
+    }
+
 }
