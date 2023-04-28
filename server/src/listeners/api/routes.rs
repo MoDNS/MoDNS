@@ -136,9 +136,9 @@ pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, enable:
 
 pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>) -> impl Reply {
     
-    let cm = pm.write().await;
+    let _cm = pm.write().await;
 
-    let resp: BTreeMap<String, String> = BTreeMap::new();
+    let _resp: BTreeMap<String, String> = BTreeMap::new();
 
     // match key.unwrap().as_ref() {
     //     USE_GLOBAL_DASH_KEY => {

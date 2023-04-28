@@ -297,7 +297,7 @@ impl DnsPlugin {
             .to_string();
 
         match check_sym::<SdkInitFn>(&lib, SDK_INIT_FN_NAME)? {
-            Some(sdk_init) => {
+            Some(_sdk_init) => {
 
                 log::trace!("Initializing SDK logger for {log_name}");
 
