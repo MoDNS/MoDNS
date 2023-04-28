@@ -1,4 +1,4 @@
-import { Table, TableBody, TableContainer, TableRow, TableCell, Typography } from '@mui/material';
+import { Table, TableBody, TableContainer, Typography } from '@mui/material';
 import PluginTableRow from './PluginTableRow';
 import { useRef } from 'react';
 import { PropTypes } from 'prop-types';

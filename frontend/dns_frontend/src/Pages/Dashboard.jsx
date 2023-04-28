@@ -42,7 +42,7 @@ const Dashboard = () => {
             Dashboard
             <Button variant="contained" sx={{ marginLeft: 'auto', marginY: 'auto' }} onClick={() => {
               if (editMode) {
-                if (useGlobalDashboard) {
+                if (useGlobalDashboard.value) {
                   setDashboardLayoutAPI('dashboard', dashboardJson);
                 } else {
                   setDashboardLayout(dashboardJson);
