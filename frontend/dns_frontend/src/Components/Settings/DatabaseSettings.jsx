@@ -6,42 +6,50 @@ import ErrorIcon from '@mui/icons-material/Error';
 import { IPInputValidation } from '../../scripts/scripts';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Visibility from '@mui/icons-material/Visibility';
+import { DB_TYPE_KEY, POSTGRES_IP_KEY, POSTGRES_PASS_KEY, POSTGRES_PORT_KEY, POSTGRES_USER_KEY, SQLITE_PATH_KEY } from '../../Constants';
 
 const DatabaseSettings = () => {
 
     const [dataBaseType, setDataBaseType] = useState({});
 
     const [sqlitePath, setSQLitePath] = useState({});
-    const [sqlitePassword, setSqlitePassword] = useState({});
 
     const [postgresIP, setPostgresIP] = useState({});
     const [postgresPort, setPostgresPort] = useState({});
+    const [postgresUser, setPostgresUser] = useState({})
     const [postgresPassword, setPostgresPassword] = useState({});
 
+    const [showPass, setShowPass] = useState(false);
+    const [errorPostgresIP, setErrorPostgresIP] = useState( false );
+
     useEffect(() => {
-        getServerConfig('database_type').then(res => {
-            setDataBaseType(res);
+        getServerConfig(DB_TYPE_KEY).then(res => {
+            setDataBaseType(res[DB_TYPE_KEY]);
         });
-        getServerConfig('sqlite_file_path').then(res => {
-            setSQLitePath(res);
+        getServerConfig(SQLITE_PATH_KEY).then(res => {
+            setSQLitePath(res[SQLITE_PATH_KEY]);
         });
-        getServerConfig('postgres_ip').then(res => {
-            setPostgresIP(res);
+        getServerConfig(POSTGRES_IP_KEY).then(res => {
+            setPostgresIP(res[POSTGRES_IP_KEY]);
+            setErrorPostgresIP(!IPInputValidation(res[POSTGRES_IP_KEY].value || ""));
         })
-        getServerConfig('postgres_port').then(res => {
-            setPostgresPort(res);
+        getServerConfig(POSTGRES_PORT_KEY).then(res => {
+            setPostgresPort(res[POSTGRES_PORT_KEY]);
         })
-        getServerConfig('postgres_password').then(res => {
-            setPostgresPassword(res);
+        getServerConfig(POSTGRES_USER_KEY).then(res => {
+            console.log(res)
+            setPostgresUser(res[POSTGRES_USER_KEY]);
         })
-        getServerConfig('sqlite_password').then(res => {
-            setSqlitePassword(res);
+        getServerConfig(POSTGRES_PASS_KEY).then(res => {
+            setPostgresPassword({
+                overridden: res[POSTGRES_PASS_KEY].overridden,
+                value: ""
+            });
         })
 
     }, []);
 
-    const [showPass, setShowPass] = useState(false);
-    const [errorPostgresIP, setErrorPostgresIP] = useState( postgresIP && postgresIP.value ? !IPInputValidation(postgresIP.value) : true );
+
     const inputPostgresIP = (ip) => {
         setPostgresIP(ip);
         if (!IPInputValidation(ip.value)) {
@@ -54,26 +62,42 @@ const DatabaseSettings = () => {
 
     ///// called when apply changes is pressed /////
     const handleSetDataBaseType = () => {
-        setServerConfig('database_type', dataBaseType.value)
+        setServerConfig(DB_TYPE_KEY, dataBaseType.value)
     }
     const handleSetSQLitepath = () => {
-        setServerConfig('sqlite_file_path', sqlitePath.value);
+        setServerConfig(SQLITE_PATH_KEY, sqlitePath.value);
     }
     const handleSetPostgresIP = () => {
-        setServerConfig('postgres_ip', postgresIP.value);
+        if (errorPostgresIP) {
+            alert("Postgres IP format not correct")
+        } else {
+            setServerConfig(POSTGRES_IP_KEY, postgresIP.value);
+        }
     }
     const handleSetPostgresPort = () => {
-        setServerConfig('postgres_port', postgresPort.value);
+        setServerConfig(POSTGRES_PORT_KEY, postgresPort.value);
+    }
+    const handleSetPostgresUser = () => {
+        if (postgresUser.value !== "" && postgresUser.value !== null && postgresUser.value !== undefined ) {
+            setServerConfig(POSTGRES_USER_KEY, postgresUser.value);
+        }
+    }
+    const handleSetPostgresPassword = () => {
+        if (postgresPassword.value !== "" && postgresPassword.value !== null && postgresPassword.value !== undefined ) {
+            setServerConfig(POSTGRES_PASS_KEY, postgresPassword.value);
+        }
     }
 
 
     const applyChanges = () => {
         !(dataBaseType && dataBaseType.overridden) && handleSetDataBaseType();
-        if (dataBaseType && dataBaseType.value === "sqlite") {
+        if (dataBaseType && dataBaseType.value === "Sqlite") {
             !sqlitePath.overridden && handleSetSQLitepath();
-        } else if (dataBaseType && dataBaseType.value === "postgres") {
+        } else if (dataBaseType && dataBaseType.value === "Postgres") {
             !(postgresIP && postgresIP.overridden) && handleSetPostgresIP()
             !(postgresPort && postgresPort.overridden) && handleSetPostgresPort();
+            !(postgresUser.overridden) && handleSetPostgresUser();
+            !(postgresPassword.overridden) && handleSetPostgresPassword();
         }
     }
 
@@ -107,14 +131,14 @@ const DatabaseSettings = () => {
                             }}
                             sx={{ width: 100, marginTop: 'auto' }} 
                         >
-                            <MenuItem value={"sqlite"} > SQLite </MenuItem>
-                            <MenuItem value={"postgres"} > PostGres </MenuItem>
+                            <MenuItem value={"Sqlite"} > SQLite </MenuItem>
+                            <MenuItem value={"Postgres"} > Postgres </MenuItem>
                         </Select>
                     </div>
                 </div>
 
                 {
-                    dataBaseType && dataBaseType.value === "sqlite" ? <>
+                    dataBaseType && dataBaseType.value === "Sqlite" ? <>
                         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35 }}>
                             <Typography
                                 sx={{
@@ -132,44 +156,6 @@ const DatabaseSettings = () => {
                                     let x = sqlitePath;
                                     x.value = e.target.value;
                                     setSQLitePath({...x});
-                                }}
-                            />
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35 }}>
-                            <Typography
-                                sx={{
-                                    fontSize: 25,
-                                    marginRight: 'auto',
-                                    marginBottom: 'auto'
-                                }}
-
-                            >
-                                SQLite Password:
-                            </Typography>
-                            <TextField
-                                disabled={sqlitePassword && sqlitePassword.overridden}
-                                type={ showPass ? 'text' : 'password' }
-                                value={(sqlitePassword && sqlitePassword.value) || ""}
-                                onInput={ e => {
-                                    let x = sqlitePassword;
-                                    x.value = e.target.value;
-                                    setSqlitePassword({...x});
-                                } }
-                                onFocus={e => {
-                                    e.target.select();
-                                }}
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position='end'>
-                                            <IconButton
-                                                onClick={ () => setShowPass(!showPass) }
-                                                onMouseDown= { (e) => { e.preventDefault() } }
-                                            >
-                                                {showPass ? <VisibilityOff /> : <Visibility /> }
-                                            </IconButton>
-                                        </InputAdornment>
-                                    )
                                 }}
                             />
                         </div>
@@ -231,6 +217,29 @@ const DatabaseSettings = () => {
                                         setPostgresPort({...x});
                                     }
                                 }}
+                            />
+                        </div>
+
+
+                        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35 }}>
+                            <Typography
+                                sx={{
+                                    fontSize: 25,
+                                    marginRight: 'auto',
+                                    marginBottom: 'auto'
+                                }}
+
+                            >
+                                Postgres Username:
+                            </Typography>
+                            <TextField
+                                disabled={postgresUser && postgresUser.overridden}
+                                value={(postgresUser && postgresUser.value) || ""}
+                                onInput={ e => {
+                                    let x = postgresUser;
+                                    x.value = e.target.value;
+                                    setPostgresUser({...x});
+                                } }
                             />
                         </div>
 

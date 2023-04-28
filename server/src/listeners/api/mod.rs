@@ -48,7 +48,6 @@ impl Display for ApiListener {
 }
 
 pub async fn listen_api(listeners: Vec<ApiListener>, shutdown_channel: broadcast::Sender<()>, pm: Arc<RwLock<PluginManager>>) -> Result<()>{
-    // let pm_arc = Arc::new(RwLock::new(PluginManager::new()));
     
     let api_filter = api_filter(pm.clone());
 

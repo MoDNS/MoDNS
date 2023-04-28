@@ -6,7 +6,7 @@
 /////////////////////////////// PLUGIN MANAGE ///////////////////////////////
 
 export const getPluginDict = async (filter) => {
-    return await fetch(`${window.location.origin}/api/plugins${filter ? `?modules=${filter}` : ''}`, {
+    return await fetch(`${window.location.origin}/api/plugins${filter ? `?module=${filter}` : ''}`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
@@ -22,31 +22,27 @@ export const getPluginDict = async (filter) => {
 }
 
 export const installPlugin = async (file) => {
-    const formData = new FormData();
-    formData.append('fileName', file)
 
-    if (false) {
+    try {
+        let extension = file.name.split('.').at(-1).toLowerCase();
+
+        if (extension !== "zip" && extension !== "gzip") {
+            alert("Not a zip or gzip");
+            return;
+        }
+    
         fetch(`${window.location.origin}/api/plugins/install`, {
+            method: 'POST',
             headers: {
-                'Content-Type': 'application/zip'
+                'Content-Type': `application/${extension}`
             },
-            body: formData,
+            body: file,
         })
-    } else if (false) {
-        fetch(`${window.location.origin}/api/plugins/install`, {
-            headers: {
-                'Content-Type': 'application/gzip'
-            },
-            body: formData,
-        })
-    } else if (false) {
-        fetch(`${window.location.origin}/api/plugins/install`, {
-            headers: {
-                'Content-Type': 'text/plain'
-            },
-            body: formData,
-        })
+        
+    } catch (error) {
+        alert("There was a problem with this file");
     }
+    
 }
 
 export const uninstallPlugin = async (uuid) => {
@@ -59,12 +55,12 @@ export const setInterceptOrderAPI = async (uuidList) => {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: {"data": uuidList},
+        body: uuidList,
     });
 }
 
 export const enabledisablePlugin = async (uuid, enabled) => {
-    await fetch(`${window.location.origin}/api/plugins/${uuid}/enable?enabled=${enabled}`, {
+    await fetch(`${window.location.origin}/api/plugins/${uuid}/${enabled ? "enable" : "disable"}`, {
         method: 'POST',
     });
 }
@@ -83,7 +79,7 @@ export const getPluginConfig = async (uuid, key) => {
         }
     }).then(response => {
         if (response.ok) {
-            return response.json().data;
+            return response.json();
         }
     });
 }
@@ -146,30 +142,36 @@ export const shutdownServer = async () => {
 }
 
 export const setServerConfig = async (key, value) => {
-    await fetch(`${window.location.origin}/api/server/config?${key}=${value}`, {
+    await fetch(`${window.location.origin}/api/server/config`, {
         method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: {
+            key: value,
+        }
     });
 }
 
 export const getServerConfig = async (key) => {
-    return await fetch(`${window.location.origin}/api/config?${key}`, {
+    return await fetch(`${window.location.origin}/api/server/config?key=${key}`, {
         method: 'GET'
     }).then(response => {
         if (response.ok) {
-            return response;
-        } else {
-            return {
-                overridden: true,
-                value: ""
-            };
+            return response.json();
         }
     })
 }
 
 export const getDashboardLayoutAPI = async () => {
-    return await fetch(`${window.location.origin}/api/dashboard`).then(response => {
+    return await fetch(`${window.location.origin}/api/dashboard`,{
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json'
+        }
+    }).then(response => {
         if (response.ok) {
-            return response.json().data;
+            return response.json();
         } else {
             return [];
         }
@@ -182,13 +184,15 @@ export const setDashboardLayoutAPI = async (dashboard) => {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: {'data': dashboard},
+        body: {'data': dashboard },
     });
 }
 
 ////////////////////////////// AUTHENTICATION ///////////////////////////////
 export const getAuthentication = (password) => {
-    return true
+    if (password !== "") {
+        return true
+    }
     // fetch(`${window.location.origin}/api/auth`);
 
 }

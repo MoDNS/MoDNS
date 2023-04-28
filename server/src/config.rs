@@ -32,15 +32,17 @@ const LOG_ENV: &str = "MODNS_LOG";
 const ADMIN_PW_ENV: &str = "MODNS_ADMIN_PW";
 const HEADLESS_ENV: &str = "MODNS_HEADLESS";
 
-const PLUGIN_PATH_KEY: &str = "plugin_path";
-const DB_TYPE_KEY: &str = "db_type";
-const DB_PATH_KEY: &str = "db_path";
-const DB_ADDR_KEY: &str = "db_addr";
-const DB_PORT_KEY: &str = "db_port";
-const DB_USER_KEY: &str = "db_user";
-const DB_PASS_KEY: &str = "db_pass";
-const LOG_KEY: &str = "log_filter";
-const ADMIN_PW_KEY: &str = "admin_pw_hash";
+pub const PLUGIN_PATH_KEY: &str = "plugin_path";
+pub const DB_TYPE_KEY: &str = "db_type";
+pub const DB_PATH_KEY: &str = "sqlite_path";
+pub const DB_ADDR_KEY: &str = "postgres_ip";
+pub const DB_PORT_KEY: &str = "postgres_port";
+pub const DB_USER_KEY: &str = "postgres_user";
+pub const DB_PASS_KEY: &str = "postgres_pw";
+pub const LOG_KEY: &str = "log_filter";
+pub const ADMIN_PW_KEY: &str = "admin_pw_hash";
+pub const USE_GLOBAL_DASH_KEY: &str = "use_global_dashboard";
+pub const ALL_KEY: &str = "all";
 
 const DEFAULT_PLUGIN_PATH: &str = "/usr/share/modns/default-plugins";
 const DEFAULT_UNIX_SOCKET: &str = "/run/modnsd.sock";
@@ -51,6 +53,7 @@ const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const DEFAULT_POSTGRES_USER: &str = "postgres";
 const DEFAULT_POSTGRES_PASS: &str = "postgres";
 const DEFAULT_LOG_FILTER: &str = "info";
+const DEFAULT_USE_GLOBAL_DASH: bool = false;
 
 const CONFIG_LOCKFILE_NAME: &str = "config-lock.json";
 
@@ -395,6 +398,10 @@ impl MutableServerConfig {
         self.get_config_obj(ADMIN_PW_KEY)
     }
 
+    fn use_global_dash(&self) -> Option<bool> {
+        self.get_config_obj(USE_GLOBAL_DASH_KEY)
+    }
+
     pub fn set_plugin_path(&mut self, plugin_path: Vec<PathBuf>) -> Result<()> {
         self.set_config_obj(PLUGIN_PATH_KEY, plugin_path)
     }
@@ -429,6 +436,10 @@ impl MutableServerConfig {
 
     pub fn set_admin_pw_hash(&mut self, pw: String) -> Result<()> {
         self.set_config_obj(ADMIN_PW_ENV, pw)
+    }
+
+    pub fn set_use_global_dash(&mut self, dash: bool) -> Result<()> {
+        self.set_config_obj(USE_GLOBAL_DASH_KEY, dash)
     }
 }
 
@@ -631,6 +642,10 @@ impl ServerConfig {
             .or(self.settings.admin_pw_hash())
     }
 
+    pub fn use_global_dash(&self) -> bool {
+        self.settings.use_global_dash().unwrap_or(DEFAULT_USE_GLOBAL_DASH)
+    }
+
     pub fn headless(&self) -> bool {
         self.headless
     }
@@ -671,6 +686,10 @@ impl ServerConfig {
     
     pub fn set_admin_pw_hash(&mut self, pw: String) -> Result<()> {
         self.settings.set_admin_pw_hash(pw)
+    }
+
+    pub fn set_use_global_dash(&mut self, dash: bool) -> Result<()> {
+        self.settings.set_use_global_dash(dash)
     }
 }
 
@@ -739,6 +758,13 @@ impl ServerConfig {
         }
     }
 
+    pub fn query_db_user(&self) -> MutableConfigValue<String> {
+        MutableConfigValue { 
+            overridden: self.override_db_user.is_some(),
+            value: self.db_user()
+        }
+    }
+
     pub fn query_log(&self) -> MutableConfigValue<String> {
         MutableConfigValue {
             overridden: self.override_log.is_some(),
@@ -750,6 +776,13 @@ impl ServerConfig {
         MutableConfigValue {
             overridden: self.override_admin_pw_hash.is_some(),
             value: ()
+        }
+    }
+
+    pub fn query_use_global_dash(&self) -> MutableConfigValue<bool> {
+        MutableConfigValue {
+            overridden: false,
+            value: self.use_global_dash()
         }
     }
 

@@ -1,13 +1,12 @@
-import { Button, Checkbox, FormControlLabel, Icon, IconButton, InputAdornment, List, ListItem, MenuItem, Select, Switch, TextField, Tooltip, Typography } from '@mui/material';
+import { Button, Checkbox, FormControlLabel, IconButton, InputAdornment, List, ListItem, MenuItem, Select, TextField, Tooltip, Typography } from '@mui/material';
 import React from 'react';
 import { useState, useEffect } from 'react';
-import ErrorIcon from '@mui/icons-material/Error';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { getServerConfig, setServerConfig } from '../../API/getsetAPI';
 import { useTheme } from '@emotion/react';
-import { IPInputValidation } from '../../scripts/scripts';
+import { LOG_FILTER_KEY, PLUGIN_PATH_KEY, USE_GLOBAL_DASH_KEY } from '../../Constants';
 
 const ServerSettings = () => {
     const theme = useTheme();
@@ -27,82 +26,54 @@ const ServerSettings = () => {
     
 
     const [useGlobDash, setUseGlobDash] = useState({});
-    const [staticIP, setStaticIP] = useState({});
-    const [useStaticIP, setUseStaticIP] = useState({});
     const [pluginPaths, setPluginPaths] = useState([]);
 
     const [logFilter, setLogFilter] = useState({});
     const [selectLogFilter, setSelectLogFilter] = useState(["", ""]);
     
     useEffect(() => {
-        getServerConfig('use_global_dashboard').then(res => {
-            setUseGlobDash(res);
+        getServerConfig(USE_GLOBAL_DASH_KEY).then(res => {
+            setUseGlobDash(res[USE_GLOBAL_DASH_KEY]);
         })
-        getServerConfig('use_static_ip').then(res => {
-            setUseStaticIP(res);
+        getServerConfig(PLUGIN_PATH_KEY).then(res => {
+            setPluginPaths(res[PLUGIN_PATH_KEY] || []);
         })
-        getServerConfig('static_ip').then(res => {
-            setStaticIP(res);
-        })
-        getServerConfig('plugin_paths').then(res => {
-            setPluginPaths(res.data || []);
-        })
-        getServerConfig('log_filter').then(res => {
-            setLogFilter(res);
-            setSelectLogFilter(parseLogFilter(res));
+        getServerConfig(LOG_FILTER_KEY).then(res => {
+            setLogFilter(res[LOG_FILTER_KEY]);
+            setSelectLogFilter(parseLogFilter(res[LOG_FILTER_KEY]));
         })
 
     }, [])
     
-
-    const [errorStaticIP, setErrorStaticIP] = useState( staticIP && staticIP.value ? !IPInputValidation(staticIP.value) : true );
+    
+    // const [errorStaticIP, setErrorStaticIP] = useState( staticIP && staticIP.value ? !IPInputValidation(staticIP.value) : true );
     const [addPath, setAddPath] = useState("");
     const [useCustLogFilt, setUseCustLogFilt] = useState(!(loggingOptions.includes(selectLogFilter[0] || "") && loggingOptions.includes(selectLogFilter[1] || "")));
-
-    const inputStaticIP = (ip) => {
-        setStaticIP(ip);
-        console.log(ip);
-        if (!IPInputValidation(ip.value)) {
-            setErrorStaticIP(true);
-        }
-        else {
-            setErrorStaticIP(false);
-        }
-    }
 
 
     ///// called when apply changes is pressed /////
     const handleSetUseGlobDash = () => {
-        setServerConfig('use_global_dashboard', useGlobDash.value);
-    }
-    const handleStaticIPSwitch = () => {
-        setServerConfig('use_static_ip', useStaticIP.value);
-    }
-    const handleSetStaticIP = () => {
-        if (IPInputValidation(staticIP.value)) {
-            setServerConfig('static_ip', staticIP.value);
-        } else {
-            alert("Static IP format not correct");
+        if (useGlobDash.value !== undefined && useGlobDash.value !== null) {
+            setServerConfig(USE_GLOBAL_DASH_KEY, useGlobDash.value);
         }
     }
+
     const handleSetPluginPaths = () => {
-        setServerConfig('plugin_paths', pluginPaths);
+        setServerConfig(PLUGIN_PATH_KEY, pluginPaths.map(theJson => {
+            return theJson.value;
+        }));
     }
     const handleSetLogFilter = () => {
         if (useCustLogFilt) {
-            setServerConfig('log_filter', logFilter.value);
+            setServerConfig(LOG_FILTER_KEY, logFilter.value);
         } else {
-            setServerConfig('log_filter', `modns=${selectLogFilter[0] || ""},${selectLogFilter[1] || ""}`)
+            setServerConfig(LOG_FILTER_KEY, `modns=${selectLogFilter[0] || ""},${selectLogFilter[1] || ""}`)
         }
     }
 
 
     const applyChanges = () => {
         !(useGlobDash && useGlobDash.overridden) && handleSetUseGlobDash();
-        !(useStaticIP && useStaticIP.overridden) && handleStaticIPSwitch();
-        if (useStaticIP.value) {
-            !(staticIP && staticIP.overridden) && handleSetStaticIP();
-        }
         handleSetPluginPaths();
         !(logFilter && logFilter.overridden) && handleSetLogFilter();
     }
@@ -169,60 +140,6 @@ const ServerSettings = () => {
                         </Select>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35, }}>
-                        <Typography
-                            sx={{
-                                fontSize: 25,
-                                marginRight: 'auto',
-                            }}
-                        >
-                            Use Static IP:
-                        </Typography>
-                        <Switch 
-                            disabled={useStaticIP && useStaticIP.overridden}
-                            checked={(useStaticIP && useStaticIP.value) || false}
-                            onChange={ () => {
-                                let x = {...useStaticIP};
-                                x.value = !useStaticIP.value;
-                                setUseStaticIP( {...x} )
-                            }}
-                        />
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', opacity: !useStaticIP ? '50%' : '100%', }}>
-                        <Typography
-                            sx={{ 
-                                fontSize: 25,
-                                marginRight: 'auto',
-                            }}
-                            >
-                            Static IP:
-                        </Typography>
-
-                        <TextField
-                            onFocus={ (e) => e.target.select() }
-                            value={(staticIP && staticIP.value) || ""}
-                            disabled={!(useStaticIP && useStaticIP.value) || (staticIP && staticIP.overridden)}
-                            inputProps={{style: { textAlign: 'right', paddingRight: 0, }}}
-                            placeholder={ useStaticIP ? 'xxx.xxx.xxx.xxx' : null }
-                            onInput={ e => {
-                                let x = {...staticIP}
-                                x.value = e.target.value;
-                                inputStaticIP({...x});
-                            } }
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position='start'>
-                                        { errorStaticIP &&
-                                            <Icon>
-                                                <ErrorIcon />
-                                            </Icon>
-                                        }
-                                    </InputAdornment>
-                                )
-                            }}
-                        />
-                    </div>
 
                     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35, }}>
                         <Tooltip title={"Where the server searches for plugins."} >
@@ -237,31 +154,36 @@ const ServerSettings = () => {
                             </Typography>
                         </Tooltip>
                             
-                        <div style={{ display: 'flex', flexDirection: 'column' }} >
-                            <TextField
-                                value={addPath}
-                                onChange={ (e) => setAddPath(e.target.value) }
-                                onKeyPress={(e) => {
-                                    if (e.key !== "Enter") {
-                                        return;                                        
+                        <TextField
+                            value={addPath}
+                            onChange={ (e) => setAddPath(e.target.value) }
+                            onKeyPress={(e) => {
+                                if (e.key !== "Enter") {
+                                    return;                                        
+                                }
+                                if (addPath.trim() === "") {
+                                    return;
+                                }
+                                let x = [...pluginPaths];
+                                x.push(
+                                    {
+                                        "overridden": false,
+                                        "value": addPath
                                     }
-                                    let x = [...pluginPaths];
-                                    x.push(
-                                        {
-                                            "overridden": false,
-                                            "value": addPath
-                                        }
-                                    );
-                                    setPluginPaths([...x]);
-                                    setAddPath("");
-                                }} //this adds enter to submit
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position='end' >
-                                            { 
-                                                <IconButton 
+                                );
+                                setPluginPaths([...x]);
+                                setAddPath("");
+                            }}
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position='end' >
+                                        { 
+                                            <IconButton 
                                                 sx={{ marginRight: 0.5 }}
                                                 onClick={() => {
+                                                    if (addPath.trim() === "") {
+                                                        return;
+                                                    }
                                                     let x = [...pluginPaths];
                                                     x.push(
                                                         {
@@ -272,21 +194,22 @@ const ServerSettings = () => {
                                                     setPluginPaths([...x]);
                                                     setAddPath("");
                                                 }}
-                                                >
-                                                    <AddIcon />
-                                                </IconButton>
-                                            }
-                                        </InputAdornment>
-                                    )
-                                }}
-                            />
-                            <List
-                                sx={{ backgroundColor: theme.palette.primary.dark, maxHeight: 150, overflowY: 'scroll' }}
-                                dense={true}
-                            >
-                                { makePluginPathList() }
-                            </List>
-                        </div>
+                                            >
+                                                <AddIcon />
+                                            </IconButton>
+                                        }
+                                    </InputAdornment>
+                                )
+                            }}
+                        />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'row' }}>
+                        <List
+                            sx={{ backgroundColor: theme.palette.primary.dark, maxHeight: 150, overflowY: 'auto', width: '100%', }}
+                            dense={true}
+                        >
+                            { makePluginPathList() }
+                        </List>
                         
                     </div>
 
