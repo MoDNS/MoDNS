@@ -276,16 +276,5 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
         return ApiResponse::new(200, serde_json::json!(&reply).to_string())
     }
 
-    // let resp = if reply.is_empty() {
-    //     (warp::reject(), "Error")
-    // } else {
-    //     (json(&reply), "Success")
-    // };
-
-    // match resp {
-    //     Ok(_) => ApiResponse::new(200, json(&reply)),
-    //     Err(e) => ApiResponse::from(e),
-    // }
-
 }
 
