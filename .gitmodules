@@ -1,0 +1,3 @@
+[submodule "plugins/base-datacollector/lib/jsoncpp"]
+	path = plugins/base-datacollector/lib/jsoncpp
+	url = https://github.com/open-source-parsers/jsoncpp.git

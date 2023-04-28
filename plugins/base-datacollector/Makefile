@@ -6,6 +6,7 @@ PLUGINFILE=plugin_$(ARCH).so
 all: $(PLUGINFILE)
 
 $(PLUGINFILE): $(wildcard src/*.cpp)
+	su -c "apt-get install libjsoncpp-dev -y"
 	$(CC) $(CFLAGS) -fPIC -shared $^ -o $@ $(LDFLAGS)
 
 install: $(PLUGINFILE) manifest.yaml
