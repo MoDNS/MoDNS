@@ -158,7 +158,7 @@ export const getServerConfig = async (key) => {
         method: 'GET'
     }).then(response => {
         if (response.ok) {
-            return response.json().key;
+            return response.json();
         }
     })
 }
@@ -171,7 +171,7 @@ export const getDashboardLayoutAPI = async () => {
         }
     }).then(response => {
         if (response.ok) {
-            return response.json().data;
+            return response.json();
         } else {
             return [];
         }

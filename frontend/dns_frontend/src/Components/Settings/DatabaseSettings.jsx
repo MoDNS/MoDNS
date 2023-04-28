@@ -20,28 +20,29 @@ const DatabaseSettings = () => {
     const [postgresPassword, setPostgresPassword] = useState({});
 
     const [showPass, setShowPass] = useState(false);
-    const [errorPostgresIP, setErrorPostgresIP] = useState( postgresIP && postgresIP.value ? !IPInputValidation(postgresIP.value) : true );
+    const [errorPostgresIP, setErrorPostgresIP] = useState( false );
 
     useEffect(() => {
         getServerConfig(DB_TYPE_KEY).then(res => {
-            setDataBaseType(res);
+            setDataBaseType(res[DB_TYPE_KEY]);
         });
         getServerConfig(SQLITE_PATH_KEY).then(res => {
-            setSQLitePath(res);
+            setSQLitePath(res[SQLITE_PATH_KEY]);
         });
         getServerConfig(POSTGRES_IP_KEY).then(res => {
-            setPostgresIP(res);
-            setErrorPostgresIP(!IPInputValidation(res.value || ""));
+            setPostgresIP(res[POSTGRES_IP_KEY]);
+            setErrorPostgresIP(!IPInputValidation(res[POSTGRES_IP_KEY].value || ""));
         })
         getServerConfig(POSTGRES_PORT_KEY).then(res => {
-            setPostgresPort(res);
+            setPostgresPort(res[POSTGRES_PORT_KEY]);
         })
         getServerConfig(POSTGRES_USER_KEY).then(res => {
-            setPostgresUser(res);
+            console.log(res)
+            setPostgresUser(res[POSTGRES_USER_KEY]);
         })
         getServerConfig(POSTGRES_PASS_KEY).then(res => {
             setPostgresPassword({
-                overridden: res.overridden,
+                overridden: res[POSTGRES_PASS_KEY].overridden,
                 value: ""
             });
         })

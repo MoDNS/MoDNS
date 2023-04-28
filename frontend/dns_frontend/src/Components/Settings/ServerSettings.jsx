@@ -33,14 +33,14 @@ const ServerSettings = () => {
     
     useEffect(() => {
         getServerConfig(USE_GLOBAL_DASH_KEY).then(res => {
-            setUseGlobDash(res);
+            setUseGlobDash(res[USE_GLOBAL_DASH_KEY]);
         })
         getServerConfig(PLUGIN_PATH_KEY).then(res => {
-            setPluginPaths(res || []);
+            setPluginPaths(res[PLUGIN_PATH_KEY] || []);
         })
         getServerConfig(LOG_FILTER_KEY).then(res => {
-            setLogFilter(res);
-            setSelectLogFilter(parseLogFilter(res));
+            setLogFilter(res[LOG_FILTER_KEY]);
+            setSelectLogFilter(parseLogFilter(res[LOG_FILTER_KEY]));
         })
 
     }, [])
