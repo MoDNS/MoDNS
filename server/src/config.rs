@@ -2,11 +2,13 @@ use std::borrow::Borrow;
 use std::fmt::Debug;
 use std::fs;
 use std::hash::Hash;
-use std::net::{SocketAddr, IpAddr, Ipv4Addr};
+use std::net::{IpAddr, Ipv4Addr};
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
+use modns_sdk::helpers::database::DEFAULT_POSTGRES_PORT;
+use modns_sdk::types::safe;
 use scrypt::Scrypt;
 use scrypt::password_hash::rand_core::OsRng;
 use scrypt::password_hash::{PasswordHasher, SaltString};
@@ -24,17 +26,23 @@ const DB_TYPE_ENV: &str = "MODNS_DB_TYPE";
 const SQLITE_PATH_ENV: &str = "MODNS_DB_SQLITE_PATH";
 const DB_ADDR_ENV: &str = "MODNS_DB_ADDR";
 const DB_PORT_ENV: &str = "MODNS_DB_PORT";
+const DB_USER_ENV: &str = "MODNS_DB_USER";
+const DB_PASSWORD_ENV: &str = "MODNS_DB_PASSWORD";
 const LOG_ENV: &str = "MODNS_LOG";
 const ADMIN_PW_ENV: &str = "MODNS_ADMIN_PW";
 const HEADLESS_ENV: &str = "MODNS_HEADLESS";
 
-const PLUGIN_PATH_KEY: &str = "plugin_path";
-const DB_TYPE_KEY: &str = "db_type";
-const DB_PATH_KEY: &str = "db_path";
-const DB_ADDR_KEY: &str = "db_addr";
-const DB_PORT_KEY: &str = "db_port";
-const LOG_KEY: &str = "log_filter";
-const ADMIN_PW_KEY: &str = "admin_pw_hash";
+pub const PLUGIN_PATH_KEY: &str = "plugin_path";
+pub const DB_TYPE_KEY: &str = "db_type";
+pub const DB_PATH_KEY: &str = "sqlite_path";
+pub const DB_ADDR_KEY: &str = "postgres_ip";
+pub const DB_PORT_KEY: &str = "postgres_port";
+pub const DB_USER_KEY: &str = "postgres_user";
+pub const DB_PASS_KEY: &str = "postgres_pw";
+pub const LOG_KEY: &str = "log_filter";
+pub const ADMIN_PW_KEY: &str = "admin_pw_hash";
+pub const USE_GLOBAL_DASH_KEY: &str = "use_global_dashboard";
+pub const ALL_KEY: &str = "all";
 
 const DEFAULT_PLUGIN_PATH: &str = "/usr/share/modns/default-plugins";
 const DEFAULT_UNIX_SOCKET: &str = "/run/modnsd.sock";
@@ -42,8 +50,10 @@ const DEFAULT_DATA_DIR: &str = "/var/lib/modns";
 const DEFAULT_FRONTEND_DIR: &str = "/usr/share/modns/web";
 const DEFAULT_SQLITE_FILE: &str = "modns.sqlite";
 const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-const DEFAULT_MYSQL_PORT: u16 = 3306;
+const DEFAULT_POSTGRES_USER: &str = "postgres";
+const DEFAULT_POSTGRES_PASS: &str = "postgres";
 const DEFAULT_LOG_FILTER: &str = "info";
+const DEFAULT_USE_GLOBAL_DASH: bool = false;
 
 const CONFIG_LOCKFILE_NAME: &str = "config-lock.json";
 
@@ -119,6 +129,12 @@ pub struct ImmutableServerConfig {
     #[arg(long, env=DB_PORT_ENV)]
     db_port: Option<u16>,
 
+    #[arg(long, env=DB_USER_ENV)]
+    db_user: Option<String>,
+
+    #[arg(long, env=DB_PASSWORD_ENV)]
+    db_password: Option<String>,
+
     /// Log level to output. Can be `error` (most severe), `warn`, `info`, `debug`, or `trace` (least severe).
     ///
     /// You can also specify filters per module, like `modnsd::listeners=debug,info` which sets the filter to
@@ -151,6 +167,8 @@ impl ImmutableServerConfig {
         sqlite_db_path,
         db_addr,
         db_port,
+        db_user,
+        db_password,
         admin_password,
         headless
         } = self;
@@ -201,6 +219,13 @@ impl ImmutableServerConfig {
         let data_dir = data_dir.as_path().canonicalize()
             .with_context(|| format!("Data directory {} was not found", data_dir.as_path().display()))?;
 
+        let plugin_data_dir = data_dir.join("plugin_data");
+
+        if !plugin_data_dir.is_dir() {
+            fs::create_dir(data_dir.join("plugin_data"))
+                .with_context(|| format!("Failed to create plugin data directory at {}", data_dir.join("plugin_data").display()))?;
+        }
+
         let join_data_dir = |p: &Path| {
             if p.is_absolute() {
                 p.canonicalize()
@@ -240,6 +265,8 @@ impl ImmutableServerConfig {
             sqlite_db_path,
             db_addr,
             db_port,
+            db_user,
+            db_password,
             log,
             admin_password,
             headless
@@ -250,70 +277,7 @@ impl ImmutableServerConfig {
 #[derive(Debug, Default, ValueEnum, Clone, Copy, Serialize, Deserialize)]
 pub enum DatabaseBackend {
     #[default] Sqlite,
-    Mysql,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum DatabaseConfig {
-    Sqlite(PathBuf),
-    MySql(SocketAddr)
-}
-
-impl DatabaseConfig {
-
-    /// Returns an enum representing the database backend
-    pub fn backend(&self) -> DatabaseBackend {
-        match self {
-            DatabaseConfig::Sqlite(_) => DatabaseBackend::Sqlite,
-            DatabaseConfig::MySql(_) => DatabaseBackend::Mysql,
-        }
-    }
-
-    /// Returns `Some` with the path to the SQLite database file if the database backend is SQLite.
-    pub fn path(&self) -> Option<&Path> {
-        if let Self::Sqlite(p) = self {
-            Some(p.as_path())
-        } else {
-            None
-        }
-    }
-
-    /// Returns `Some` with the socket address for the database, unless the backend is SQLite
-    pub fn addr(&self) -> Option<&SocketAddr> {
-        if let Self::MySql(s) = self {
-            Some(s)
-        } else {
-            None
-        }
-    }
-
-    /// Returns `Some` with the IP address for the database, unless the backend is SQLite
-    pub fn ip(&self) -> Option<IpAddr> {
-        if let Self::MySql(s) = self {
-            Some(s.ip())
-        } else {
-            None
-        }
-    }
-
-    /// Returns `Some` with the port for the database, unless the backend is SQLite
-    pub fn port(&self) -> Option<u16> {
-        if let Self::MySql(s) = self {
-            Some(s.port())
-        } else {
-            None
-        }
-    }
-
-    /// Similar to `port()`, but only returns `Some` if the default port for a particular
-    /// backend has been overriden
-    pub fn nonstandard_port(&self) -> Option<u16> {
-        match self {
-            DatabaseConfig::Sqlite(_) => None,
-            DatabaseConfig::MySql(s) if s.port() != DEFAULT_MYSQL_PORT => Some(s.port()),
-            _ => None
-        }
-    }
+    Postgres,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum, Default, Serialize, Deserialize)]
@@ -422,8 +386,20 @@ impl MutableServerConfig {
         self.get_config_obj(DB_PORT_KEY)
     }
 
+    fn db_user(&self) -> Option<String> {
+        self.get_config_obj(DB_USER_KEY)
+    }
+
+    fn db_password(&self) -> Option<String> {
+        self.get_config_obj(DB_PASS_KEY)
+    }
+
     fn admin_pw_hash(&self) -> Option<String> {
         self.get_config_obj(ADMIN_PW_KEY)
+    }
+
+    fn use_global_dash(&self) -> Option<bool> {
+        self.get_config_obj(USE_GLOBAL_DASH_KEY)
     }
 
     pub fn set_plugin_path(&mut self, plugin_path: Vec<PathBuf>) -> Result<()> {
@@ -446,12 +422,24 @@ impl MutableServerConfig {
         self.set_config_obj(DB_PORT_KEY, db_port)
     }
 
+    pub fn set_db_user(&mut self, user: &str) -> Result<()> {
+        self.set_config_obj(DB_USER_KEY, user)
+    }
+
+    pub fn set_db_password(&mut self, password: &str) -> Result<()> {
+        self.set_config_obj(DB_PASS_KEY, password)
+    }
+
     pub fn set_log(&mut self, log: String) -> Result<()> {
         self.set_config_obj(LOG_KEY, log)
     }
 
     pub fn set_admin_pw_hash(&mut self, pw: String) -> Result<()> {
         self.set_config_obj(ADMIN_PW_ENV, pw)
+    }
+
+    pub fn set_use_global_dash(&mut self, dash: bool) -> Result<()> {
+        self.set_config_obj(USE_GLOBAL_DASH_KEY, dash)
     }
 }
 
@@ -489,6 +477,10 @@ pub struct ServerConfig {
 
     override_db_port: Option<u16>,
 
+    override_db_user: Option<String>,
+
+    override_db_pass: Option<String>,
+
     override_admin_pw_hash: Option<String>,
 
     headless: bool,
@@ -504,10 +496,10 @@ impl ServerConfig {
             overrides.data_dir.join(CONFIG_LOCKFILE_NAME)
         )?;
 
-        Ok(Self::new(overrides, mutable))
+        Ok(Self::compose(overrides, mutable))
     }
 
-    fn new(im: ImmutableServerConfig, mu: MutableServerConfig) -> Self {
+    fn compose(im: ImmutableServerConfig, mu: MutableServerConfig) -> Self {
         Self {
             settings: mu,
             override_plugin_path: im.plugin_path,
@@ -521,6 +513,8 @@ impl ServerConfig {
             override_db_path: im.sqlite_db_path,
             override_db_addr: im.db_addr,
             override_db_port: im.db_port,
+            override_db_user: im.db_user,
+            override_db_pass: im.db_password,
             override_admin_pw_hash: im.admin_password,
             headless: im.headless,
         }
@@ -528,6 +522,12 @@ impl ServerConfig {
 
     pub fn write_lockfile(&self) -> Result<()> {
         self.settings.write_lockfile()
+    }
+
+    pub fn new() -> Self {
+        let im = ImmutableServerConfig::parse();
+        let mu = MutableServerConfig(Map::new(), PathBuf::new());
+        Self::compose(im, mu)
     }
 
 }
@@ -589,6 +589,16 @@ impl ServerConfig {
             .or(self.settings.db_path())
             .unwrap_or(PathBuf::from(DEFAULT_SQLITE_FILE))
     }
+    
+    pub fn db_path_absolute(&self) -> PathBuf {
+        let p = self.db_path();
+
+        if p.is_absolute() {
+            p
+        } else {
+            self.data_dir().join(p)
+        }
+    }
 
     pub fn db_addr(&self) -> IpAddr {
         self.override_db_addr
@@ -601,20 +611,39 @@ impl ServerConfig {
             .or(self.settings.db_port())
     }
 
-    pub fn db_info(&self) -> DatabaseConfig {
+    pub fn db_user(&self) -> String {
+        self.override_db_user.clone()
+            .or(self.settings.db_user())
+            .unwrap_or(DEFAULT_POSTGRES_USER.to_string())
+    }
+
+    pub fn db_password(&self) -> String {
+        self.override_db_pass.clone()
+            .or(self.settings.db_password())
+            .unwrap_or(DEFAULT_POSTGRES_PASS.to_string())
+    }
+
+    pub fn db_info(&self) -> safe::DatabaseInfo {
         match self.db_type() {
-            DatabaseBackend::Sqlite => DatabaseConfig::Sqlite(
-                self.db_path().to_path_buf()
+            DatabaseBackend::Sqlite => safe::DatabaseInfo::Sqlite(
+                self.db_path_absolute()
             ),
-            DatabaseBackend::Mysql => DatabaseConfig::MySql(
-                SocketAddr::from((self.db_addr(), self.db_port().unwrap_or(DEFAULT_MYSQL_PORT)))
-            ),
+            DatabaseBackend::Postgres => safe::DatabaseInfo::Postgres{
+                host: self.db_addr().to_string(),
+                port: self.db_port().unwrap_or(DEFAULT_POSTGRES_PORT),
+                username: self.db_user(),
+                password: self.db_password(),
+            },
         }
     }
 
     pub fn admin_pw_hash(&self) -> Option<String> {
         self.override_admin_pw_hash.clone()
             .or(self.settings.admin_pw_hash())
+    }
+
+    pub fn use_global_dash(&self) -> bool {
+        self.settings.use_global_dash().unwrap_or(DEFAULT_USE_GLOBAL_DASH)
     }
 
     pub fn headless(&self) -> bool {
@@ -643,12 +672,24 @@ impl ServerConfig {
         self.settings.set_db_port(db_port)
     }
 
+    pub fn set_db_user(&mut self, user: &str) -> Result<()> {
+        self.settings.set_db_user(user)
+    }
+
+    pub fn set_db_password(&mut self, password: &str) -> Result<()> {
+        self.settings.set_db_password(password)
+    }
+
     pub fn set_log(&mut self, log: String) -> Result<()> {
         self.settings.set_log(log)
     }
     
     pub fn set_admin_pw_hash(&mut self, pw: String) -> Result<()> {
         self.settings.set_admin_pw_hash(pw)
+    }
+
+    pub fn set_use_global_dash(&mut self, dash: bool) -> Result<()> {
+        self.settings.set_use_global_dash(dash)
     }
 }
 
@@ -717,6 +758,13 @@ impl ServerConfig {
         }
     }
 
+    pub fn query_db_user(&self) -> MutableConfigValue<String> {
+        MutableConfigValue { 
+            overridden: self.override_db_user.is_some(),
+            value: self.db_user()
+        }
+    }
+
     pub fn query_log(&self) -> MutableConfigValue<String> {
         MutableConfigValue {
             overridden: self.override_log.is_some(),
@@ -728,6 +776,13 @@ impl ServerConfig {
         MutableConfigValue {
             overridden: self.override_admin_pw_hash.is_some(),
             value: ()
+        }
+    }
+
+    pub fn query_use_global_dash(&self) -> MutableConfigValue<bool> {
+        MutableConfigValue {
+            overridden: false,
+            value: self.use_global_dash()
         }
     }
 

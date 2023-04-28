@@ -1,4 +1,5 @@
 
+
 use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn, SdkInitFn, InterceptorFn, ValidatorFn, InspectorFn, ResponseSource, PLUGIN_FILE_NAME};
 use modns_sdk::types::conversion::FfiVector;
 use modns_sdk::{types::ffi, PluginState};
@@ -177,7 +178,7 @@ impl DnsPlugin {
 
         let mut message = Box::new(ffi::DnsMessage::default());
 
-        let rc = unsafe {f(buf.into(), message.as_mut(), self.state_ptr.into())};
+        let rc = unsafe {f(&buf.into(), message.as_mut(), self.state_ptr.ptr())};
 
         if rc == 0 {
             Ok(message)
@@ -194,7 +195,7 @@ impl DnsPlugin {
         let mut buf = ffi::ByteVector::from_safe_vec(Vec::new());
 
         let rc = unsafe {
-            f(message.as_ref(), &mut buf, self.state_ptr.into())
+            f(message.as_ref(), &mut buf, self.state_ptr.ptr())
         };
 
         if rc != 0 {
@@ -213,7 +214,7 @@ impl DnsPlugin {
         let mut resp = Box::new(ffi::DnsMessage::default());
 
         let rc = unsafe{
-            f(req.as_ref(), resp.as_mut(), self.state_ptr.into())
+            f(req.as_ref(), resp.as_mut(), self.state_ptr.ptr())
         };
 
         match rc {
@@ -232,7 +233,7 @@ impl DnsPlugin {
         let mut resp = Box::new(ffi::DnsMessage::default());
 
         let rc = unsafe {
-            f(req.as_ref(), resp.as_mut(), self.state_ptr.into())
+            f(req.as_ref(), resp.as_mut(), self.state_ptr.ptr())
         };
 
         if rc == 0 {
@@ -251,7 +252,7 @@ impl DnsPlugin {
         let mut err_resp = Box::new(ffi::DnsMessage::default());
 
         let rc = unsafe{
-            f(req.as_ref(), resp.as_ref(), err_resp.as_mut(), self.state_ptr.into())
+            f(req.as_ref(), resp.as_ref(), err_resp.as_mut(), self.state_ptr.ptr())
         };
 
         match rc {
@@ -268,7 +269,7 @@ impl DnsPlugin {
         .ok_or(PluginExecutorError::DoesNotImplement)?;
 
         let rc = unsafe{
-            f(req.as_ref(), resp.as_ref(), source as u8, self.state_ptr.into())
+            f(req.as_ref(), resp.as_ref(), source as u8, self.state_ptr.ptr())
         };
 
         if rc != 0 {
@@ -296,16 +297,20 @@ impl DnsPlugin {
             .to_string();
 
         match check_sym::<SdkInitFn>(&lib, SDK_INIT_FN_NAME)? {
-            Some(sdk_init) => {
+            Some(_sdk_init) => {
 
                 log::trace!("Initializing SDK logger for {log_name}");
 
-                if let Err(e) = sdk_init(&log_name, log::logger()) {
+                // if let Err(e) = sdk_init(
+                //     &log_name,
+                //     log::logger(),
+                //     config.db_info(),
+                //     config.data_dir().join("plugin_data").join(&log_name)
+                // ) {
 
-                    log::warn!("Failed to initialize SDK for {log_name}");
-                    log::debug!("Got error while initializing SDK: {e:?}");
-
-                };
+                //     log::error!("Failed to initialize SDK for {log_name}");
+                //     log::debug!("Got error while initializing SDK: {e:?}");
+                // };
 
             }
             None => {
@@ -343,10 +348,10 @@ impl DnsPlugin {
     pub fn disable(&mut self) -> Result<()> {
         
         if let Some(f) = check_sym::<TeardownFn>(&self.lib, TEARDOWN_FN_NAME)? {
-            unsafe { f(self.state_ptr.into()) }
+            unsafe { f(self.state_ptr.mut_ptr()) }
         };
 
-        self.state_ptr = std::ptr::null_mut::<c_void>().into();
+        self.state_ptr = PluginState::new();
 
         self.enabled = false;
 

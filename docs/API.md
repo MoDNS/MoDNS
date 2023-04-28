@@ -252,7 +252,7 @@ Return code determined by plugin
 
 Endpoint : `GET /api/plugins/<uuid>/settingspage`
 
-Get the setting's page specified in a plugin's `manifest.yaml` file
+Get the setting's page `custom_settings.json` from your plugin's directory.
 
 Returns:
     - `200 OK` with the JSON object as the body
@@ -267,6 +267,15 @@ Get the logo icon specified in a plugin's `manifest.yaml` file
 Returns:
 - `200 OK` with the icon file as the body
 - `404 Not Found` if the plugin does not have an icon
+
+#### Get Statistics from a plugin
+
+Endpoint: `GET /api/plugins/<uuid>/stats/<key>`
+
+Query a plugin for dashboard statistics with `key`
+
+Passes directly to plugin's `impl_statistics` function. Return data and code
+are controlled by plugin, but should conform to expectations for associated dashboard widget
 
 ### Server Configuration
 
@@ -315,6 +324,18 @@ if `key` is `"all"`, server will return entire configuration
 Returns:
 - `200 OK` with JSON object representing requested key-value pairs
 - `404 Not Found` if one or more requested keys do not exist
+
+
+#### Get the Layout of the Dashboard
+
+Endpoint: `GET /api/server/dashboard`
+
+CLI: `modns dashboard get`
+
+Returns:
+ - `200 OK` with JSON object of the Dashboards Layout.
+ - `404 Not Found` if no dashboard has been created
+
 
 ### Send a test DNS request and resolve the IP
 

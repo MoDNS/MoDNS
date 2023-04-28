@@ -26,6 +26,7 @@ jobs:
           - architecture: arm
             gcc: gcc-arm-linux-gnueabi
             rust_toolchain: arm-unknown-linux-gnueabi
+      fail-fast: false
     uses: MoDNS/MoDNS/.github/workflows/backend-workflow.yml@main
     with:
       architecture: ${{ matrix.architecture }}

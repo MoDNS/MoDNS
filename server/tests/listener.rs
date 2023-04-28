@@ -4,7 +4,7 @@ use std::{path::PathBuf, env};
 
 use modns_sdk::types::{ffi::{self, ByteVector}, safe, conversion::{FfiType, FfiVector}};
 
-use modnsd::plugins::manager::PluginManager;
+use modnsd::{plugins::manager::PluginManager, ServerConfig};
 
 const SAMPLE_REQUEST: &[u8; 29] = b"\xc3\xd9\x01\x00\x00\x01\x00\x00\
                                     \x00\x00\x00\x00\x07\x65\x78\x61\
@@ -22,12 +22,12 @@ const SAMPLE_RESPONSE: &[u8; 56] = b"\x1e\x92\x81\xa0\x00\x01\x00\x01\
 const SAMPLE_REQUEST_HEADER: ffi::DnsHeader = ffi::DnsHeader{
     id: 0xc3d9,
     is_response: false,
-    opcode: ffi::DnsOpcode::Query,
+    opcode: 0,
     authoritative_answer: false,
     truncation: false,
     recursion_desired: true,
     recursion_available: false,
-    response_code: ffi::DnsResponseCode::NoError,
+    response_code: 0,
     qdcount: 1,
     ancount: 0,
     nscount: 0,
@@ -37,12 +37,12 @@ const SAMPLE_REQUEST_HEADER: ffi::DnsHeader = ffi::DnsHeader{
 const SAMPLE_RESPONSE_HEADER: ffi::DnsHeader = ffi::DnsHeader {
     id: 0x1e92,
     is_response: true,
-    opcode: ffi::DnsOpcode::Query,
+    opcode: 0,
     authoritative_answer: false,
     truncation: false,
     recursion_desired: true,
     recursion_available: true,
-    response_code: ffi::DnsResponseCode::NoError,
+    response_code: 0,
     qdcount: 1,
     ancount: 1,
     nscount: 0,
@@ -61,11 +61,13 @@ fn listener_plugin_decoder_success() {
 
     init_logger();
 
-    let mut pm = PluginManager::new();
+    let mut pm = PluginManager::new(ServerConfig::new());
 
     pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]).unwrap();
 
+    log::debug!("Decoding request");
     let test_response = pm.decode(&SAMPLE_REQUEST[..]).unwrap();
+    log::debug!("Request decoded");
 
     assert_eq!(test_response.header(), SAMPLE_REQUEST_HEADER);
 
@@ -87,7 +89,9 @@ fn listener_plugin_decoder_success() {
         ]
     );
 
+    log::debug!("Decoding response");
     let test_response = pm.decode(&SAMPLE_RESPONSE[..]).unwrap();
+    log::debug!("Response decoded");
 
     assert_eq!(test_response.header(), SAMPLE_RESPONSE_HEADER);
 
@@ -114,11 +118,13 @@ fn listener_plugin_decoder_success() {
 #[test]
 fn listener_plugin_decoder_failure() {
     init_logger();
-    let mut pm = PluginManager::new();
+    let mut pm = PluginManager::new(ServerConfig::new());
 
     pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]).unwrap();
 
+    log::debug!("Decoding short request");
     let test_response = pm.decode(&SAMPLE_REQUEST[..20]);
+    log::debug!("Short request decoded");
 
     assert_eq!(
         test_response.unwrap_err().error_code(),
@@ -130,7 +136,7 @@ fn listener_plugin_decoder_failure() {
 #[test]
 fn listener_plugin_encoder_success() {
     init_logger();
-    let mut pm = PluginManager::new();
+    let mut pm = PluginManager::new(ServerConfig::new());
 
     pm.search(&[PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("../plugins")]).unwrap();
 
@@ -165,7 +171,9 @@ fn listener_plugin_encoder_success() {
         additional: ffi::RRVector::from_safe_vec(Vec::new()),
         });
 
+    log::debug!("Encoding message");
     let test_response = pm.encode(message).unwrap();
+    log::debug!("Message encoded");
 
     assert_eq!(&test_response[..], SAMPLE_REQUEST);
 

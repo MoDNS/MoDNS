@@ -8,6 +8,8 @@ use modns_sdk::types::ffi;
 use uuid::Uuid;
 
 
+use crate::ServerConfig;
+
 use super::ResponseSource;
 use super::response::ApiResponse;
 
@@ -20,10 +22,11 @@ pub struct PluginManager {
     resolver: Weak<DnsPlugin>,
     validators: Vec<Weak<DnsPlugin>>,
     inspectors: Vec<Weak<DnsPlugin>>,
+    config: ServerConfig,
 }
 
 impl PluginManager {
-    pub fn new() -> Self {
+    pub fn new(config: ServerConfig) -> Self {
         Self {
             plugins: BTreeMap::new(),
             listener: Weak::new(),
@@ -31,6 +34,7 @@ impl PluginManager {
             resolver: Weak::new(),
             validators: Vec::new(),
             inspectors: Vec::new(),
+            config
         }
     }
 
@@ -396,5 +400,9 @@ impl PluginManager {
 
     pub fn num_validators(&self) -> usize {
         self.validators.len()
+    }
+
+    pub fn config(&self) -> &ServerConfig {
+        &self.config
     }
 }

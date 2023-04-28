@@ -103,7 +103,7 @@ pub fn get_config(plugin: &str, keys: &[String], config: &CliOptions) -> Result<
     let uuid = uuid_from_name(plugin, config)
         .with_context(|| format!("Couldn't get UUID for `{plugin}`"))?;
 
-    let resp = make_request(Method::GET, &format!("/api/plugins/{}/config?{}", uuid.as_simple(), keys.join("&")), None, None, config)
+    let resp = make_request(Method::GET, &format!("/api/plugins/{}/config?key={}", uuid.as_simple(), keys.join("&")), None, None, config)
         .context("Unable to send request")?;
 
     if resp.status() == StatusCode::NOT_FOUND {

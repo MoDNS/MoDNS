@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PropTypes } from 'prop-types';
 import { FormControlLabel, Icon, IconButton, Switch, TableCell, TableRow, Typography } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -6,12 +6,21 @@ import SettingsDialog from './SettingsDialog';
 
 
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import { getPluginLogo } from '../API/getsetAPI';
 
 
 const PluginTableRow = ({ uuid, friendlyName, description, home, is_listener, is_interceptor, is_resolver, is_validator, is_inspector, pluginState, togglePlugin, interceptPosition, numInterceptors, setInterceptOrder, index, dragNDrop, dragStart, dragEnter, dragDrop, settingsPage }) => {
     const [dialogOpen, setDialogStatus] = useState(false);
 
     const [drag, startDrag] = useState(false);
+
+    const [logo, setLogo] = useState();
+
+    useEffect(() => {
+        getPluginLogo().then(res => {
+            setLogo(res);
+        })
+    }, [])
     
     return (
         <TableRow
@@ -32,14 +41,17 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, is_listener, is
                     </Icon>
                 </TableCell>
             }
-            <TableCell
-                width={90}
-                height={90}
-                align='left'
-                
-                >
-                <img alt="No Logo Found" width={65} height={65} style={{ margin: 10 }} draggable={false}/>    { /* dummy logo */ }
-            </TableCell>
+            {
+                false &&
+                <TableCell
+                    width={90}
+                    height={90}
+                    align='left'
+                    
+                    >
+                    <img alt="No Logo Found" src={logo} width={65} height={65} style={{ margin: 10 }} draggable={false}/>
+                </TableCell>
+            }
             <TableCell
                 align='left'
                 sx={{ paddingRight: 5 }}
