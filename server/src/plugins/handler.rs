@@ -11,6 +11,8 @@ impl PluginManager {
 
     pub async fn listen(pm_lock: Arc<RwLock<Self>>) -> Result<()> {
         loop {
+            tokio::task::yield_now().await; // Prevents starving the api listener
+
             let self_lock = pm_lock.clone();
             let pm = self_lock.read().await;
 
@@ -40,6 +42,8 @@ impl PluginManager {
                     debug_assert_eq!(e.error_code().unwrap_or(1), 0);
                 }
             }
+
+
         }
     }
 

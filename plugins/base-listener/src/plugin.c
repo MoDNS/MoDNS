@@ -89,7 +89,7 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
 
     uint32_t num_polls = state->num_connections + 2;
 
-    int events = poll(pollfds, num_polls, -1);
+    int events = poll(pollfds, num_polls, 5);
 
     if (events < 0) {
         modns_log(0, 255, "Got error while polling: %s", strerror(errno));
