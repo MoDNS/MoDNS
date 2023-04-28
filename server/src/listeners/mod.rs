@@ -1,9 +1,7 @@
 
 mod api;
-mod dns;
 
 pub use api::ApiListener;
-pub use dns::DnsListener;
 use crate::plugins::manager::PluginManager;
 
 use tokio::sync::RwLock;
