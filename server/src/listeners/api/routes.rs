@@ -5,7 +5,6 @@ use std::sync::Arc;
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use warp::Rejection;
 use warp::reply::json;
 use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
@@ -25,13 +24,6 @@ pub struct PluginQuery
 pub struct ConfigGetQuery
 {
     key: String,
-}
-
-#[derive(Deserialize)]
-pub struct ConfigSetQuery
-{
-    key: Option<String>,
-    value: Option<bool>
 }
 
 pub fn root_redirect() -> BoxedFilter<(impl Reply,)> {
@@ -59,8 +51,6 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
     let disable_pm = pm.clone();
     let config_set_pm = pm.clone();
     let config_get_pm = pm.clone();
-    // let favicon_pm = pm.clone();
-    // let intercept_pm = pm.clone();
 
     warp::path("api")
         .and(warp::path!("plugins").and(warp::query::<PluginQuery>())
@@ -90,17 +80,17 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             get_server_config(pm, cq)
             })
         )
-        .or(warp::path!("server" / "config").and(warp::query::<ConfigSetQuery>()).and(warp::post())
-        .then(move |cq: ConfigSetQuery| {
+        .or(warp::path!("server" / "config").and(warp::post())
+        .then(move || {
             let pm = config_set_pm.clone();
             log::trace!("Server config requested");
-            set_server_config(pm, cq)
+            set_server_config(pm)
             })
         )
     ).boxed()
 }
 
-pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, query: PluginQuery) -> Box<dyn Reply> {
+pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, query: PluginQuery) -> impl Reply {
     let metadata = pm.read().await.list_metadata();
 
     let reply = metadata.iter().filter(|(_, plugin)| {
@@ -124,7 +114,7 @@ pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, query: PluginQuer
 
     let json = json(&reply);
 
-    Box::new(json)
+    Ok(Box::new(json))
 }
 
 pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, enable: bool) -> impl Reply {
@@ -144,50 +134,43 @@ pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, enable:
     }
 }
 
-pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigSetQuery) -> Box<dyn Reply> {
+pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>) -> impl Reply {
     
     let cm = pm.write().await;
 
-    let key = cq.key;
-    let val = cq.value;
-
-    cm.config().db_info();
-
     let resp: BTreeMap<String, String> = BTreeMap::new();
 
-    match key.unwrap().as_ref() {
-        USE_GLOBAL_DASH_KEY => {},
-        PLUGIN_PATH_KEY => {},
-        LOG_KEY => {},
-        DB_TYPE_KEY => {},
-        DB_PATH_KEY => {},
-        DB_ADDR_KEY => {},
-        DB_PORT_KEY => {},
-        DB_PASS_KEY => {},
-        ADMIN_PW_KEY => {},
-        &_ => {
-            val.unwrap();
-        },
-    }
+    // match key.unwrap().as_ref() {
+    //     USE_GLOBAL_DASH_KEY => {},
+    //     PLUGIN_PATH_KEY => {},
+    //     LOG_KEY => {},
+    //     DB_TYPE_KEY => {},
+    //     DB_PATH_KEY => {},
+    //     DB_ADDR_KEY => {},
+    //     DB_PORT_KEY => {},
+    //     DB_PASS_KEY => {},
+    //     ADMIN_PW_KEY => {},
+    //     &_ => {
+    //     },
+    // }
 
     let json = json(&resp);
 
-    Box::new(json)
+    Ok(Box::new(json))
 }
 
-pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuery) -> Result<impl Reply, Rejection> {
+pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuery) -> impl Reply {
     
     let cm = pm.write().await;
 
     let mut reply:BTreeMap<&str, serde_json::Value> = BTreeMap::new();
-    let reject;
     let key = cq.key.as_ref();
 
     match key {
         USE_GLOBAL_DASH_KEY => {
             let bool = cm.config().query_use_global_dash();
             let Ok(value) = serde_json::to_value(bool) else {
-                return Err(warp::reject())
+                return ApiResponse::new(404, format!("Key not found"))
             };
 
             reply.insert(key, value);
@@ -195,87 +178,87 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
         PLUGIN_PATH_KEY => {
             let path = cm.config().query_plugin_path();
             let Ok(value) = serde_json::to_value(path) else {
-                return Err(warp::reject())
+                return ApiResponse::new(404, format!("Key not found"))
             };
             reply.insert(key, value);
         },
         LOG_KEY => {
             let log = cm.config().query_log();
             let Ok(value) = serde_json::to_value(log) else {
-                return Err(warp::reject())
+                return ApiResponse::new(404, format!("Key not found"))
             };
             reply.insert(key, value);
         },
         DB_TYPE_KEY => {
             let db_type = cm.config().query_db_type();
             let Ok(value) = serde_json::to_value(db_type) else {
-                return Err(warp::reject())
+                return ApiResponse::new(404, format!("Key not found"))
             };
             reply.insert(key, value);
         },
         DB_PATH_KEY => {
             let db_path = cm.config().query_db_path();
             let Ok(value) = serde_json::to_value(db_path) else {
-                return Err(warp::reject())
+                return ApiResponse::new(404, format!("Key not found"))
             };
             reply.insert(key, value);
         },
         DB_ADDR_KEY => {
             let db_ip = cm.config().query_db_addr();
             let Ok(value) = serde_json::to_value(db_ip) else {
-                return Err(warp::reject())
+                return ApiResponse::new(404, format!("Key not found"))
             };
             reply.insert(key, value);           
         },
         DB_PORT_KEY => {
             let db_port = cm.config().query_db_port();
             let Ok(value) = serde_json::to_value(db_port) else {
-                return Err(warp::reject())
+                return ApiResponse::new(404, format!("Key not found"))
             };
             reply.insert(key, value);
         },
         DB_PASS_KEY => {
             let db_pass = cm.config().query_admin_pw();
             let Ok(value) = serde_json::to_value(db_pass) else {
-                return Err(warp::reject())
+                return ApiResponse::new(404, format!("Key not found"))
             };
             reply.insert(key, value);
         },
         ADMIN_PW_KEY => {
             let admin_pass = cm.config().query_plugin_path();
             let Ok(value) = serde_json::to_value(admin_pass) else {
-                return Err(warp::reject())
+                return ApiResponse::new(404, format!("Key not found"))
             };
             reply.insert(key, value);
         },
         ALL_KEY => {
             let db_type = cm.config().query_db_type();
             let Ok(value) = serde_json::to_value(db_type) else {
-                return Err(warp::reject())
+                return ApiResponse::new(404, format!("Key not found"))
             };
             reply.insert(key, value);
 
             let db_pass = cm.config().query_plugin_path();
             let Ok(value) = serde_json::to_value(db_pass) else {
-                return Err(warp::reject())
+                return ApiResponse::new(404, format!("Key not found"))
             };
             reply.insert(key, value);
 
             let db_port = cm.config().query_db_port();
             let Ok(value) = serde_json::to_value(db_port) else {
-                return Err(warp::reject())
+                return ApiResponse::new(404, format!("Key not found"))
             };
             reply.insert(key, value);
 
             let db_ip = cm.config().query_db_addr();
             let Ok(value) = serde_json::to_value(db_ip) else {
-                return Err(warp::reject())
+                return ApiResponse::new(404, format!("Key not found"))
             };
             reply.insert(key, value);
 
             let db_path = cm.config().query_db_path();
             let Ok(value) = serde_json::to_value(db_path) else {
-                return Err(warp::reject())
+                return ApiResponse::new(404, format!("Key not found"))
             };
             reply.insert(key, value);
 
@@ -283,15 +266,26 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
             
         },
         &_ => {
-            reject = warp::reject();
+            return ApiResponse::new(404, format!("Key not found"))
         },
-    }
+    };
 
     if reply.is_empty() {
-        Err(warp::reject())
+        return ApiResponse::new(404, format!("Key not found"))
     } else {
-        Ok(Box::new(json(&reply)))
+        return ApiResponse::new(200, format!("Test"))
     }
+
+    // let resp = if reply.is_empty() {
+    //     (warp::reject(), "Error")
+    // } else {
+    //     (json(&reply), "Success")
+    // };
+
+    // match resp {
+    //     Ok(_) => ApiResponse::new(200, json(&reply)),
+    //     Err(e) => ApiResponse::from(e),
+    // }
 
 }
 
