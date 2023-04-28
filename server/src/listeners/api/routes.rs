@@ -1,16 +1,16 @@
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use warp::reject;
+use warp::Rejection;
 use warp::reply::json;
 use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
 
-use crate::config::{MutableConfigValue, PLUGIN_PATH_KEY, USE_GLOBAL_DASH, USE_GLOBAL_DASH_KEY, LOG_KEY, DB_TYPE_KEY, DB_PATH_KEY, DB_ADDR_KEY, DB_PASS_KEY, ADMIN_PW_KEY, DB_PORT_KEY};
+use crate::config::{PLUGIN_PATH_KEY, USE_GLOBAL_DASH_KEY, LOG_KEY, DB_TYPE_KEY, DB_PATH_KEY, DB_ADDR_KEY, DB_PASS_KEY, ADMIN_PW_KEY, DB_PORT_KEY, ALL_KEY};
 use crate::plugins::manager::PluginManager;
 use crate::plugins::response::ApiResponse;
 
@@ -24,7 +24,7 @@ pub struct PluginQuery
 #[derive(Deserialize)]
 pub struct ConfigGetQuery
 {
-    key: Option<String>,
+    key: String,
 }
 
 #[derive(Deserialize)]
@@ -83,20 +83,6 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             set_plugin_stat(pm, uuid, false)
             })
         )
-        // .or(warp::path!("plugins" / Uuid / "favicon")
-        // .then(move |uuid: Uuid| {
-        //     let pm = favicon_pm.clone();
-        //     log::trace!("Plugin enabled status change requested");
-        //     get_favicon(pm, uuid)
-        //     })
-        // )
-        // .or(warp::path!("plugins" / "interceptorder")
-        // .then(move || {
-        //     let pm = intercept_pm.clone();
-        //     log::trace!("Plugin intercept order requested");
-        //     // set_plugin_stat(pm, uuid, false)
-        //     })
-        // )
         .or(warp::path!("server" / "config").and(warp::query::<ConfigGetQuery>()).and(warp::get())
         .then(move |cq: ConfigGetQuery| {
             let pm = config_get_pm.clone();
@@ -189,88 +175,123 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigSetQuer
     Box::new(json)
 }
 
-pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuery) -> Box<dyn Reply> {
+pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuery) -> Result<impl Reply, Rejection> {
     
     let cm = pm.write().await;
 
     let mut reply:BTreeMap<&str, serde_json::Value> = BTreeMap::new();
-    let mut reject;
+    let reject;
+    let key = cq.key.as_ref();
 
-    match cq.key.unwrap_or_default().as_ref() {
+    match key {
         USE_GLOBAL_DASH_KEY => {
             let bool = cm.config().query_use_global_dash();
-            reply.insert(cq.key.unwrap_or_default().as_ref(), serde_json::to_value(bool));
+            let Ok(value) = serde_json::to_value(bool) else {
+                return Err(warp::reject())
+            };
+
+            reply.insert(key, value);
         },
         PLUGIN_PATH_KEY => {
             let path = cm.config().query_plugin_path();
-            let mut resp: BTreeMap<&str, Vec<MutableConfigValue<PathBuf>>> = BTreeMap::new();
-            resp.insert("plugin_path", path);
-            reply = json(&resp);
+            let Ok(value) = serde_json::to_value(path) else {
+                return Err(warp::reject())
+            };
+            reply.insert(key, value);
         },
         LOG_KEY => {
             let log = cm.config().query_log();
-            reply = json(&log);
+            let Ok(value) = serde_json::to_value(log) else {
+                return Err(warp::reject())
+            };
+            reply.insert(key, value);
         },
         DB_TYPE_KEY => {
             let db_type = cm.config().query_db_type();
-            reply = json(&db_type);
+            let Ok(value) = serde_json::to_value(db_type) else {
+                return Err(warp::reject())
+            };
+            reply.insert(key, value);
         },
         DB_PATH_KEY => {
             let db_path = cm.config().query_db_path();
-            reply = json(&db_path);
+            let Ok(value) = serde_json::to_value(db_path) else {
+                return Err(warp::reject())
+            };
+            reply.insert(key, value);
         },
         DB_ADDR_KEY => {
             let db_ip = cm.config().query_db_addr();
-            reply = json(&db_ip);            
+            let Ok(value) = serde_json::to_value(db_ip) else {
+                return Err(warp::reject())
+            };
+            reply.insert(key, value);           
         },
         DB_PORT_KEY => {
             let db_port = cm.config().query_db_port();
-            reply = json(&db_port);            
+            let Ok(value) = serde_json::to_value(db_port) else {
+                return Err(warp::reject())
+            };
+            reply.insert(key, value);
         },
         DB_PASS_KEY => {
             let db_pass = cm.config().query_admin_pw();
-            reply = json(&db_pass);
+            let Ok(value) = serde_json::to_value(db_pass) else {
+                return Err(warp::reject())
+            };
+            reply.insert(key, value);
         },
         ADMIN_PW_KEY => {
-            let db_pass = cm.config().query_plugin_path();
-            reply = json(&db_pass);            
+            let admin_pass = cm.config().query_plugin_path();
+            let Ok(value) = serde_json::to_value(admin_pass) else {
+                return Err(warp::reject())
+            };
+            reply.insert(key, value);
         },
-        "all" => {
-            // let db_type = cm.config().query_db_type();
-            // let db_pass = cm.config().query_plugin_path();
-            // let db_port = cm.config().query_db_port();
-            // let db_ip = cm.config().query_db_addr();
-            // let db_path = cm.config().query_db_path();
+        ALL_KEY => {
+            let db_type = cm.config().query_db_type();
+            let Ok(value) = serde_json::to_value(db_type) else {
+                return Err(warp::reject())
+            };
+            reply.insert(key, value);
 
-            // json = json(&db_ip, &db_pass, &db_port, &db_path)
+            let db_pass = cm.config().query_plugin_path();
+            let Ok(value) = serde_json::to_value(db_pass) else {
+                return Err(warp::reject())
+            };
+            reply.insert(key, value);
+
+            let db_port = cm.config().query_db_port();
+            let Ok(value) = serde_json::to_value(db_port) else {
+                return Err(warp::reject())
+            };
+            reply.insert(key, value);
+
+            let db_ip = cm.config().query_db_addr();
+            let Ok(value) = serde_json::to_value(db_ip) else {
+                return Err(warp::reject())
+            };
+            reply.insert(key, value);
+
+            let db_path = cm.config().query_db_path();
+            let Ok(value) = serde_json::to_value(db_path) else {
+                return Err(warp::reject())
+            };
+            reply.insert(key, value);
+
             log::trace!("Sending all server configs");
-            reply = json(&());
             
-        }
+        },
         &_ => {
             reject = warp::reject();
         },
     }
 
-    if reject.is_not_found() {
-        Box::new(reject)
+    if reply.is_empty() {
+        Err(warp::reject())
     } else {
-        Box::new(reply)
+        Ok(Box::new(json(&reply)))
     }
+
 }
-
-// pub async fn get_favicon(pm: Arc<RwLock<PluginManager>>, uuid: Uuid) -> impl Reply {
-
-//     let path = pm.read().await.get_plugin_path(&uuid);
-
-//     let resp = warp::filters::fs::dir(path)
-//         .map(|reply: warp::filters::fs::File| {
-//             reply.into_response()
-//         });
-    
-// }
-
-// pub async fn get_intercept_order(pm: Arc<RwLock<PluginManager>>) -> impl Reply {
-    
-// }
 

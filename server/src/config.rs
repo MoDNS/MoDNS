@@ -42,6 +42,7 @@ pub const DB_PASS_KEY: &str = "postgres_pw";
 pub const LOG_KEY: &str = "log_filter";
 pub const ADMIN_PW_KEY: &str = "admin_pw_hash";
 pub const USE_GLOBAL_DASH_KEY: &str = "use_global_dashboard";
+pub const ALL_KEY: &str = "all";
 
 const DEFAULT_PLUGIN_PATH: &str = "/usr/share/modns/default-plugins";
 const DEFAULT_UNIX_SOCKET: &str = "/run/modnsd.sock";
