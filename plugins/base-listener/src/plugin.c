@@ -416,8 +416,6 @@ uint8_t impl_listener_async_respond(const struct DnsMessage *resp, void *req_sta
         free(req_state->tcp_conn.buf);
         req_state->tcp_conn.buf = NULL;
 
-        free(req_state);
-
         // Return this connection to the active connection list, in case it sends another request
         pthread_mutex_lock(&state->connections_lock);
         state->connections[state->num_connections++] = req_state->tcp_conn;
