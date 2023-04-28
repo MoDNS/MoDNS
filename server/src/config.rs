@@ -758,6 +758,13 @@ impl ServerConfig {
         }
     }
 
+    pub fn query_db_user(&self) -> MutableConfigValue<String> {
+        MutableConfigValue { 
+            overridden: self.override_db_user.is_some(),
+            value: self.db_user()
+        }
+    }
+
     pub fn query_log(&self) -> MutableConfigValue<String> {
         MutableConfigValue {
             overridden: self.override_log.is_some(),
