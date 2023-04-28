@@ -273,7 +273,7 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
     if reply.is_empty() {
         return ApiResponse::new(404, format!("Key not found"))
     } else {
-        return ApiResponse::new(200, format!("Test"))
+        return ApiResponse::new(200, serde_json::json!(&reply).to_string())
     }
 
     // let resp = if reply.is_empty() {
