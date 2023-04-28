@@ -9,7 +9,7 @@ use warp::reply::json;
 use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
 
-use crate::config::{PLUGIN_PATH_KEY, USE_GLOBAL_DASH_KEY, LOG_KEY, DB_TYPE_KEY, DB_PATH_KEY, DB_ADDR_KEY, DB_PASS_KEY, ADMIN_PW_KEY, DB_PORT_KEY, ALL_KEY};
+use crate::config::{PLUGIN_PATH_KEY, USE_GLOBAL_DASH_KEY, LOG_KEY, DB_TYPE_KEY, DB_PATH_KEY, DB_ADDR_KEY, DB_PASS_KEY, ADMIN_PW_KEY, DB_PORT_KEY, ALL_KEY, DB_USER_KEY};
 use crate::plugins::manager::PluginManager;
 use crate::plugins::response::ApiResponse;
 
@@ -141,22 +141,39 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>) -> impl Reply {
     let resp: BTreeMap<String, String> = BTreeMap::new();
 
     // match key.unwrap().as_ref() {
-    //     USE_GLOBAL_DASH_KEY => {},
-    //     PLUGIN_PATH_KEY => {},
-    //     LOG_KEY => {},
-    //     DB_TYPE_KEY => {},
-    //     DB_PATH_KEY => {},
-    //     DB_ADDR_KEY => {},
-    //     DB_PORT_KEY => {},
-    //     DB_PASS_KEY => {},
-    //     ADMIN_PW_KEY => {},
+    //     USE_GLOBAL_DASH_KEY => {
+    //         cm.config().set_use_global_dash(dash);
+    //     },
+    //     PLUGIN_PATH_KEY => {
+    //         cm.config().set_plugin_path(plugin_path);
+    //     },
+    //     LOG_KEY => {
+    //         cm.config().set_log(log);
+    //     },
+    //     DB_TYPE_KEY => {
+    //         cm.config().set_db_type(db_type);
+    //     },
+    //     DB_PATH_KEY => {
+    //         cm.config().set_db_path(db_path);
+    //     },
+    //     DB_ADDR_KEY => {
+    //         cm.config().set_db_addr(db_addr);
+    //     },
+    //     DB_PORT_KEY => {
+    //         cm.config().set_db_port(db_port);
+    //     },
+    //     DB_PASS_KEY => {
+    //         cm.config().set_db_password(password);
+    //     },
+    //     ADMIN_PW_KEY => {
+    //         cm.config().set_admin_pw_hash(pw);
+    //     },
     //     &_ => {
     //     },
     // }
 
-    let json = json(&resp);
+    ApiResponse::new(200, format!("Set server config"))
 
-    Ok(Box::new(json))
 }
 
 pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuery) -> impl Reply {
@@ -213,6 +230,13 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
         DB_PORT_KEY => {
             let db_port = cm.config().query_db_port();
             let Ok(value) = serde_json::to_value(db_port) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
+            reply.insert(key, value);
+        },
+        DB_USER_KEY => {
+            let db_pass = cm.config().query_db_user();
+            let Ok(value) = serde_json::to_value(db_pass) else {
                 return ApiResponse::new(404, format!("Key not found"))
             };
             reply.insert(key, value);
@@ -275,17 +299,6 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuer
     } else {
         return ApiResponse::new(200, serde_json::json!(&reply).to_string())
     }
-
-    // let resp = if reply.is_empty() {
-    //     (warp::reject(), "Error")
-    // } else {
-    //     (json(&reply), "Success")
-    // };
-
-    // match resp {
-    //     Ok(_) => ApiResponse::new(200, json(&reply)),
-    //     Err(e) => ApiResponse::from(e),
-    // }
 
 }
 
