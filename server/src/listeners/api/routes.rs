@@ -1,5 +1,5 @@
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use serde::Deserialize;
@@ -9,7 +9,7 @@ use warp::reply::json;
 use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
 
-use crate::config::MutableConfigValue;
+use crate::config::{PLUGIN_PATH_KEY, USE_GLOBAL_DASH_KEY, LOG_KEY, DB_TYPE_KEY, DB_PATH_KEY, DB_ADDR_KEY, DB_PASS_KEY, ADMIN_PW_KEY, DB_PORT_KEY, ALL_KEY};
 use crate::plugins::manager::PluginManager;
 use crate::plugins::response::ApiResponse;
 
@@ -23,14 +23,7 @@ pub struct PluginQuery
 #[derive(Deserialize)]
 pub struct ConfigGetQuery
 {
-    key: Option<String>,
-}
-
-#[derive(Deserialize)]
-pub struct ConfigSetQuery
-{
-    key: Option<String>,
-    value: Option<bool>
+    key: String,
 }
 
 pub fn root_redirect() -> BoxedFilter<(impl Reply,)> {
@@ -58,7 +51,6 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
     let disable_pm = pm.clone();
     let config_set_pm = pm.clone();
     let config_get_pm = pm.clone();
-    // let intercept_pm = pm.clone();
 
     warp::path("api")
         .and(warp::path!("plugins").and(warp::query::<PluginQuery>())
@@ -81,13 +73,6 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             set_plugin_stat(pm, uuid, false)
             })
         )
-        // .or(warp::path!("plugins" / "interceptorder")
-        // .then(move || {
-        //     let pm = intercept_pm.clone();
-        //     log::trace!("Plugin intercept order requested");
-        //     // set_plugin_stat(pm, uuid, false)
-        //     })
-        // )
         .or(warp::path!("server" / "config").and(warp::query::<ConfigGetQuery>()).and(warp::get())
         .then(move |cq: ConfigGetQuery| {
             let pm = config_get_pm.clone();
@@ -95,17 +80,17 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             get_server_config(pm, cq)
             })
         )
-        .or(warp::path!("server" / "config").and(warp::query::<ConfigSetQuery>()).and(warp::post())
-        .then(move |cq: ConfigSetQuery| {
+        .or(warp::path!("server" / "config").and(warp::post())
+        .then(move || {
             let pm = config_set_pm.clone();
             log::trace!("Server config requested");
-            set_server_config(pm, cq)
+            set_server_config(pm)
             })
         )
     ).boxed()
 }
 
-pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, query: PluginQuery) -> Box<dyn Reply> {
+pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, query: PluginQuery) -> impl Reply {
     let metadata = pm.read().await.list_metadata();
 
     let reply = metadata.iter().filter(|(_, plugin)| {
@@ -129,7 +114,7 @@ pub async fn get_metadata_list(pm: Arc<RwLock<PluginManager>>, query: PluginQuer
 
     let json = json(&reply);
 
-    Box::new(json)
+    Ok(Box::new(json))
 }
 
 pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, enable: bool) -> impl Reply {
@@ -149,108 +134,158 @@ pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, enable:
     }
 }
 
-pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigSetQuery) -> Box<dyn Reply> {
+pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>) -> impl Reply {
     
     let cm = pm.write().await;
-
-    let key = cq.key;
-    let val = cq.value;
-
-    cm.config().db_info();
 
     let resp: BTreeMap<String, String> = BTreeMap::new();
 
-    match key.unwrap().as_ref() {
-        "static_ip" => {},
-        "use_static_ip" => {},
-        "use_global_dashboard" => {},
-        "plugin_paths" => {},
-        "log_filter" => {},
-        "database_type" => {},
-        "sqlite_file_path" => {},
-        "postgres_ip" => {},
-        "postgres_port" => {},
-        "sqlite_password" => {},
-        "postgres_password" => {},
-        &_ => {
-            val.unwrap();
-        },
-    }
+    // match key.unwrap().as_ref() {
+    //     USE_GLOBAL_DASH_KEY => {},
+    //     PLUGIN_PATH_KEY => {},
+    //     LOG_KEY => {},
+    //     DB_TYPE_KEY => {},
+    //     DB_PATH_KEY => {},
+    //     DB_ADDR_KEY => {},
+    //     DB_PORT_KEY => {},
+    //     DB_PASS_KEY => {},
+    //     ADMIN_PW_KEY => {},
+    //     &_ => {
+    //     },
+    // }
 
     let json = json(&resp);
 
-    Box::new(json)
+    Ok(Box::new(json))
 }
 
-pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuery) -> Box<dyn Reply> {
+pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuery) -> impl Reply {
     
     let cm = pm.write().await;
 
-    let mut reply = json(&());
+    let mut reply:BTreeMap<&str, serde_json::Value> = BTreeMap::new();
+    let key = cq.key.as_ref();
 
-    match cq.key.unwrap_or_default().as_ref() {
-        "static_ip" => {},
-        "use_static_ip" => {},
-        "use_global_dashboard" => {
+    match key {
+        USE_GLOBAL_DASH_KEY => {
             let bool = cm.config().query_use_global_dash();
-            reply = json(&bool);
-        },
-        "plugin_paths" => {
-            let path = cm.config().query_plugin_path();
-            let mut resp: BTreeMap<&str, Vec<MutableConfigValue<PathBuf>>> = BTreeMap::new();
-            resp.insert("data", path);
-            reply = json(&resp);
-        },
-        "log_filter" => {
-            let log = cm.config().query_log();
-            reply = json(&log);
-        },
-        "database_type" => {
-            let db_type = cm.config().query_db_type();
-            reply = json(&db_type);
-        },
-        "sqlite_file_path" => {
-            let db_path = cm.config().query_db_path();
-            reply = json(&db_path);
-        },
-        "postgres_ip" => {
-            let db_ip = cm.config().query_db_addr();
-            reply = json(&db_ip);            
-        },
-        "postgres_port" => {
-            let db_port = cm.config().query_db_port();
-            reply = json(&db_port);            
-        },
-        "sqlite_password" => {
-            let db_pass = cm.config().query_admin_pw();
-            reply = json(&db_pass);
-        },
-        "postgres_password" => {
-            let db_pass = cm.config().query_plugin_path();
-            reply = json(&db_pass);            
-        },
-        "all" => {
-            // let db_type = cm.config().query_db_type();
-            // let db_pass = cm.config().query_plugin_path();
-            // let db_port = cm.config().query_db_port();
-            // let db_ip = cm.config().query_db_addr();
-            // let db_path = cm.config().query_db_path();
+            let Ok(value) = serde_json::to_value(bool) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
 
-            // json = json(&db_ip, &db_pass, &db_port, &db_path)
-            log::trace!("Sending all server configs");
-            reply = json(&());
-            
-        }
-        &_ => {
-            log::trace!("Default catch-all response");
-            reply = json(&());
+            reply.insert(key, value);
         },
+        PLUGIN_PATH_KEY => {
+            let path = cm.config().query_plugin_path();
+            let Ok(value) = serde_json::to_value(path) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
+            reply.insert(key, value);
+        },
+        LOG_KEY => {
+            let log = cm.config().query_log();
+            let Ok(value) = serde_json::to_value(log) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
+            reply.insert(key, value);
+        },
+        DB_TYPE_KEY => {
+            let db_type = cm.config().query_db_type();
+            let Ok(value) = serde_json::to_value(db_type) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
+            reply.insert(key, value);
+        },
+        DB_PATH_KEY => {
+            let db_path = cm.config().query_db_path();
+            let Ok(value) = serde_json::to_value(db_path) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
+            reply.insert(key, value);
+        },
+        DB_ADDR_KEY => {
+            let db_ip = cm.config().query_db_addr();
+            let Ok(value) = serde_json::to_value(db_ip) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
+            reply.insert(key, value);           
+        },
+        DB_PORT_KEY => {
+            let db_port = cm.config().query_db_port();
+            let Ok(value) = serde_json::to_value(db_port) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
+            reply.insert(key, value);
+        },
+        DB_PASS_KEY => {
+            let db_pass = cm.config().query_admin_pw();
+            let Ok(value) = serde_json::to_value(db_pass) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
+            reply.insert(key, value);
+        },
+        ADMIN_PW_KEY => {
+            let admin_pass = cm.config().query_plugin_path();
+            let Ok(value) = serde_json::to_value(admin_pass) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
+            reply.insert(key, value);
+        },
+        ALL_KEY => {
+            let db_type = cm.config().query_db_type();
+            let Ok(value) = serde_json::to_value(db_type) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
+            reply.insert(key, value);
+
+            let db_pass = cm.config().query_plugin_path();
+            let Ok(value) = serde_json::to_value(db_pass) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
+            reply.insert(key, value);
+
+            let db_port = cm.config().query_db_port();
+            let Ok(value) = serde_json::to_value(db_port) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
+            reply.insert(key, value);
+
+            let db_ip = cm.config().query_db_addr();
+            let Ok(value) = serde_json::to_value(db_ip) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
+            reply.insert(key, value);
+
+            let db_path = cm.config().query_db_path();
+            let Ok(value) = serde_json::to_value(db_path) else {
+                return ApiResponse::new(404, format!("Key not found"))
+            };
+            reply.insert(key, value);
+
+            log::trace!("Sending all server configs");
+            
+        },
+        &_ => {
+            return ApiResponse::new(404, format!("Key not found"))
+        },
+    };
+
+    if reply.is_empty() {
+        return ApiResponse::new(404, format!("Key not found"))
+    } else {
+        return ApiResponse::new(200, format!("Test"))
     }
 
-    Box::new(reply)
-}
+    // let resp = if reply.is_empty() {
+    //     (warp::reject(), "Error")
+    // } else {
+    //     (json(&reply), "Success")
+    // };
 
-// pub async fn get_intercept_order(pm: Arc<RwLock<PluginManager>>) -> impl Reply {
-    
-// }
+    // match resp {
+    //     Ok(_) => ApiResponse::new(200, json(&reply)),
+    //     Err(e) => ApiResponse::from(e),
+    // }
+
+}
 
