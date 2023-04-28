@@ -10,26 +10,24 @@ const TopBar = ({ isLoggedIn, setLoggedIn }) => {
     return (
         <AppBar 
             position='fixed'
-            sx={{
-                paddingLeft: 4,
-            }}
         >
-            {
-                links && links.map((link, index) => {
-                    return (
-                        <Button 
-                            key={index}
-                            variant="text"
-                            sx={{ marginRight: 4 }} 
-                            component={Link} 
-                            to={'./manage/' + link.toLowerCase()} 
-                        >
-                            {link}
-                        </Button>
+            <div style={{ display: 'flex', justifyContent: 'space-around', width: 500, flexShrink: 0, marginLeft: 10 }} >
+                {
+                    links && links.map((link, index) => {
+                        return (
+                            <Button 
+                                key={index}
+                                variant="text"
+                                component={Link} 
+                                to={'./manage/' + link.toLowerCase()} 
+                            >
+                                {link}
+                            </Button>
 
-                    );
-                })
-            }
+                        );
+                    })
+                }
+            </div>
             {isLoggedIn &&
                 <Button 
                     variant="text"

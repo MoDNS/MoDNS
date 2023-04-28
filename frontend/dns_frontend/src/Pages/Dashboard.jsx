@@ -20,7 +20,7 @@ const Dashboard = () => {
   useEffect(() => {
     getServerConfig('use_global_dashboard').then(useGlobDash => {
       setUseGlobDash(useGlobDash);
-      if (useGlobDash) {
+      if (useGlobDash.value) {
         getDashboardLayoutAPI().then(res => {
           let x = (res && res.data) || [];
           setDashboardJson([...x]);

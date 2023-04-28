@@ -3,18 +3,17 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 
 import MainBox from '../Components/MainBox';
-import { Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Button, ToggleButton, ToggleButtonGroup, Typography, TextField } from '@mui/material';
 import { useState, useEffect } from 'react';
 import SequentialView from '../Components/Plugins/SequentialView';
 import Overview from '../Components/Plugins/Overview';
-import { enabledisablePlugin, getPluginCustomSettings, getPluginDict, setInterceptOrderAPI } from '../API/getsetAPI';
+import { enabledisablePlugin, getPluginCustomSettings, getPluginDict, installPlugin, setInterceptOrderAPI } from '../API/getsetAPI';
 import { getPluginViewStorage, setPluginViewStorage } from '../scripts/getsetLocalStorage';
 
 
 const Plugins = () => {
 
     const [loading, setLoading] = useState(true);
-
 
     // sets sequential or overview
     const [view, setView] = useState(getPluginViewStorage());
@@ -124,7 +123,7 @@ const Plugins = () => {
 
     //////////////////////////////////////////////////////////// MAIN ///////////////////////////////////////////////////////////
     
-    const inputFile = useRef(null);
+    const [theFile, setTheFile] = useState();
 
     return (
         <MainBox
@@ -132,10 +131,24 @@ const Plugins = () => {
             divider
         >
             <div style={{ display: 'flex'}}>
-                <input ref={inputFile} type='file' id='file' style={{ display: 'none' }} />
+                <TextField
+                    inputProps={{ accept:".zip,.gzip" }}
+                    onChange={ (e) => {
+                        if (e.target.files) {
+                            setTheFile(e.target.files[0]);
+                        }
+                    }}
+                    type='file'
+                    sx={{ marginRight: 2 }}
+                />
                 <Button 
                     variant='contained'
-                    onClick={() => inputFile.current.click()}
+                    onClick={(e) => {
+                        if (theFile) {
+                            installPlugin(theFile);
+                            setTheFile(null);
+                        }
+                    }}
                 >
                     Install
                 </Button>

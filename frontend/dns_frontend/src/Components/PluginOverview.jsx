@@ -45,6 +45,7 @@ const PluginOverview = ({ uuid, friendlyName, description, home, is_listener, is
     }
 
     return (
+        
         <Box
             sx={{
                 marginY: 1,
@@ -59,9 +60,12 @@ const PluginOverview = ({ uuid, friendlyName, description, home, is_listener, is
             }}
         >
 
-            <div style={{ display: 'flex', flexDirection: 'column', margin: 10 }} >
-                <img alt="No Logo Found" src={logo} width={65} height={65} style={{ marginBottom: 'auto' }} draggable={false}/>
-            </div>
+            {
+                false && 
+                <div style={{ display: 'flex', flexDirection: 'column', margin: 10 }} >
+                    <img alt="No Logo Found" src={logo} width={65} height={65} style={{ marginBottom: 'auto' }} draggable={false}/>
+                </div>
+            }
             
             <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1}} >
                 <div style={{ display: 'flex', flexDirection: 'row'}} >

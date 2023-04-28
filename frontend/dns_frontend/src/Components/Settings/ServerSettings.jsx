@@ -73,8 +73,11 @@ const ServerSettings = () => {
 
     ///// called when apply changes is pressed /////
     const handleSetUseGlobDash = () => {
-        setServerConfig('use_global_dashboard', useGlobDash && useGlobDash.value);
+        if (useGlobDash.value !== undefined && useGlobDash.value !== null) {
+            setServerConfig('use_global_dashboard', useGlobDash.value);
+        }
     }
+
     // const handleStaticIPSwitch = () => {
     //     setServerConfig('use_static_ip', useStaticIP.value);
     // }
@@ -85,8 +88,9 @@ const ServerSettings = () => {
     //         alert("Static IP format not correct");
     //     }
     // }
+
     const handleSetPluginPaths = () => {
-        setServerConfig('plugin_paths', {data: pluginPaths});
+        setServerConfig('plugin_paths', pluginPaths);
     }
     const handleSetLogFilter = () => {
         if (useCustLogFilt) {
@@ -256,7 +260,7 @@ const ServerSettings = () => {
                                 );
                                 setPluginPaths([...x]);
                                 setAddPath("");
-                            }} //this adds enter to submit
+                            }}
                             InputProps={{
                                 endAdornment: (
                                     <InputAdornment position='end' >

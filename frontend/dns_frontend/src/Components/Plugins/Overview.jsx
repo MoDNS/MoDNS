@@ -1,11 +1,11 @@
 import React from 'react';
 import { PropTypes } from 'prop-types';
+import { Typography } from '@mui/material';
+
 import PluginOverview from '../PluginOverview';
 
 
 const Overview = ({ pluginDict, numInterceptors, pluginsEnabledDict, togglePlugin, interceptorUuidOrder, setInterceptOrder, settingsPagesDict }) => {
-
-
 
     return (
             <div 
@@ -18,7 +18,8 @@ const Overview = ({ pluginDict, numInterceptors, pluginsEnabledDict, togglePlugi
                 }}
             >
                 {
-                    pluginDict && Object.keys(pluginDict).map((key, index) => (
+                    Object.keys(pluginDict || {}).length !== 0 ?
+                    Object.keys(pluginDict || {}).map((key, index) => (
                         <PluginOverview 
                             key={index} 
                             // plugin info
@@ -38,7 +39,15 @@ const Overview = ({ pluginDict, numInterceptors, pluginsEnabledDict, togglePlugi
                             togglePlugin={togglePlugin}
                             settingsPage={settingsPagesDict[key]}
                         />
-                    ))
+                    )) 
+                    :
+                        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }} >
+                            <Typography
+                                fontSize={20}
+                            >
+                                No plugins installed yet.
+                            </Typography>
+                        </div>
                 }
             </div>
     );

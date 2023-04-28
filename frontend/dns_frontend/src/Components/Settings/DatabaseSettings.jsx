@@ -12,7 +12,6 @@ const DatabaseSettings = () => {
     const [dataBaseType, setDataBaseType] = useState({});
 
     const [sqlitePath, setSQLitePath] = useState({});
-    const [sqlitePassword, setSqlitePassword] = useState({});
 
     const [postgresIP, setPostgresIP] = useState({});
     const [postgresPort, setPostgresPort] = useState({});
@@ -37,9 +36,6 @@ const DatabaseSettings = () => {
         })
         getServerConfig('postgres_password').then(res => {
             setPostgresPassword(res);
-        })
-        getServerConfig('sqlite_password').then(res => {
-            setSqlitePassword(res);
         })
 
     }, []);
@@ -70,10 +66,11 @@ const DatabaseSettings = () => {
         }
     }
     const handleSetPostgresPort = () => {
-        if (postgresPort.value !== "") {
-            setServerConfig('postgres_port', postgresPort.value);
-        } else {
-            alert("No port provided");
+        setServerConfig('postgres_port', postgresPort.value);
+    }
+    const handleSetPostgresPassword = () => {
+        if (postgresPassword.value !== "" && postgresPassword.value !== null && postgresPassword.value !== undefined ) {
+            setServerConfig('postgres_password', postgresPassword.value);
         }
     }
 
@@ -85,6 +82,7 @@ const DatabaseSettings = () => {
         } else if (dataBaseType && dataBaseType.value === "Postgres") {
             !(postgresIP && postgresIP.overridden) && handleSetPostgresIP()
             !(postgresPort && postgresPort.overridden) && handleSetPostgresPort();
+            !(postgresPassword.overridden) && handleSetPostgresPassword();
         }
     }
 
@@ -119,7 +117,7 @@ const DatabaseSettings = () => {
                             sx={{ width: 100, marginTop: 'auto' }} 
                         >
                             <MenuItem value={"Sqlite"} > SQLite </MenuItem>
-                            <MenuItem value={"Postgres"} > PostGres </MenuItem>
+                            <MenuItem value={"Postgres"} > Postgres </MenuItem>
                         </Select>
                     </div>
                 </div>
@@ -143,44 +141,6 @@ const DatabaseSettings = () => {
                                     let x = sqlitePath;
                                     x.value = e.target.value;
                                     setSQLitePath({...x});
-                                }}
-                            />
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35 }}>
-                            <Typography
-                                sx={{
-                                    fontSize: 25,
-                                    marginRight: 'auto',
-                                    marginBottom: 'auto'
-                                }}
-
-                            >
-                                SQLite Password:
-                            </Typography>
-                            <TextField
-                                disabled={sqlitePassword && sqlitePassword.overridden}
-                                type={ showPass ? 'text' : 'password' }
-                                value={(sqlitePassword && sqlitePassword.value) || ""}
-                                onInput={ e => {
-                                    let x = sqlitePassword;
-                                    x.value = e.target.value;
-                                    setSqlitePassword({...x});
-                                } }
-                                onFocus={e => {
-                                    e.target.select();
-                                }}
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position='end'>
-                                            <IconButton
-                                                onClick={ () => setShowPass(!showPass) }
-                                                onMouseDown= { (e) => { e.preventDefault() } }
-                                            >
-                                                {showPass ? <VisibilityOff /> : <Visibility /> }
-                                            </IconButton>
-                                        </InputAdornment>
-                                    )
                                 }}
                             />
                         </div>

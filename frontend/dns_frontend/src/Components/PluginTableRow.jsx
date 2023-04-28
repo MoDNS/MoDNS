@@ -41,14 +41,17 @@ const PluginTableRow = ({ uuid, friendlyName, description, home, is_listener, is
                     </Icon>
                 </TableCell>
             }
-            <TableCell
-                width={90}
-                height={90}
-                align='left'
-                
-                >
-                <img alt="No Logo Found" src={logo} width={65} height={65} style={{ margin: 10 }} draggable={false}/>
-            </TableCell>
+            {
+                false &&
+                <TableCell
+                    width={90}
+                    height={90}
+                    align='left'
+                    
+                    >
+                    <img alt="No Logo Found" src={logo} width={65} height={65} style={{ margin: 10 }} draggable={false}/>
+                </TableCell>
+            }
             <TableCell
                 align='left'
                 sx={{ paddingRight: 5 }}

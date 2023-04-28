@@ -1,4 +1,4 @@
-import { Table, TableBody, TableContainer } from '@mui/material';
+import { Table, TableBody, TableContainer, TableRow, TableCell, Typography } from '@mui/material';
 import PluginTableRow from './PluginTableRow';
 import { useRef } from 'react';
 import { PropTypes } from 'prop-types';
@@ -23,49 +23,60 @@ const PluginTable = ({ dragNDrop, pluginDict, numInterceptors, pluginsEnabledDic
         setInterceptOrder(dragItem.current, dragOverItem.current);
     };
 
+    console.log('here:', pluginDict);
+
     return (
         <div>
-            <TableContainer >
-                <Table >
-                    <TableBody >
-                        {
-                            (module === 'interceptor' ? interceptorUuidOrder : Object.keys(pluginDict || {})).map((key, index) => (
-                                <PluginTableRow 
-                                    key={index} 
-                                    // plugin elements
-                                    uuid={key} 
-                                    friendlyName={pluginDict[key].friendly_name} 
-                                    description={pluginDict[key].description} 
-                                    home={pluginDict[key].home} 
-                                    is_listener={pluginDict[key].is_listener}
-                                    is_interceptor={pluginDict[key].is_interceptor}
-                                    is_resolver={pluginDict[key].is_resolver}
-                                    is_validator={pluginDict[key].is_validator}
-                                    is_inspector={pluginDict[key].is_inspector}
-                                    
-                                    
-                                    pluginState={pluginsEnabledDict[key]}
-                                    togglePlugin={togglePlugin}
-                                    
-                                    interceptPosition={ interceptorUuidOrder.includes(key) ? interceptorUuidOrder.indexOf(key) + 1 : null }
-                                    numInterceptors={numInterceptors}
-                                    setInterceptOrder={setInterceptOrder}
-                                    
-                                    dragNDrop={dragNDrop}                   // enables dragging and dropping of rows
-                                    index={index}
-                                    dragStart={dragStart}
-                                    dragEnter={dragEnter}
-                                    dragDrop={dragDrop}
+            {
+                Object.keys(pluginDict || {}).length !== 0 ? <TableContainer >
+                    <Table >
+                        <TableBody >
+                            {
+                                (module === 'interceptor' ? interceptorUuidOrder : Object.keys(pluginDict || {})).map((key, index) => (
+                                    <PluginTableRow 
+                                        key={index} 
+                                        // plugin elements
+                                        uuid={key} 
+                                        friendlyName={pluginDict[key].friendly_name} 
+                                        description={pluginDict[key].description} 
+                                        home={pluginDict[key].home} 
+                                        is_listener={pluginDict[key].is_listener}
+                                        is_interceptor={pluginDict[key].is_interceptor}
+                                        is_resolver={pluginDict[key].is_resolver}
+                                        is_validator={pluginDict[key].is_validator}
+                                        is_inspector={pluginDict[key].is_inspector}
+                                        
+                                        
+                                        pluginState={pluginsEnabledDict[key]}
+                                        togglePlugin={togglePlugin}
+                                        
+                                        interceptPosition={ interceptorUuidOrder.includes(key) ? interceptorUuidOrder.indexOf(key) + 1 : null }
+                                        numInterceptors={numInterceptors}
+                                        setInterceptOrder={setInterceptOrder}
+                                        
+                                        dragNDrop={dragNDrop}                   // enables dragging and dropping of rows
+                                        index={index}
+                                        dragStart={dragStart}
+                                        dragEnter={dragEnter}
+                                        dragDrop={dragDrop}
 
-                                    settingsPage={settingsPagesDict[key]}
-                                    
-                                    />
-                                    ))
-                        }
-                    </TableBody>
-                </Table>
-            </TableContainer>
-            
+                                        settingsPage={settingsPagesDict[key]}
+                                        
+                                        />
+                                ))
+                            }
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+                :
+                <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10}} >
+                    <Typography
+                        fontSize={20}
+                    >
+                        {`No plugins of module ${module.charAt(0).toUpperCase()}${module.substring(1)} installed yet.`}
+                    </Typography>
+                </div>
+            }
             
         </div>
     );

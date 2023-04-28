@@ -22,31 +22,27 @@ export const getPluginDict = async (filter) => {
 }
 
 export const installPlugin = async (file) => {
-    const formData = new FormData();
-    formData.append('fileName', file)
 
-    if (false) {
+    try {
+        let extension = file.name.split('.').at(-1).toLowerCase();
+
+        if (extension !== "zip" && extension !== "gzip") {
+            alert("Not a zip or gzip");
+            return;
+        }
+    
         fetch(`${window.location.origin}/api/plugins/install`, {
+            method: 'POST',
             headers: {
-                'Content-Type': 'application/zip'
+                'Content-Type': `application/${extension}`
             },
-            body: formData,
+            body: file,
         })
-    } else if (false) {
-        fetch(`${window.location.origin}/api/plugins/install`, {
-            headers: {
-                'Content-Type': 'application/gzip'
-            },
-            body: formData,
-        })
-    } else if (false) {
-        fetch(`${window.location.origin}/api/plugins/install`, {
-            headers: {
-                'Content-Type': 'text/plain'
-            },
-            body: formData,
-        })
+        
+    } catch (error) {
+        alert("There was a problem with this file");
     }
+    
 }
 
 export const uninstallPlugin = async (uuid) => {
@@ -146,8 +142,14 @@ export const shutdownServer = async () => {
 }
 
 export const setServerConfig = async (key, value) => {
-    await fetch(`${window.location.origin}/api/server/config?key=${key}&value=${value}`, {
+    await fetch(`${window.location.origin}/api/server/config`, {
         method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: {
+            key: value,
+        }
     });
 }
 
