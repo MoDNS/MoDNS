@@ -373,6 +373,11 @@ impl DnsPlugin {
     }
 
     pub fn enable(&mut self) -> Result<()> {
+
+        if self.enabled() {
+            log::debug!("Already enabled");
+            return Ok(())
+        }
         self.state_ptr = if let Some(f) = check_sym::<SetupFn>(&self.lib, SETUP_FN_NAME)? {
             unsafe { f() }.into()
         } else { std::ptr::null_mut::<c_void>().into() };
@@ -383,6 +388,11 @@ impl DnsPlugin {
     }
 
     pub fn disable(&mut self) -> Result<()> {
+
+        if !self.enabled() {
+            log::debug!("Already disabled");
+            return Ok(())
+        }
         
         if let Some(f) = check_sym::<TeardownFn>(&self.lib, TEARDOWN_FN_NAME)? {
             unsafe { f(self.state_ptr.mut_ptr()) }

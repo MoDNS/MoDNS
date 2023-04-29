@@ -373,6 +373,11 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
 
 uint8_t impl_listener_async_respond(const struct DnsMessage *resp, void *req_state_ptr, const void *state_ptr) {
 
+    if (req_state_ptr == NULL || state_ptr == NULL) {
+        // Something broke
+        return 1;
+    }
+
     RequestState *req_state = (RequestState *)req_state_ptr;
     PluginState *state = (PluginState *)state_ptr;
 
@@ -485,17 +490,27 @@ void *impl_plugin_setup() {
 
 void impl_plugin_teardown(void *state_ptr) {
 
+    if (state_ptr == NULL) {
+        modns_log_cstr(4, "Teardown function received unexpected null pointer");
+        return;
+    }
+
     PluginState *state = (PluginState *)state_ptr;
 
+    modns_log_cstr(3, "Closing UDP listener");
     close(state->udplistener);
+    modns_log_cstr(3, "Closing TCP listener");
     close(state->tcplistener);
 
+    modns_log_cstr(3, "Closing active TCP connections");
     for(uint8_t i = 0; i < state->num_connections; i++) {
         close(state->connections[i].sock);
         free(state->connections[i].buf);
     }
 
+    modns_log_cstr(3, "Cleaning up");
     free_state(state);
+    modns_log_cstr(3, "Successfully disabled");
 }
 
 void end_connection(TcpConnection *conn) {
