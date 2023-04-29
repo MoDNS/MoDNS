@@ -97,7 +97,7 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
     }
 
     if (events > 0) {
-        modns_log(3, 255, "Got %d events, %d connections are active", events, state->num_connections);
+        modns_log(4, 255, "Got %d events, %d connections are active", events, state->num_connections);
     }
 
     // The list of connections might change unexpectedly if a response is generated.
@@ -270,10 +270,10 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
     // Handle incoming UDP stream
     if (pollfds[num_polls-2].revents) {
 
-        modns_log_cstr(3, "Got event on UDP");
+        modns_log_cstr(4, "Got event on UDP");
 
         if (pollfds[num_polls-2].revents != POLLIN) {
-            modns_log(0, 64, "UDP Listener encountered an error (poll returned %d)", pollfds[num_polls-2].revents);
+            modns_log(0, 64, "UDP Listener encountered an error (poll returned 0x%4X)", pollfds[num_polls-2].revents);
             return 2;
         }
 
@@ -281,6 +281,13 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
         struct sockaddr addr;
         socklen_t addr_len = sizeof(addr);
         ssize_t rc = recvfrom(state->udplistener, state->udp_buf, state->buffer_len, MSG_DONTWAIT, &addr, &addr_len);
+
+        struct sockaddr_in *addr_in = (struct sockaddr_in *)&addr;
+
+        char remotestr[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &addr_in->sin_addr, remotestr, INET_ADDRSTRLEN);
+
+        modns_log(3, 256, "Recieved UDP request from %s:%d", remotestr, addr_in->sin_port);
 
         if (rc < 0 && !(errno == EWOULDBLOCK || errno == EAGAIN)) {
             modns_log(0, 255, "Got error reading from UDP listener: %s", strerror(errno));
@@ -337,13 +344,12 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
             return 2;
         }
 
-        struct sockaddr_in *remote_ipv4 = (struct sockaddr_in *)&remote;
-        struct in_addr remote_ip = remote_ipv4->sin_addr;
+        struct sockaddr_in *remote_in = (struct sockaddr_in *)&remote;
 
         char remotestr[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &remote_ip, remotestr, INET_ADDRSTRLEN);
+        inet_ntop(AF_INET, &remote_in->sin_addr, remotestr, INET_ADDRSTRLEN);
 
-        modns_log(3, 256, "Got TCP request from %s:%d on sock fd %d", remotestr, remote_ipv4->sin_port, conn_sock);
+        modns_log(3, 256, "Recieved TCP request from %s:%d", remotestr, remote_in->sin_port);
 
         if (state->num_connections >= state->max_connections) {
             close(conn_sock);
@@ -363,7 +369,7 @@ uint8_t impl_listener_async_poll(struct DnsMessage *req, void **req_state, const
 
 
 
-        modns_log(100, 3, "TCP socket at fd %d added to connection queue, there are now %d open connections", new_conn.sock, state->num_connections);
+        modns_log(100, 4, "TCP socket at fd %d added to connection queue, there are now %d open connections", new_conn.sock, state->num_connections);
 
     }
 
@@ -414,7 +420,7 @@ uint8_t impl_listener_async_respond(const struct DnsMessage *resp, void *req_sta
             return 1;
         }
 
-        modns_log(3, 50, "Successfully sent %d-byte reply over TCP fd %d", rc, req_state->tcp_conn.sock);
+        modns_log(4, 50, "Successfully sent %d-byte reply over TCP fd %d", rc, req_state->tcp_conn.sock);
 
         req_state->tcp_conn.recvd = 0;
         req_state->tcp_conn.size = 0;
@@ -491,7 +497,7 @@ void *impl_plugin_setup() {
 void impl_plugin_teardown(void *state_ptr) {
 
     if (state_ptr == NULL) {
-        modns_log_cstr(4, "Teardown function received unexpected null pointer");
+        modns_log_cstr(1, "Teardown function received unexpected null pointer");
         return;
     }
 
@@ -510,7 +516,7 @@ void impl_plugin_teardown(void *state_ptr) {
 
     modns_log_cstr(3, "Cleaning up");
     free_state(state);
-    modns_log_cstr(3, "Successfully disabled");
+    modns_log_cstr(2, "Successfully disabled");
 }
 
 void end_connection(TcpConnection *conn) {
