@@ -5,31 +5,29 @@ import { PropTypes } from 'prop-types';
 
 
 const TopBar = ({ isLoggedIn, setLoggedIn }) => {
-    const links = isLoggedIn ? ["Dashboard", "Plugins", "Tools", "Settings", "About"] : null;
+    const links = isLoggedIn ? ["Dashboard", "Plugins", "Tools", "Settings"] : null;
 
     return (
         <AppBar 
             position='fixed'
-            sx={{
-                paddingLeft: 4,
-            }}
         >
-            {
-                links && links.map((link, index) => {
-                    return (
-                        <Button 
-                            key={index}
-                            variant="text"
-                            sx={{ marginRight: 4 }} 
-                            component={Link} 
-                            to={'./manage/' + link.toLowerCase()} 
-                        >
-                            {link}
-                        </Button>
+            <div style={{ display: 'flex', justifyContent: 'space-around', width: 500, flexShrink: 0, marginLeft: 10 }} >
+                {
+                    links && links.map((link, index) => {
+                        return (
+                            <Button 
+                                key={index}
+                                variant="text"
+                                component={Link} 
+                                to={'./manage/' + link.toLowerCase()} 
+                            >
+                                {link}
+                            </Button>
 
-                    );
-                })
-            }
+                        );
+                    })
+                }
+            </div>
             {isLoggedIn &&
                 <Button 
                     variant="text"

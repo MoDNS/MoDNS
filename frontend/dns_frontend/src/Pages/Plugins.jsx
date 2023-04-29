@@ -1,15 +1,19 @@
-import React, { useRef } from 'react';
+import React from 'react';
+import CircularProgress from '@mui/material/CircularProgress';
+
 
 import MainBox from '../Components/MainBox';
-import { Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Button, ToggleButton, ToggleButtonGroup, Typography, TextField } from '@mui/material';
 import { useState, useEffect } from 'react';
 import SequentialView from '../Components/Plugins/SequentialView';
 import Overview from '../Components/Plugins/Overview';
-import { enabledisablePlugin, getPluginCustomSettings, getPluginDict, setInterceptOrderAPI } from '../API/getsetAPI';
+import { enabledisablePlugin, getPluginCustomSettings, getPluginDict, installPlugin, setInterceptOrderAPI } from '../API/getsetAPI';
 import { getPluginViewStorage, setPluginViewStorage } from '../scripts/getsetLocalStorage';
 
 
 const Plugins = () => {
+
+    const [loading, setLoading] = useState(true);
 
     // sets sequential or overview
     const [view, setView] = useState(getPluginViewStorage());
@@ -58,27 +62,29 @@ const Plugins = () => {
         return await settingsDict;
     }
 
+    const [pluginsEnabledDict, setPluginsEnabledDict] = useState({});
+
     useEffect(() => {
         makePluginDict().then(dicts => {
             setPluginDicts({...dicts})
             makeSettingsPageDict(dicts['all']).then(settingsPages => {
                 setSettingsPagesDict({...settingsPages});
             })
+            let pluginsEnabled = {}
+            Object.keys(dicts['all'] || {}).forEach(uuid => {
+                pluginsEnabled[uuid] = dicts['all'][uuid]['enabled'];
+            });
+            setPluginsEnabledDict({...pluginsEnabled})
+            setLoading(false);
         })
-
     }, []);
 
+
     /////////////////////////////////////////////////////// ENABLE / DISABLE ///////////////////////////////////////////////////////
-    let pluginsEnabled = {}
-    Object.keys(pluginDicts['all'] || {}).forEach(uuid => {
-        pluginsEnabled[uuid] = pluginDicts['all'][uuid]['enabled'];
-    });
 
-    const [pluginsEnabledDict, setPluginsEnabledDict] = useState({...pluginsEnabled});
-    pluginsEnabled = null;
-
+    
     const togglePlugin = (uuid) => {
-        let pluginsEnabled = pluginsEnabledDict;
+        let pluginsEnabled = {...pluginsEnabledDict};
         if (!pluginsEnabled[uuid]) {
             Object.keys(onlyOneEnabledDict).forEach(module => {
                 if (pluginDicts['all'][`is_${module}`] && onlyOneEnabledDict[module]) {
@@ -117,7 +123,7 @@ const Plugins = () => {
 
     //////////////////////////////////////////////////////////// MAIN ///////////////////////////////////////////////////////////
     
-    const inputFile = useRef(null);
+    const [theFile, setTheFile] = useState();
 
     return (
         <MainBox
@@ -125,10 +131,24 @@ const Plugins = () => {
             divider
         >
             <div style={{ display: 'flex'}}>
-                <input ref={inputFile} type='file' id='file' style={{ display: 'none' }} />
+                <TextField
+                    inputProps={{ accept:".zip,.gzip" }}
+                    onChange={ (e) => {
+                        if (e.target.files) {
+                            setTheFile(e.target.files[0]);
+                        }
+                    }}
+                    type='file'
+                    sx={{ marginRight: 2 }}
+                />
                 <Button 
                     variant='contained'
-                    onClick={() => inputFile.current.click()}
+                    onClick={(e) => {
+                        if (theFile) {
+                            installPlugin(theFile);
+                            setTheFile(null);
+                        }
+                    }}
                 >
                     Install
                 </Button>
@@ -157,6 +177,7 @@ const Plugins = () => {
                 </ToggleButtonGroup>
             </div>
             { 
+                
                 // shoes sequential or overview
                 view === 's' ? 
                     <SequentialView 
@@ -170,16 +191,19 @@ const Plugins = () => {
 
                     /> 
                     : 
-                    <Overview 
-                        pluginDict={pluginDicts['all']}                         // list of all plugins                        
-                        numInterceptors={Object.keys(pluginDicts['interceptor'] || {}).length}
-                        pluginsEnabledDict={pluginsEnabledDict}
-                        togglePlugin={togglePlugin}
-                        interceptorUuidOrder={interceptorUuidOrder}
-                        setInterceptOrder={setInterceptOrder}
-                        settingsPagesDict={settingsPagesDict}
+                    loading ? <div style={{ width: '100%', height: '100%', display: 'flex' }} >
+                            <CircularProgress color="inherit" sx={{ margin: 'auto' }} />
+                        </div> :
+                        <Overview 
+                            pluginDict={pluginDicts['all']}                         // list of all plugins                        
+                            numInterceptors={Object.keys(pluginDicts['interceptor'] || {}).length}
+                            pluginsEnabledDict={pluginsEnabledDict}
+                            togglePlugin={togglePlugin}
+                            interceptorUuidOrder={interceptorUuidOrder}
+                            setInterceptOrder={setInterceptOrder}
+                            settingsPagesDict={settingsPagesDict}
 
-                    />
+                        />
             }
 
         </MainBox>
