@@ -1,5 +1,5 @@
 CFLAGS+= -Wall -Wno-pointer-sign $(SDK_HEADER_ARGS)
-LDFLAGS=$(SDK_LINK_ARGS) -I../common -ljsoncpp
+LDFLAGS=$(SDK_LINK_ARGS) -ljsoncpp
 
 PLUGINFILE=plugin_$(ARCH).so
 
