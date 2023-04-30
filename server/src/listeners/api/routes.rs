@@ -41,7 +41,7 @@ pub fn frontend_filter(path: &Path, disable: bool) -> BoxedFilter<(impl Reply,)>
             }
         })
         .untuple_one()
-        .and(warp::fs::dir(path.to_owned()))
+        .and(warp::fs::dir(path.to_owned()).or(warp::fs::file(path.join(path.join("index.html")))))
         .boxed()
 }
 
