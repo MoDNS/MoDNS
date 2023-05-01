@@ -1,6 +1,6 @@
 
 
-use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn, SdkInitFn, InterceptorFn, ValidatorFn, InspectorFn, ResponseSource, PLUGIN_FILE_NAME};
+use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn, SdkInitFn, InterceptorFn, ValidatorFn, InspectorFn, ResponseSource, PLUGIN_FILE_NAME, ListenerPollFn, ListenerRespondFn};
 use modns_sdk::types::conversion::FfiVector;
 use modns_sdk::{types::ffi, PluginState};
 
@@ -16,6 +16,8 @@ use std::ffi::{OsStr, c_void, OsString};
 const SDK_INIT_FN_NAME:     &[u8] = b"_init_modns_sdk";
 const SETUP_FN_NAME:        &[u8] = b"impl_plugin_setup";
 const TEARDOWN_FN_NAME:     &[u8] = b"impl_plugin_teardown";
+const LISTENER_POLL_FN_NAME:&[u8] = b"impl_listener_async_poll";
+const LISTENER_RESP_FN_NAME:&[u8] = b"impl_listener_async_respond";
 const DECODER_FN_NAME:      &[u8] = b"impl_listener_sync_decode_req";
 const ENCODER_FN_NAME:      &[u8] = b"impl_listener_sync_encode_resp";
 const INTERCEPTOR_FN_NAME:  &[u8] = b"impl_intercept_req";
@@ -139,8 +141,8 @@ impl DnsPlugin {
     ) -> Result<Self, PluginLoaderError> {
 
         let is_listener =
-        check_sym::<ListenerDecodeFn>(&lib, DECODER_FN_NAME)?.is_some() &&
-            check_sym::<ListenerEncodeFn>(&lib, ENCODER_FN_NAME)?.is_some();
+        check_sym::<ListenerPollFn>(&lib, LISTENER_POLL_FN_NAME)?.is_some() &&
+            check_sym::<ListenerRespondFn>(&lib, LISTENER_RESP_FN_NAME)?.is_some();
 
         let is_interceptor = 
         check_sym::<InterceptorFn>(&lib, INTERCEPTOR_FN_NAME)?.is_some();
@@ -168,6 +170,40 @@ impl DnsPlugin {
             description,
             state_ptr: PluginState::new(),
         })
+
+    }
+
+    pub fn poll(&self, buf: &mut ffi::DnsMessage) -> Result<Option<*mut c_void>, PluginExecutorError> {
+
+        let f = check_sym::<ListenerPollFn>(&self.lib, LISTENER_POLL_FN_NAME)?
+            .ok_or(PluginExecutorError::DoesNotImplement)?;
+
+        let mut req_state = std::ptr::null_mut();
+
+        let rc = unsafe {
+            f(buf, &mut req_state, self.state_ptr.ptr())
+        };
+
+        match rc {
+            0 => Ok(Some(req_state)),
+            1 => Ok(None),
+            e => Err(PluginExecutorError::ErrorCode(e))
+        }
+    }
+
+    pub fn respond(&self, resp: &ffi::DnsMessage, req_state: *mut c_void) -> Result<(), PluginExecutorError> {
+
+        let f = check_sym::<ListenerRespondFn>(&self.lib, LISTENER_RESP_FN_NAME)?
+            .ok_or(PluginExecutorError::DoesNotImplement)?;
+
+        let rc = unsafe {
+            f(resp, req_state, self.state_ptr.ptr())
+        };
+
+        match rc {
+            0 => Ok(()),
+            e => Err(PluginExecutorError::ErrorCode(e))
+        }
 
     }
     
@@ -336,6 +372,11 @@ impl DnsPlugin {
     }
 
     pub fn enable(&mut self) -> Result<()> {
+
+        if self.enabled() {
+            log::debug!("Already enabled");
+            return Ok(())
+        }
         self.state_ptr = if let Some(f) = check_sym::<SetupFn>(&self.lib, SETUP_FN_NAME)? {
             unsafe { f() }.into()
         } else { std::ptr::null_mut::<c_void>().into() };
@@ -346,6 +387,11 @@ impl DnsPlugin {
     }
 
     pub fn disable(&mut self) -> Result<()> {
+
+        if !self.enabled() {
+            log::debug!("Already disabled");
+            return Ok(())
+        }
         
         if let Some(f) = check_sym::<TeardownFn>(&self.lib, TEARDOWN_FN_NAME)? {
             unsafe { f(self.state_ptr.mut_ptr()) }

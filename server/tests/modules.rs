@@ -14,7 +14,7 @@ fn load_test_plugin() {
 
     init_logger();
 
-    let mut pm = PluginManager::new(ServerConfig::new());
+    let mut pm = PluginManager::new(ServerConfig::empty());
 
     let uuid = pm.load("./tests/test-plugin", true).expect("Test plugin failed to load");
     pm.init().unwrap();
@@ -33,7 +33,7 @@ fn test_plugin_intercept() {
 
     init_logger();
 
-    let mut pm = PluginManager::new(ServerConfig::new());
+    let mut pm = PluginManager::new(ServerConfig::empty());
 
     pm.load("./tests/test-plugin", true).expect("Test plugin failed to load");
     pm.init().unwrap();
@@ -48,7 +48,7 @@ fn test_plugin_validate() {
 
     init_logger();
 
-    let mut pm = PluginManager::new(ServerConfig::new());
+    let mut pm = PluginManager::new(ServerConfig::empty());
 
     pm.load("./tests/test-plugin", true).expect("Test plugin failed to load");
     pm.init().unwrap();
@@ -64,7 +64,7 @@ fn test_plugin_inspect() {
 
     init_logger();
 
-    let mut pm = PluginManager::new(ServerConfig::new());
+    let mut pm = PluginManager::new(ServerConfig::empty());
 
     pm.load("./tests/test-plugin", true).expect("Test plugin failed to load");
     pm.init().unwrap();

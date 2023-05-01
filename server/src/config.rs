@@ -530,6 +530,12 @@ impl ServerConfig {
         Self::compose(im, mu)
     }
 
+    pub fn empty() -> Self {
+        let im = ImmutableServerConfig::default();
+        let mu = MutableServerConfig(Map::new(), PathBuf::new());
+        Self::compose(im, mu)
+    }
+
 }
 
 impl ServerConfig {

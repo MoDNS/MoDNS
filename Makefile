@@ -54,7 +54,7 @@ test: plugins test-plugins
 endif
 
 .PHONY: clean
-clean: cargo-clean plugin-clean
+clean:
 	$(MAKE) -C plugins/ clean
 	cargo clean
 
