@@ -10,7 +10,7 @@ use warp::reply::json;
 use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
 
-use crate::config::{PLUGIN_PATH_KEY, USE_GLOBAL_DASH_KEY, LOG_KEY, DB_TYPE_KEY, DB_PATH_KEY, DB_ADDR_KEY, DB_PASS_KEY, ADMIN_PW_KEY, DB_PORT_KEY, ALL_KEY, DB_USER_KEY, DatabaseBackend};
+use crate::config::{PLUGIN_PATH_KEY, LOG_KEY, DB_TYPE_KEY, DB_PATH_KEY, DB_ADDR_KEY, DB_PASS_KEY, ADMIN_PW_KEY, DB_PORT_KEY, ALL_KEY, DB_USER_KEY, DatabaseBackend};
 use crate::plugins::manager::PluginManager;
 use crate::plugins::response::ApiResponse;
 
@@ -140,10 +140,6 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
 
     for i in json.iter() {
         match i.0.as_ref() {
-            USE_GLOBAL_DASH_KEY => {
-                let val = if i.1 == "true" {true} else {false};
-                cm.config_mut().set_use_global_dash(val).err();
-            },
             PLUGIN_PATH_KEY => {
                 let vec =  cm.config().query_plugin_path();
                 let mut new = Vec::<PathBuf>::new();
@@ -200,14 +196,6 @@ pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
     
     for i in json.iter() {
         match i.0.as_ref() {
-            USE_GLOBAL_DASH_KEY => {
-                let bool = cm.config().query_use_global_dash();
-                let Ok(value) = serde_json::to_value(bool) else {
-                    return ApiResponse::new(404, format!("Key not found"))
-                };
-    
-                reply.insert(i.0, value);
-            },
             PLUGIN_PATH_KEY => {
                 let path = cm.config().query_plugin_path();
                 let Ok(value) = serde_json::to_value(path) else {
