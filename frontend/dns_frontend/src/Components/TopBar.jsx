@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { PropTypes } from 'prop-types';
 import { useTheme } from '@emotion/react';
 
-import { ReactComponent as MoDNSLogo_Small} from '../images/logo_small.svg';
 import { ReactComponent as MoDNSLogo} from '../images/logo.svg';
 
 const TopBar = ({ isLoggedIn, setLoggedIn }) => {
