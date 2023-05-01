@@ -23,7 +23,7 @@ number-sections: true
 # Metadata passed to latex template
 metadata:
   title: "MoDNS: A Modular DNS Solution"
-  subtitle: Winter Technical Report
+  subtitle: Final Technical Report
   author:
   - Tim Huhn
   - Bronson Jordan
@@ -32,9 +32,10 @@ metadata:
   - Seth Warren
 
   abstract: |
-    Domain Name System (DNS) translates domain names into IP addresses. It allows people to access websites without memorizing IP addresses. DNS Servers respond to DNS requests made by devices with the IP address for the requested site. 
-    Some amazing things can be done through DNS, but combining any of these benefits often requires chaining multiple DNS servers to each other until one finally reaches an external DNS server. This is a complicated and messy process just to combine features such as SecureDNS, DNSSEC, DNS domain blocking, or download caching.
-    MoDNS offers a solution to the typical convoluted DNS approach. It allows user to write and load plugins that have the functionality to change how DNS requests on a local network are handled. The MoDNS Framework provides opporunities to combine many DNS benefits into one MoDNS Server.
+    Domain Name System (DNS) is the system in place that translates domain names into IP addresses. This allows user to access websites without the need to memorize seemingly random strings of numbers. DNS Servers respond to requests made by devices in a network with the correct IP address for the requested domain name.
+    In addition to the translation functionality, additional amazing services can be done through DNS. Services like PiHole can block requests made for advertisements while the user roams the internet. Another service like LANCache can cache downloads to allow for faster installations of shared sotfware.
+    With these services and many other open source additions, user's may want to add multiple services to their local DNS server. However, combining many of these benefits often requires chaining multiple DNS servers to each other until one finally reaches an external DNS server.
+    This is a complicated and messy process to combine only a few of the features previously mentioned. MoDNS offers a solution to the typical DNS approach. It allows user to write and load plugins that have the functionality to change how DNS requests on a local network are handled. This provides opporunities to combine many DNS benefits into one MoDNS Server.
 
   documentclass: report
   papersize: letter
