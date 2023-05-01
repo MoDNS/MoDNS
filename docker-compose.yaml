@@ -38,7 +38,9 @@ services:
       - ./Makefile:/rust-server/Makefile
       - frontend_build:/usr/share/modns/web:ro
       - backend_build:/rust-server/target
+      - backend_cache:/root/.cargo/registry
 
 volumes:
   frontend_build:
   backend_build:
+  backend_cache:
