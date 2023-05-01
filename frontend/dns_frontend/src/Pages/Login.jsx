@@ -1,4 +1,4 @@
-import { Button, IconButton, InputAdornment, TextField, useTheme, Icon } from '@mui/material';
+import { Button, IconButton, InputAdornment, TextField, useTheme } from '@mui/material';
 import { Box } from '@mui/system';
 import React from 'react';
 import { useState } from 'react';
