@@ -423,4 +423,8 @@ impl PluginManager {
     pub fn config(&self) -> &ServerConfig {
         &self.config
     }
+
+    pub fn config_mut(&mut self) -> &mut ServerConfig {
+        &mut self.config
+    }
 }
