@@ -24,6 +24,18 @@ type SetupFn = unsafe extern "C" fn() -> *mut c_void;
 
 type TeardownFn = unsafe extern "C" fn(*mut c_void);
 
+type ListenerPollFn = unsafe extern "C" fn(
+    &mut ffi::DnsMessage,
+    *mut *mut c_void,
+    *const c_void
+) -> u8;
+
+type ListenerRespondFn = unsafe extern "C" fn(
+    &ffi::DnsMessage,
+    *mut c_void,
+    *const c_void
+) -> u8;
+
 type ListenerDecodeFn = unsafe extern "C" fn(
     &ffi::ByteVector,
     &mut ffi::DnsMessage,

@@ -8,7 +8,8 @@ void modns_log(uint8_t log_level, uintptr_t buf_size, char *format, ...) {
     va_start(vararg, format);
 
     char *buf = malloc(buf_size);
-    uintptr_t len = vsnprintf(buf, buf_size, format, vararg) + 1;
+    vsnprintf(buf, buf_size, format, vararg);
+
     va_end(vararg);
 
     modns_log_cstr(log_level, buf);

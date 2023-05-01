@@ -2,16 +2,26 @@ import { AppBar, Button } from '@mui/material';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { PropTypes } from 'prop-types';
+import { useTheme } from '@emotion/react';
 
+import { ReactComponent as MoDNSLogo} from '../images/logo.svg';
 
 const TopBar = ({ isLoggedIn, setLoggedIn }) => {
     const links = isLoggedIn ? ["Dashboard", "Plugins", "Tools", "Settings"] : null;
+
+    const theme = useTheme();
 
     return (
         <AppBar 
             position='fixed'
         >
-            <div style={{ display: 'flex', justifyContent: 'space-around', width: 500, flexShrink: 0, marginLeft: 10 }} >
+            {
+                links &&
+                <div style={{ height: '80%', marginTop: 'auto', marginBottom: 'auto', marginLeft: 20, marginRight: 30 }} >
+                    <MoDNSLogo stroke={theme.palette.text.primary} fill={theme.palette.text.primary}/>
+                </div>
+            }
+            <div style={{ display: 'flex', justifyContent: 'space-around', width: 500, flexShrink: 0, marginLeft: 10, height: '100%' }} >
                 {
                     links && links.map((link, index) => {
                         return (
@@ -38,7 +48,7 @@ const TopBar = ({ isLoggedIn, setLoggedIn }) => {
                 >
                     Log Out
                 </Button>
-        }
+            }
         </AppBar>
     );
 };
