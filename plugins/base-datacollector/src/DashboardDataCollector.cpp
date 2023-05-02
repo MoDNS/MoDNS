@@ -1,10 +1,17 @@
 #include "modns-sdk.hpp"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <iostream>
 #include <fstream>
 #include <map>
 #include <list>
 #include <jsoncpp/json/value.h>
 #include <jsoncpp/json/json.h>
+#include <vector>
+#include <iomanip>
+#include <time.h>
+#include <ctime>
 
 /*
 Structure of DNS Message
@@ -22,11 +29,54 @@ Structure of DNS Message
         RRVector authorities;
         RRVector additional;
     };
+
+    pub struct DnsQuestion {
+        pub name: Vec<String>,
+        pub type_code: u16,
+        pub class_code: u16
+    }
+
+    pub struct DnsResourceRecord {
+        pub name: Vec<String>,
+        pub type_code: u16,
+        pub class_code: u16,
+        pub ttl: i32,
+        pub rdlength: u16,
+        pub rdata: DnsResourceData
+    }
+
+    pub enum DnsResourceData {
+        A { address: Ipv4Addr },
+        AAAA { address: Ipv6Addr },
+        Ns { nsdname: Vec<String> },
+        Cname { cname: Vec<String> },
+        Ptr { ptrdname: Vec<String> },
+        Soa {
+            mname: Vec<String>,
+            rname: Vec<String>,
+            serial: u32,
+            refresh: u32,
+            retry: u32,
+            expire: u32,
+            minimum: u32
+        },
+        Txt { txt_data: Vec<String> },
+        Other { rdata: Vec<u8> }
+    }
 */
 
 bool is_empty(std::ifstream &pFile)
 {
     return pFile.peek() == std::ifstream::traits_type::eof();
+}
+
+std::string getTime()
+{
+
+    time_t _tm = time(NULL);
+    struct tm *curtime = localtime(&_tm);
+
+    return asctime(curtime);
 }
 
 extern "C" uint8_t impl_inspect_resp(const modns_sdk::DnsMessage *req,
@@ -35,95 +85,105 @@ extern "C" uint8_t impl_inspect_resp(const modns_sdk::DnsMessage *req,
                                      const void *plugin_state)
 {
 
-    // Create a map to store the user's input
-    Json::Value myMap;
-
-    myMap["id"] = req->id;
-    myMap["is_response"] = req->is_response;
-    myMap["opcode"] = req->opcode;
-    myMap["authoritative_answer"] = req->authoritative_answer;
-    myMap["truncation"] = req->truncation;
-    myMap["recursion_desired"] = req->recursion_desired;
-    myMap["recursion_available"] = req->recursion_available;
-    myMap["response_code"] = req->response_code;
-
     std::list<Json::Value> dataList;
+    Json::StreamWriterBuilder builder;
+    Json::Value myData;
 
     // Open the input file stream to read JSON data from the file
-    // std::ifstream inputFile("../myData.json");
+    std::ifstream inputFile("../myData.json");
 
-    // Create a JSON object to store the list of maps
-    Json::Value myData;
-/*
-    if (!is_empty(inputFile))
+    if (inputFile)
     {
-        // Read the JSON data from the input file stream
         inputFile >> myData;
-
-        // Close the input file stream
-        inputFile.close();
-
-        // Iterate over the JSON data and add each map to the list
-        for (const auto &map : myData)
-        {
-            dataList.push_back(map);
-        }
     }
-
-    // Add the map to the list
-    if (dataList.size() <= 1000)
-    {
-        dataList.push_back(myMap);
-    }
-    else
-    {
-        dataList.pop_front();
-        dataList.push_back(myMap);
-    }
-
     inputFile.close();
-*/
-    std::cout << "\n\n\n";
 
-    // for (auto const &i : dataList)
-    // {
-    //     std::cout << i["id"] << std::endl;
-    // }
+    // std::cout << json_string << std::endl;
 
-    // Open a file stream to write the JSON data to a file
-    // std::ofstream file("../myData.json");
+    // Create a map to store the DNS message
+    Json::Value myMap;
 
-    // Create a JSON object to store the list of maps
-    int index = 0;
-    for (const auto &map : dataList)
+    modns_sdk::modns_log_cstr(3, "Line 3\n\n");
+
+    // std::cout << req << std::endl;
+
+    myMap["timeStamp"] = getTime();
+    myMap["id"] = req->id;
+    myMap["is_response"] = req->is_response;
+    myMap["truncation"] = req->truncation;
+    myMap["response_code"] = req->response_code;
+
+    // Go through the question vector
+    uintptr_t num_questions = req->questions.size;
+    for (uintptr_t i = 0; i < num_questions; i++)
     {
-        myData[index++] = map;
+        myMap["questions_Type"] = req->questions.ptr[i].type_code;
+
+        // myMap["questions_Name"] = req->questions.ptr[i].name.ptr->ptr[0];
+        myMap["questions_Class"] = req->questions.ptr[i].class_code;
     }
 
-    std::cout << "\n\n\n";
-
-    for (auto const &i : myData)
+    // go through the additional vector
+    uintptr_t num_Additional = req->additional.size;
+    for (uintptr_t i = 0; i < num_Additional; i++)
     {
-        std::cout << i["id"] << std::endl;
+        std::string ipv4 = "";
+        for (int a = 0; a < 4; a++)
+        {
+            if (a == 3)
+            {
+                ipv4 = ipv4 + std::to_string(req->additional.ptr[i].rdata.a.address[a]);
+            }
+            else
+            {
+                ipv4 = ipv4 + std::to_string(req->additional.ptr[i].rdata.a.address[a]) + ".";
+            }
+        }
+       
+        myMap["additional IPv4 " + std::to_string(i)] = ipv4;
     }
 
-    // Write the JSON data to the file
-    // Json::StyledStreamWriter dataWriter;
-    // file << dataWriter.write(dataList);
+    /*
+         pub enum DnsResourceData {Txt
+            A { address: Ipv4Addr },
+            AAAA { address: Ipv6Addr },
+            Ns { nsdname: Vec<String> },
+            Cname { cname: Vec<String> },
+            Ptr { ptrdname: Vec<String> },
+            Soa {
+                mname: Vec<String>,
+                rname: Vec<String>,
+                serial: u32,
+                refresh: u32,
+                retry: u32,
+                expire: u32,
+                minimum: u32
+            },
+            Txt { txt_data: Vec<String> },
+            Other { rdata: Vec<u8> }
+        }
+        myMap["additional_Name"] = req->additional.ptr[1].name;
 
-    // Close the file stream
-    // file.close();
+        Add the new JSON object to the file if limit not reached,
+        otherwise remove the oldest object and add the new one
+    */
+    myData.append(myMap);
 
-    std::cout << "Data has been written to myData.json" << std::endl;
+    // Streamwriterbuilder
+    std::ofstream outfile("../myData.json");
+    builder["indentation"] = "\t";
+    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+    writer->write(myData, &outfile);
+    std::string json_string = Json::writeString(builder, myData);
 
-    // std::string sStyled = styled.write(myData);
-    // cout << "Styled stream:\n";
+    // Print the JSON string to the console
+    std::cout << json_string << std::endl;
 
-    // Json::StyledStreamWriter styledStream;
-    // styledStream.write(std::cout, myData);
+    outfile << json_string << std::endl;
 
-    std::cout << dataList.size() << std::endl;
+    // std::cout << sizeof(myData) << std::endl;
 
-    std::cout << "Printed \n";
+    // std::cout << "Data has been written to myData.json" << std::endl;
+
     return 0;
 }
