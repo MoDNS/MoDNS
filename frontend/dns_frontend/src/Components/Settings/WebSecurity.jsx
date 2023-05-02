@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getPluginConfig, setServerConfig } from '../../API/getsetAPI';
+import { getServerConfig, setServerConfig } from '../../API/getsetAPI';
 import { Button, Typography, FormControlLabel, Switch, Tooltip, TextField } from '@mui/material';
 import SettingBox from './SettingBox';
 import ChangePassword from './ChangePassword';
@@ -21,8 +21,8 @@ const WebSecurity = () => {
     }
 
     useEffect(() => {
-        getPluginConfig([HTTPS_ENABLED_KEY, TLS_CERT_KEY, TLS_KEY_KEY, API_PORT_KEY, ADMIN_PW_KEY]).then(res => {
-            let x = res;
+        getServerConfig([HTTPS_ENABLED_KEY, TLS_CERT_KEY, TLS_KEY_KEY, API_PORT_KEY, ADMIN_PW_KEY]).then(res => {
+            let x = res || {};
             x[ADMIN_PW_KEY] = {
                 overridden: (res && res[ADMIN_PW_KEY] && res[ADMIN_PW_KEY].overridden) || false,
                 value: "",

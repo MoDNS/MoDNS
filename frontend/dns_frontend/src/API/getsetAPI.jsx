@@ -147,18 +147,19 @@ export const setServerConfig = async (dict) => {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: dict
+        body: JSON.stringify(dict)
     });
 }
 
 export const getServerConfig = async (keys) => {
     const keyDict = Object.fromEntries(keys.map(k => [k, ""]))
-    return await fetch(`${window.location.origin}/api/server/config}`, {
+    console.log("here", keyDict);
+    return await fetch(`${window.location.origin}/api/server/config`, {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json'
+            'Accept': 'application/json'
         },
-        body: keyDict
+        body: JSON.stringify(keyDict)
     }).then(response => {
         if (response.ok) {
             return response.json();

@@ -1,5 +1,5 @@
 import React from 'react';
-import { getPluginConfig, setServerConfig } from '../../API/getsetAPI';
+import { getServerConfig, setServerConfig } from '../../API/getsetAPI';
 import { useState, useEffect } from 'react';
 import { Button, Checkbox, FormControlLabel, IconButton, InputAdornment, List, ListItem, MenuItem, Select, TextField, Tooltip, Typography, useTheme, Icon } from '@mui/material';
 import { LOG_FILTER_KEY, PLUGIN_PATH_KEY, DB_TYPE_KEY, POSTGRES_IP_KEY, POSTGRES_PASS_KEY, POSTGRES_PORT_KEY, POSTGRES_USER_KEY, SQLITE_PATH_KEY } from '../../Constants';
@@ -42,7 +42,7 @@ const AdvancedSettings = () => {
     const [errorPostgresIP, setErrorPostgresIP] = useState( false );
     
     useEffect(() => {
-        getPluginConfig([LOG_FILTER_KEY, PLUGIN_PATH_KEY, DB_TYPE_KEY, SQLITE_PATH_KEY, POSTGRES_IP_KEY, POSTGRES_PORT_KEY, POSTGRES_USER_KEY, POSTGRES_PASS_KEY]).then(res => {
+        getServerConfig([LOG_FILTER_KEY, PLUGIN_PATH_KEY, DB_TYPE_KEY, SQLITE_PATH_KEY, POSTGRES_IP_KEY, POSTGRES_PORT_KEY, POSTGRES_USER_KEY, POSTGRES_PASS_KEY]).then(res => {
             setOldSettings((res && {...res}) || {});
             setCurrentSettings((res && {...res}) || {});
 
