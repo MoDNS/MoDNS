@@ -4,9 +4,10 @@ use anyhow::Context;
 
 use modnsd::config;
 use modnsd::plugins::manager::PluginManager;
-use modnsd::listeners::{DnsListener, self};
 
-use tokio::{net::UdpSocket, sync::RwLock};
+use modnsd::listeners;
+
+use tokio::sync::RwLock;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -54,12 +55,7 @@ async fn main() -> anyhow::Result<()> {
         log::info!("Plugin initialization successful");
     }
 
-    log::info!("Binding DNS listener");
-    let dnsaddrs = vec![
-        DnsListener::Udp(UdpSocket::bind(("0.0.0.0", 53)).await.context("Failed to bind DNS listener on port 5300/udp")?)
-    ];
-
-    listeners::listen(dnsaddrs, pm_arc).await;
+    listeners::listen(pm_arc).await;
 
     std::fs::remove_file(&socket_path)
     .with_context(|| format!("Failed to remove unix socket at {}", socket_path.display()))?;

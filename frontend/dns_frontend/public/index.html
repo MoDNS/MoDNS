@@ -2,14 +2,29 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta
-      name="Website for DNS Server Management"
-      content=""
+    name="Website for DNS Server Management"
+    content=""
     />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="icon" id="favicon" href="%PUBLIC_URL%/favicon-light.svg" />
+    <link rel="apple-touch-icon" />
+    <script>
+      const usesDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches || false;
+      const favicon = document.getElementById('favicon');
+
+      function switchIcon(usesDarkMode) {
+        if (usesDarkMode) { 
+          favicon.href = '%PUBLIC_URL%/favicon-dark.svg';
+        } else {
+          favicon.href = '%PUBLIC_URL%/favicon-light.svg';
+        }
+      }
+
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener( "change", (e) => switchIcon(e.matches));
+      switchIcon(usesDarkMode);
+    </script>
     <!--
       manifest.json provides metadata used when your web app is installed on a
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/

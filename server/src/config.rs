@@ -45,7 +45,6 @@ pub const DB_USER_KEY: &str = "postgres_user";
 pub const DB_PASS_KEY: &str = "postgres_pw";
 pub const LOG_KEY: &str = "log_filter";
 pub const ADMIN_PW_KEY: &str = "admin_pw_hash";
-pub const USE_GLOBAL_DASH_KEY: &str = "use_global_dashboard";
 pub const API_PORT_KEY: &str = "api_port";
 pub const HTTPS_KEY: &str = "use_https";
 pub const TLS_CERT_KEY: &str = "tls_cert_path";
@@ -61,7 +60,6 @@ const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const DEFAULT_POSTGRES_USER: &str = "postgres";
 const DEFAULT_POSTGRES_PASS: &str = "postgres";
 const DEFAULT_LOG_FILTER: &str = "info";
-const DEFAULT_USE_GLOBAL_DASH: bool = false;
 const DEFAULT_HTTP_PORT: u16 = 80;
 const DEFAULT_HTTPS_PORT: u16 = 443;
 const DEFAULT_HTTPS: bool = false;
@@ -457,10 +455,6 @@ impl MutableServerConfig {
         self.get_config_obj(TLS_KEY_KEY)
     }
 
-    fn use_global_dash(&self) -> Option<bool> {
-        self.get_config_obj(USE_GLOBAL_DASH_KEY)
-    }
-
     pub fn set_plugin_path(&mut self, plugin_path: Vec<PathBuf>) -> Result<()> {
         self.set_config_obj(PLUGIN_PATH_KEY, plugin_path)
     }
@@ -495,10 +489,6 @@ impl MutableServerConfig {
 
     pub fn set_admin_pw_hash(&mut self, pw: String) -> Result<()> {
         self.set_config_obj(ADMIN_PW_ENV, pw)
-    }
-
-    pub fn set_use_global_dash(&mut self, dash: bool) -> Result<()> {
-        self.set_config_obj(USE_GLOBAL_DASH_KEY, dash)
     }
 
     pub fn set_https(&mut self, https: Option<bool>) -> Result<()> {
@@ -617,6 +607,12 @@ impl ServerConfig {
         Self::compose(im, mu)
     }
 
+    pub fn empty() -> Self {
+        let im = ImmutableServerConfig::default();
+        let mu = MutableServerConfig(Map::new(), PathBuf::new());
+        Self::compose(im, mu)
+    }
+
 }
 
 impl ServerConfig {
@@ -729,10 +725,6 @@ impl ServerConfig {
             .or(self.settings.admin_pw_hash())
     }
 
-    pub fn use_global_dash(&self) -> bool {
-        self.settings.use_global_dash().unwrap_or(DEFAULT_USE_GLOBAL_DASH)
-    }
-
     pub fn headless(&self) -> bool {
         self.headless
     }
@@ -801,10 +793,6 @@ impl ServerConfig {
     
     pub fn set_admin_pw_hash(&mut self, pw: String) -> Result<()> {
         self.settings.set_admin_pw_hash(pw)
-    }
-
-    pub fn set_use_global_dash(&mut self, dash: bool) -> Result<()> {
-        self.settings.set_use_global_dash(dash)
     }
 
     pub fn set_api_port(&mut self, port: Option<u16>) -> Result<()> {
@@ -907,13 +895,6 @@ impl ServerConfig {
         MutableConfigValue {
             overridden: self.override_admin_pw_hash.is_some(),
             value: ()
-        }
-    }
-
-    pub fn query_use_global_dash(&self) -> MutableConfigValue<bool> {
-        MutableConfigValue {
-            overridden: false,
-            value: self.use_global_dash()
         }
     }
 

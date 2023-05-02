@@ -1,4 +1,5 @@
 
+use std::ffi::c_void;
 use std::path::{PathBuf, Path};
 use std::sync::{Arc, Weak};
 use std::collections::BTreeMap;
@@ -303,6 +304,23 @@ impl PluginManager {
             .encode(message)
     }
 
+    pub fn poll_listeners(&self) -> Result<Option<(ffi::DnsMessage, Arc<DnsPlugin>, *mut c_void)>, PluginExecutorError> {
+
+        let Some(listener) = self.listener.upgrade() else {
+            return Ok(None)
+        };
+
+        let mut msg = ffi::DnsMessage::default();
+
+        if let Some(request_ptr) = listener.poll(&mut msg)? {
+            log::trace!("Got request from listener");
+            return Ok(Some((msg, Arc::clone(&listener), request_ptr)));
+        };
+
+        Ok(None)
+
+    }
+
     pub fn poll_interceptors(&self, req: &Box<ffi::DnsMessage>) -> Result<Option<Box<ffi::DnsMessage>>, PluginExecutorError> {
         
         for plugin_weakref in &self.interceptors {
@@ -404,5 +422,9 @@ impl PluginManager {
 
     pub fn config(&self) -> &ServerConfig {
         &self.config
+    }
+
+    pub fn config_mut(&mut self) -> &mut ServerConfig {
+        &mut self.config
     }
 }

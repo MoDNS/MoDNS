@@ -10,6 +10,9 @@ import { getAuthentication } from '../API/getsetAPI';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Visibility from '@mui/icons-material/Visibility';
 
+import { ReactComponent as MoDNSLogo} from '../images/logo.svg';
+
+
 const Login = ({ setLoggedIn }) => {
     const theme = useTheme();
     const navigate = useNavigate();
@@ -41,13 +44,17 @@ const Login = ({ setLoggedIn }) => {
         <MainBox 
             id='MBox' 
             sx={{ position: 'relative', top: 150, marginLeft: 'auto', marginRight: 'auto', width: 415, }} 
-            title={'Login'}
+            title={
+                <div style={{ height: 220, width: '100%', marginBottom: 60, marginTop: 5, paddingRight: 10 }} >
+                    <MoDNSLogo stroke={theme.palette.text.primary} fill={theme.palette.text.primary}/>
+                </div>
+            }
             titleCentered
         >
 
             <Box 
                 type='form'
-                sx={{ marginTop: 20, width: '100%' }}
+                sx={{ width: '100%' }}
             >
                 <TextField
                     fullWidth
