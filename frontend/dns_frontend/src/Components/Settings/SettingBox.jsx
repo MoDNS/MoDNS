@@ -12,6 +12,7 @@ const SettingBox = ({ children, title, noFullWidth }) => {
                 borderRadius: 8, 
                 border: `4px solid ${theme.palette.primary.dark}`,
                 padding: 3,
+                marginBottom: 2,
                 width: '99%',
                 display: 'flex',
                 flexDirection: 'column',
