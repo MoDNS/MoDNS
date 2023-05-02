@@ -41,18 +41,27 @@ func impl_inspect_resp(req *C.constMessage, resp *C.constMessage, source C.uchar
 
 //export impl_plugin_setup
 func impl_plugin_setup() *C.void {
+    modns_log(3, "Retrieving database connection info")
     database := C.modns_get_database()
 
+    if database == nil {
+        modns_log(0, "Couldn't retrieve database connection info from server")
+        return nil
+    }
+
+    modns_log(3, "Connecting to database")
     if database.tag == C.SQLite{
         db = sqlite_connect(*database)
     } else {
         db = postgres_connect(*database)
     }
 
+    modns_log(3, "Checking connection to database")
     if err := db.Ping(); err != nil {
         modns_log(0, fmt.Sprint("Connection to database could not be established", err))
     }
 
+    modns_log(3, "Creating database table")
     _, err := db.Exec(`CREATE TABLE IF NOT EXISTS basecache (
         host    VARCHAR(255),
         rrtype  INTEGER NOT NULL,
@@ -69,6 +78,7 @@ func impl_plugin_setup() *C.void {
         modns_log(0, fmt.Sprint("Error creating database table:", err))
     }
 
+    modns_log(2, "Successfully initialized cache database")
     return nil
 }
 
