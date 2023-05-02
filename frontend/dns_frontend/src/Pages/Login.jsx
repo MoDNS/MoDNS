@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PropTypes } from 'prop-types';
 import MainBox from '../Components/MainBox';
-import { getAuthentication } from '../API/getsetAPI';
 
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Visibility from '@mui/icons-material/Visibility';
@@ -23,7 +22,7 @@ const Login = ({ setLoggedIn }) => {
     function handleSubmit(e) {
         e.preventDefault();
 
-        if(getAuthentication(password)){
+        if(password !== "" || password !== null){
             setLoggedIn(true);
             navigate('/manage/dashboard');
         } else {

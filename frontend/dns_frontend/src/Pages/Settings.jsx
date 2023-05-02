@@ -1,15 +1,16 @@
 import React from 'react';
-import { Button, Typography } from '@mui/material';
-import { Box } from '@mui/system';
+import { Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material';
 import { useState } from 'react';
 import { PropTypes } from 'prop-types';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
 
 import MainBox from '../Components/MainBox';
-import ServerSettings from '../Components/Settings/ServerSettings';
-import ThemeSelector from '../Components/Settings/ThemeSelector';
-import ChangePassword from '../Components/Settings/ChangePassword';
-import DatabaseSettings from '../Components/Settings/DatabaseSettings';
+
+import GeneralSettings from '../Components/Settings/GeneralSettings';
+import AdvancedSettings from '../Components/Settings/AdvancedSettings';
+import WebSecurity from '../Components/Settings/WebSecurity';
 
 
 
@@ -18,19 +19,85 @@ const Settings = ({ setTheme }) => {
     
     const [box, setBox] = useState(0);
 
-    const pages = {
-        0: <ServerSettings />,
-        1: <ThemeSelector setTheme={setTheme} />,
-        2: <DatabaseSettings />,
-        3: <ChangePassword />,
+    function TabPanel(props) {
+        const { children, value, index, ...other } = props;
+      
+        return (
+          <div
+            role="tabpanel"
+            hidden={value !== index}
+            id={`simple-tabpanel-${index}`}
+            aria-labelledby={`simple-tab-${index}`}
+            {...other}
+          >
+            {value === index && (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflowX: 'hidden',
+                    }}
+                >
+                    {children}
+                </div>
+            )}
+          </div>
+        );
+      }
+
+    function a11yProps(index) {
+        return {
+          id: `simple-tab-${index}`,
+          'aria-controls': `simple-tabpanel-${index}`,
+        };
     }
+
 
     return (
         <MainBox
-            title={"Settings"}
+            title={
+                <div style={{ display: 'flex', flexDirection: 'row'}} >
+                    Settings
+                    <div
+                        style={{
+                            marginLeft: 'auto',
+                            marginTop: 'auto',
+                            backgroundColor: theme.palette.primary.dark,
+                            border: `2px solid ${theme.palette.primary.dark}`,
+                        }}
+                    >
+                        <Tabs 
+                            value={box} 
+                            onChange={(e, newValue) => setBox(newValue)} 
+                            TabIndicatorProps={{
+                                style: {
+                                backgroundColor: theme.palette.secondary.main,
+                                }
+                            }}
+                        >
+                            <Tab label="General" {...a11yProps(0)} />
+                            <Tab label="Advaned" {...a11yProps(1)} />
+                            <Tab label="Web Security" {...a11yProps(2)} />
+                        </Tabs>
+                    </div>
+
+                </div>
+            }
             divider
         >
-            <div style={{display:'flex', flexDirection:'row', height: '100%' }}>
+            
+            <TabPanel value={box} index={0}>
+                <GeneralSettings setTheme={setTheme} />
+            </TabPanel>
+            <TabPanel value={box} index={1}>
+                <AdvancedSettings />
+            </TabPanel>
+            <TabPanel value={box} index={2}>
+                <WebSecurity />
+            </TabPanel>
+
+
+            {/* <div style={{display:'flex', flexDirection:'row', height: '100%' }}>
                 <div 
                     style={{ 
                         width: '45%',
@@ -130,20 +197,20 @@ const Settings = ({ setTheme }) => {
                 <Box 
                     sx={{
                         borderRadius: 8, 
+                        border: `4px solid ${theme.palette.primary.dark}`,
                         padding: 3,
                         width: '55%',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         overflowX: 'hidden',
-                        border: `4px solid ${theme.palette.primary.dark}`,
                     }}
                 >
                     {
                         pages[box]
                     }
                 </Box>
-            </div>
+            </div> */}
         </MainBox>
 
     );

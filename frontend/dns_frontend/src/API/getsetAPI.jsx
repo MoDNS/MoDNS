@@ -141,21 +141,24 @@ export const shutdownServer = async () => {
     });
 }
 
-export const setServerConfig = async (key, value) => {
+export const setServerConfig = async (dict) => {
     await fetch(`${window.location.origin}/api/server/config`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: {
-            key: value,
-        }
+        body: dict
     });
 }
 
-export const getServerConfig = async (key) => {
-    return await fetch(`${window.location.origin}/api/server/config?key=${key}`, {
-        method: 'GET'
+export const getServerConfig = async (keys) => {
+    const keyDict = Object.fromEntries(keys.map(k => [k, ""]))
+    return await fetch(`${window.location.origin}/api/server/config}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: keyDict
     }).then(response => {
         if (response.ok) {
             return response.json();
@@ -186,19 +189,5 @@ export const setDashboardLayoutAPI = async (dashboard) => {
         },
         body: {'data': dashboard },
     });
-}
-
-////////////////////////////// AUTHENTICATION ///////////////////////////////
-export const getAuthentication = (password) => {
-    if (password !== "") {
-        return true
-    }
-    // fetch(`${window.location.origin}/api/auth`);
-
-}
-
-export const setNewPassword = (oldPass, newPass) => {
-    // api call for authentication of old pass
-    return true;
 }
 

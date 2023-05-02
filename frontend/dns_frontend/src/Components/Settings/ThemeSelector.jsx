@@ -4,24 +4,15 @@ import SquareIcon from '@mui/icons-material/Square';
 import themes from '../../themes';
 import { PropTypes } from 'prop-types';
 
-import { getThemeStorage, setThemeStorage } from '../../scripts/getsetLocalStorage';
-
-const ThemeSelector = ({ setTheme }) => {
+const ThemeSelector = ({ selectedTheme, setSelectedTheme }) => {
 
     const theme = useTheme();
 
-    const [selectedTheme, setSelectedTheme] = React.useState(getThemeStorage());
-
     const handleChange = (event) => {
-        setSelectedTheme(event.target.value);
+        setSelectedTheme("theme", event.target.value);
     };
 
     const themeSelectionRows = [];
-
-    const handleApplyChanges = () => {
-        setTheme(selectedTheme);
-        setThemeStorage(selectedTheme);
-    }
 
     Object.keys(themes).forEach(function(key) {
         themeSelectionRows.push(
@@ -53,28 +44,9 @@ const ThemeSelector = ({ setTheme }) => {
 
     return (
         <>
-            <Typography
-                sx={{ 
-                    fontSize: 35,
-                }}
-            >
-                Theme Selector
-            </Typography>
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flexGrow: 1, }} >
-                <RadioGroup >
-                    {themeSelectionRows}
-                </RadioGroup>
-                
-            </div>
-
-            <Button
-                variant={'contained'}
-                fullWidth
-                sx={{  position: 'sticky', bottom: 0, }}
-                onClick={ () => handleApplyChanges() }
-            >
-                Apply Changes
-            </Button>  
+            <RadioGroup >
+                {themeSelectionRows}
+            </RadioGroup>
         </>
     );
 };
