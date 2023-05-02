@@ -13,12 +13,12 @@ use std::sync::Arc;
 use anyhow::Result;
 
 /// Start API and DNS servers on the provided listeners
-pub async fn listen(apiaddrs: Vec<api::ApiListener>, dnsaddrs: Vec<dns::DnsListener>, pm_arc: Arc<RwLock<PluginManager>>, ) {
+pub async fn listen(dnsaddrs: Vec<dns::DnsListener>, pm_arc: Arc<RwLock<PluginManager>>, ) {
 
     let (shutdown, _) = broadcast::channel(1);
 
     if let Err(e) = tokio::try_join!(
-        api::listen_api(apiaddrs, shutdown.clone(), pm_arc.clone()),
+        api::listen_api(shutdown.clone(), pm_arc.clone()),
         dns::listen_dns(dnsaddrs, shutdown.clone(), pm_arc.clone()),
         wait_for_shutdown(shutdown)
     ) {
