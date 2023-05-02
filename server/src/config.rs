@@ -31,6 +31,10 @@ const DB_PASSWORD_ENV: &str = "MODNS_DB_PASSWORD";
 const LOG_ENV: &str = "MODNS_LOG";
 const ADMIN_PW_ENV: &str = "MODNS_ADMIN_PW";
 const HEADLESS_ENV: &str = "MODNS_HEADLESS";
+const API_PORT_ENV: &str = "MODNS_HTTP_PORT";
+const HTTPS_ENV: &str = "MODNS_USE_HTTPS";
+const TLS_CERT_ENV: &str = "MODNS_TLS_CERT";
+const TLS_KEY_ENV: &str = "MODNS_TLS_KEY";
 
 pub const PLUGIN_PATH_KEY: &str = "plugin_path";
 pub const DB_TYPE_KEY: &str = "db_type";
@@ -41,6 +45,10 @@ pub const DB_USER_KEY: &str = "postgres_user";
 pub const DB_PASS_KEY: &str = "postgres_pw";
 pub const LOG_KEY: &str = "log_filter";
 pub const ADMIN_PW_KEY: &str = "admin_pw_hash";
+pub const API_PORT_KEY: &str = "api_port";
+pub const HTTPS_KEY: &str = "use_https";
+pub const TLS_CERT_KEY: &str = "tls_cert_path";
+pub const TLS_KEY_KEY: &str = "tls_key_path";
 pub const ALL_KEY: &str = "all";
 
 const DEFAULT_PLUGIN_PATH: &str = "/usr/share/modns/default-plugins";
@@ -52,6 +60,11 @@ const DEFAULT_DB_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const DEFAULT_POSTGRES_USER: &str = "postgres";
 const DEFAULT_POSTGRES_PASS: &str = "postgres";
 const DEFAULT_LOG_FILTER: &str = "info";
+const DEFAULT_HTTP_PORT: u16 = 80;
+const DEFAULT_HTTPS_PORT: u16 = 443;
+const DEFAULT_HTTPS: bool = false;
+const DEFAULT_TLS_CERT: &str = "/usr/share/modns/tls/default-cert.pem";
+const DEFAULT_TLS_KEY: &str = "/usr/share/modns/tls/default-key.rsa";
 
 const CONFIG_LOCKFILE_NAME: &str = "config-lock.json";
 
@@ -147,6 +160,28 @@ pub struct ImmutableServerConfig {
     /// Don't expose the web frontend
     #[arg(long, action=clap::ArgAction::SetTrue, env=HEADLESS_ENV)]
     headless: bool,
+
+    /// Port to host the API and frontend on
+    #[arg(long, env=API_PORT_ENV)]
+    api_port: Option<u16>,
+
+    /// Host the API and frontend on HTTPS
+    #[arg(short='s', long, action=clap::ArgAction::SetTrue, env=HTTPS_ENV)]
+    https: bool,
+
+    /// The TLS certificate path to use for HTTPS
+    ///
+    /// If a relative path is given, it will be expanded to that path relative to the persistent
+    /// data directory (specified with --data-dir)
+    #[arg(long, env=TLS_CERT_ENV)]
+    tls_cert: Option<PathBuf>,
+
+    /// Path to the TLS key to use for HTTPS
+    ///
+    /// If a relative path is given, it will be expanded to that path relative to the persistent
+    /// data directory (specified with --data-dir)
+    #[arg(long, env=TLS_KEY_ENV)]
+    tls_key: Option<PathBuf>,
 }
 
 impl ImmutableServerConfig {
@@ -168,7 +203,11 @@ impl ImmutableServerConfig {
         db_user,
         db_password,
         admin_password,
-        headless
+        headless,
+        api_port,
+        https,
+        tls_cert,
+        tls_key
         } = self;
 
         // Get canonical paths for all plugin directories, creating any directories that don't exist
@@ -232,7 +271,7 @@ impl ImmutableServerConfig {
                 let relative_path = data_dir.join(frontend_dir.as_path());
 
             relative_path.canonicalize()
-                .with_context(|| format!("Frontend directory {} was not found", relative_path.display()))
+                .with_context(|| format!("Directory {} was not found", relative_path.display()))
             }
         };
 
@@ -267,7 +306,11 @@ impl ImmutableServerConfig {
             db_password,
             log,
             admin_password,
-            headless
+            headless,
+            api_port,
+            https,
+            tls_cert,
+            tls_key,
         })
     }
 }
@@ -396,6 +439,22 @@ impl MutableServerConfig {
         self.get_config_obj(ADMIN_PW_KEY)
     }
 
+    fn https(&self) -> Option<bool> {
+        self.get_config_obj(HTTPS_KEY)
+    }
+
+    fn api_port(&self) -> Option<u16> {
+        self.get_config_obj(API_PORT_KEY)
+    }
+
+    fn tls_cert(&self) -> Option<PathBuf> {
+        self.get_config_obj(TLS_CERT_KEY)
+    }
+
+    fn tls_key(&self) -> Option<PathBuf> {
+        self.get_config_obj(TLS_KEY_KEY)
+    }
+
     pub fn set_plugin_path(&mut self, plugin_path: Vec<PathBuf>) -> Result<()> {
         self.set_config_obj(PLUGIN_PATH_KEY, plugin_path)
     }
@@ -432,6 +491,21 @@ impl MutableServerConfig {
         self.set_config_obj(ADMIN_PW_ENV, pw)
     }
 
+    pub fn set_https(&mut self, https: Option<bool>) -> Result<()> {
+        self.set_config_obj(HTTPS_KEY, https)
+    }
+
+    pub fn set_api_port(&mut self, port: Option<u16>) -> Result<()> {
+        self.set_config_obj(API_PORT_KEY, port)
+    }
+
+    pub fn set_tls_cert(&mut self, path: Option<PathBuf>) -> Result<()> {
+        self.set_config_obj(TLS_CERT_KEY, path)
+    }
+
+    pub fn set_tls_key(&mut self, path: Option<PathBuf>) -> Result<()> {
+        self.set_config_obj(TLS_KEY_KEY, path)
+    }
 }
 
 /// The server's configuration. Composed of immutable options which must be set when starting
@@ -475,6 +549,14 @@ pub struct ServerConfig {
     override_admin_pw_hash: Option<String>,
 
     headless: bool,
+
+    override_api_port: Option<u16>,
+
+    override_https: bool,
+
+    override_tls_cert: Option<PathBuf>,
+
+    override_tls_key: Option<PathBuf>,
 }
 
 impl ServerConfig {
@@ -508,6 +590,10 @@ impl ServerConfig {
             override_db_pass: im.db_password,
             override_admin_pw_hash: im.admin_password,
             headless: im.headless,
+            override_https: im.https,
+            override_api_port: im.api_port,
+            override_tls_cert: im.tls_cert,
+            override_tls_key: im.tls_key,
         }
     }
 
@@ -642,6 +728,34 @@ impl ServerConfig {
     pub fn headless(&self) -> bool {
         self.headless
     }
+
+    pub fn https(&self) -> bool {
+        self.override_https
+        || self.settings.https()
+            .unwrap_or(DEFAULT_HTTPS)
+    }
+
+    pub fn api_port(&self) -> u16 {
+        self.override_api_port
+            .or(self.settings.api_port())
+            .unwrap_or(if self.https() {
+                DEFAULT_HTTPS_PORT
+            } else {
+                    DEFAULT_HTTP_PORT
+                })
+    }
+
+    pub fn tls_cert(&self) -> PathBuf {
+        self.override_tls_cert.clone()
+            .or(self.settings.tls_cert())
+            .unwrap_or(DEFAULT_TLS_CERT.into())
+    }
+
+    pub fn tls_key(&self) -> PathBuf {
+        self.override_tls_key.clone()
+            .or(self.settings.tls_key())
+            .unwrap_or(DEFAULT_TLS_KEY.into())
+    }
 }
 
 impl ServerConfig {
@@ -681,6 +795,21 @@ impl ServerConfig {
         self.settings.set_admin_pw_hash(pw)
     }
 
+    pub fn set_api_port(&mut self, port: Option<u16>) -> Result<()> {
+        self.settings.set_api_port(port)
+    }
+
+    pub fn set_https(&mut self, https: Option<bool>) -> Result<()> {
+        self.settings.set_https(https)
+    }
+
+    pub fn set_tls_cert(&mut self, path: Option<PathBuf>) -> Result<()> {
+        self.settings.set_tls_cert(path)
+    }
+
+    pub fn set_tls_key(&mut self, path: Option<PathBuf>) -> Result<()> {
+        self.settings.set_tls_key(path)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -766,6 +895,34 @@ impl ServerConfig {
         MutableConfigValue {
             overridden: self.override_admin_pw_hash.is_some(),
             value: ()
+        }
+    }
+
+    pub fn query_api_port(&self) -> MutableConfigValue<u16> {
+        MutableConfigValue {
+            overridden: self.override_api_port.is_some(),
+            value: self.api_port(),
+        }
+    }
+
+    pub fn query_https(&self) -> MutableConfigValue<bool> {
+        MutableConfigValue {
+            overridden: self.override_https,
+            value: self.https(),
+        }
+    }
+
+    pub fn query_tls_cert(&self) -> MutableConfigValue<PathBuf> {
+        MutableConfigValue {
+            overridden: self.override_tls_cert.is_some(),
+            value: self.tls_cert(),
+        }
+    }
+
+    pub fn query_tls_key(&self) -> MutableConfigValue<PathBuf> {
+        MutableConfigValue {
+            overridden: self.override_tls_key.is_some(),
+            value: self.tls_key(),
         }
     }
 

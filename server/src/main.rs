@@ -4,9 +4,10 @@ use anyhow::Context;
 
 use modnsd::config;
 use modnsd::plugins::manager::PluginManager;
-use modnsd::listeners::{ApiListener, self};
 
-use tokio::{net::{TcpListener, UnixListener}, sync::RwLock};
+use modnsd::listeners;
+
+use tokio::sync::RwLock;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -54,20 +55,7 @@ async fn main() -> anyhow::Result<()> {
         log::info!("Plugin initialization successful");
     }
 
-    log::info!("Binding API listeners");
-    let apiaddrs = vec![
-        ApiListener::Tcp(
-            TcpListener::bind(("0.0.0.0", 80)).await
-            .context("Failed to bind TCP listener on port 8080")?
-        ),
-
-        ApiListener::Unix(
-            UnixListener::bind(&socket_path)
-            .with_context(|| format!("Failed to bind Unix listener on {}", socket_path.display()))?
-        ),
-    ];
-
-    listeners::listen(apiaddrs, pm_arc).await;
+    listeners::listen(pm_arc).await;
 
     std::fs::remove_file(&socket_path)
     .with_context(|| format!("Failed to remove unix socket at {}", socket_path.display()))?;

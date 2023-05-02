@@ -27,6 +27,7 @@ services:
       MODNS_LOG_STYLE: always
     ports:
       - "8080:80"
+      - "4433:443"
       - "5300:53"
       - "5300:53/udp"
     volumes:
