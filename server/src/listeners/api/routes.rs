@@ -24,7 +24,7 @@ pub struct PluginQuery
 #[derive(Deserialize)]
 pub struct ConfigGetQuery
 {
-    keys: Option<Vec<String>>
+    keys: Option<String>
 }
 
 pub fn root_redirect() -> BoxedFilter<(impl Reply,)> {
@@ -77,8 +77,9 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
         .or(warp::path!("server" / "config").and(warp::get()).and(warp::query::<ConfigGetQuery>())
         .then(move |cq: ConfigGetQuery| {
             let pm = config_get_pm.clone();
+            let vec = cq.keys.unwrap_or("".to_string()).split(',').map(str::to_string).collect::<Vec<String>>();
             log::trace!("Server config requested");
-            get_server_config(pm, cq)
+            get_server_config(pm, vec)
             })
         )
         .or(warp::path!("server" / "config").and(warp::post()).and(warp::filters::body::json())
@@ -194,13 +195,13 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
 
 }
 
-pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, cq: ConfigGetQuery) -> impl Reply {
+pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, vec: Vec<String>) -> impl Reply {
     
     let cm = pm.write().await;
 
     let mut reply:BTreeMap<String, serde_json::Value> = BTreeMap::new();
     
-    for i in cq.keys.unwrap_or(Vec::new()) {
+    for i in vec {
         match i.as_ref() {
             PLUGIN_PATH_KEY => {
                 let path = cm.config().query_plugin_path();
