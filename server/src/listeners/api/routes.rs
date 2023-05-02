@@ -181,6 +181,26 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
                 let password = i.1;
                 cm.config_mut().set_db_password(password).ok();
             },
+            DB_USER_KEY => {
+                let user = i.1;
+                cm.config_mut().set_db_user(user).ok();
+            },
+            API_PORT_KEY => {
+                let port = serde_json::from_str(i.1).ok();
+                cm.config_mut().set_api_port(port).ok();
+            },
+            HTTPS_KEY => {
+                let https = serde_json::from_str(i.1).ok();
+                cm.config_mut().set_https(https).ok();
+            },
+            TLS_CERT_KEY => {
+                let path = PathBuf::from(i.1);
+                cm.config_mut().set_tls_key(Some(path)).ok();
+            },
+            TLS_KEY_KEY => {
+                let path = PathBuf::from(i.1);
+                cm.config_mut().set_tls_key(Some(path)).ok();
+            }
             ADMIN_PW_KEY => {
                 let pw = i.1;
                 cm.config_mut().set_admin_pw_hash(pw.to_string()).ok();
