@@ -1,4 +1,4 @@
-## Design Consideration
+## Design Considerations
 
 ### Codes & Standards
 
@@ -19,14 +19,9 @@ MoDNS will provide a seamless setup and update process.
 
 MoDNS will be easily distributable and installable onto devices that runs Ubuntu.
 
-
-### Engineering Economic Considerations
-
-[To be filled later]
-
 ### Social & Political Considerations
 
-[To be filled later]
+One of the goals of this project is to give those unfamiliar with DNS the ability to modify and enhance their DNS service. Some of these modifications include bypassing geo-restrictions and dropping specific DNS requests. As part of this, some countries will be able to access parts of the internet that their government prohibits them from accessing. Combining this with other modifications that encrypt and secure DNS requests, it could open doors for many to reach past limitations given by their government. Lawsuits or public outcry for enabling user's with this ability could be a result of this. On the other hand, others may praise and support the porject for allowing just that. While we cannot make a conclusion on how people and/or governments would react to this, but we should definitely keep this in consideration as we move further toward release.
 
 ### International Context
 

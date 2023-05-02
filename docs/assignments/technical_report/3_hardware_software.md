@@ -1,6 +1,6 @@
 ## Hardware
 
-The MoDNS Framework is designed to run on any device that can run Ubuntu. The device is intended to be set up on a network as a dedicated local DNS Server.
+The MoDNS Framework is designed to run on any device that can run Ubuntu Linux. The device is intended to be set up on a LAN network as a dedicated local DNS Server.
 
 ## Software
 
@@ -13,18 +13,18 @@ The MoDNS Back-End implements plugin integration, hosts a Rest API, and hosts th
 ### Plugins
 
 Plugins handle the DNS process by implementing atleast one of the following modules:
- - Listeners: control how incomining packets are parsed into a DNS Requeset
- - Interceptors: respond to or drops a DNS request before it is resolved
- - Resolvers: control how outbound DNS requests are handled
- - Validators: can drop a response
- - Inspectors: sees the DNS response
-These plugins will form the foundation of the DNS server and allow administrators to develop their own plugins for their DNS server.
+ - Listeners: Controls how incomining packets are parsed into a DNS Requeset
+ - Interceptors: Responds to or drops a DNS request before it is resolved
+ - Resolvers: Controls how outbound DNS requests are handled
+ - Validators: Can drop a DNS response
+ - Inspectors: Sees the DNS response
+These plugins will form the foundation of the DNS server and allow administrators and hobbyists to develop their own plugins for their DNS server.
 
 ### API
 
-The API will be used for communication between the Back-End and Front-End. This API will draw data from the MoDNS framework while managing and containing the plugins and send it to the web server to be presented to the user. It will also manage administrator authentication and plugin configuration.
+To facilitate communication of data between the framework itself and a user-friendly front end website, we created an API baked into the backend. This API uses the plugin manager provided by the framework to grab plugin data, lists, and statistics and sends the data in JSON format to the frontend. In addition to the communication, the frontend can send requests to the API that will modify plugin configuration and handle plugin management. This allows users unfamiliar with command line interfaces or programming languages to easily change plugin configurations from the frontend website.
 
 ### Front-End
 
-The Front-End is a web interface designed to allow the administrator to easily manage the MoDNS Server and any implemented plugins. The web server will be hosted locally by the MoDNS server, providing access to it anywhere on the local network. The Front-End also provides functionality to monitor plugins.
+One major goal of this project was to be accessible to the average hobbyist user who may not be as familiar with command line interfaces. To accomplish this goal, we created a user friendly web interface to manage the server. The Front-End is a web interface designed to allow the administrator to easily manage the MoDNS Server and any implemented plugins. The web server will be hosted locally by the MoDNS server, providing access to it anywhere on the local network. The Front-End also provides functionality to monitor plugins.
 
