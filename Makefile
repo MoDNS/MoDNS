@@ -18,6 +18,7 @@ endif
 
 export SDK_HEADER_ARGS=-I$(HEADER_DIR)
 export SDK_LINK_ARGS=-u_init_modns_sdk -L$(TARGET_DIR) -lmodns_sdk -ldl
+export CFLAGS+=-fdiagnostics-color=always
 
 all: sdk server plugins cli
 
@@ -54,7 +55,7 @@ test: plugins test-plugins
 endif
 
 .PHONY: clean
-clean:
+clean: cargo-clean plugin-clean
 	$(MAKE) -C plugins/ clean
 	cargo clean
 
