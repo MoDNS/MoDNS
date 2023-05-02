@@ -1,7 +1,7 @@
 
-all: listener resolver cache
+all: listener resolver cache data
 
-.PHONY: listener resolver cache install
+.PHONY: listener resolver cache data install
 
 listener:
 	$(MAKE) -C base-listener/
@@ -11,6 +11,9 @@ resolver:
 
 cache:
 	$(MAKE) -C base-cache/
+
+data:
+	$(MAKE) -C base-datacollector/
 
 install: listener resolver cache
 	$(MAKE) -C base-listener/ install
