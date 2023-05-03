@@ -1,15 +1,15 @@
 \pagebreak
 # MoDNS Technical Report
 
-This report details the design process, decisions, solutions, hardwares & softwares, and design considerations involved in developing the MoDNS Framework.
+This report will detail the technical design process, decisions, solutions, hardwares & softwares, and design considerations involved in developing the MoDNS Framework.
 
 ## Design Process
 
-The team met up and discussed what parts of the project each would like to work on and responsibilities were delegated. The team began by researching DNS, its issues, and alternative methods to achieve the solution. The idea to create a modular system had already been decided on by this point. However, the team needed to decide and discuss what the process of a modular DNS server would look like and how we should achieve it.
+Firstly, we will cover the design process that was taken to complete the project. The team met and discussed the parts of the project that each member would like to work on. These responsibilities were delegated and the members were split into three groups: Frontend, Backend, and DevOps. The team began by researching DNS, its issues, and alternative methods to achieve the solution. The idea to create a modular system had already been decided on by this point. However, the team needed to decide and discuss what the process of a modular DNS server would look like and how we should achieve it.
 
 ### Major Decisions
 
-During the design and research process, the team considered the following questions that required weighing two or more alternatives.
+During the design and research process, the team encountered the following questions that required weighing two or more solutions.
 
 #### Plugin Loading: Lua vs Dynamic Libraries
 
@@ -27,7 +27,7 @@ To deploy the framework, there were two schools of thoughts. One was an operatin
 
 #### Front End Framework: Javascript React vs HTML/CSS
 
-Using HTML/CSS forces developers to create and style components that React‘s libraries already have. This adds complexity and time to the development process not only for base components but each new component that is added. Additionally, React uses Javascript which allows for conditional rendering, iterative component creation, component recycling.
+For the front end development, the front end group needed to make a decision on how they would develop the website. Their options were HTML/CSS or Javascript React.Using HTML/CSS forces developers to create and style components that React‘s libraries already have. This adds complexity and time to the development process not only for base components but each new component that is added. Additionally, React uses Javascript which allows for conditional rendering, iterative component creation, component recycling. Alongside these reasons, the team had previous experience with React and therefore would be able to begin producing results at a faster rate than its alternative.
 
 #### Frontend and Backend Communication: Rest API vs GraphQL
 
