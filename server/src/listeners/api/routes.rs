@@ -83,7 +83,7 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             })
         )
         .or(warp::path!("server" / "config").and(warp::post()).and(warp::filters::body::json())
-        .then(move |json: HashMap<String, String>| {
+        .then(move |json: HashMap<String, serde_json::Value>| {
             let pm = config_set_pm.clone();
             log::trace!("Server config requested");
             set_server_config(pm, json)
@@ -136,7 +136,7 @@ pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, enable:
     }
 }
 
-pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<String, String>) -> impl Reply {
+pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<String, serde_json::Value>) -> impl Reply {
     
     let mut cm = pm.write().await;
 
@@ -148,12 +148,12 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
     for i in json.iter() {
         match i.0.as_ref() {
             PLUGIN_PATH_KEY => {
-                let vec =  cm.config().query_plugin_path();
+                let vec = cm.config().query_plugin_path();
                 let mut new = Vec::<PathBuf>::new();
                 for value in vec {
                     new.insert(0, value.value().to_path_buf())
                 }
-                new.insert(0, PathBuf::from(i.1));
+                new.insert(0, PathBuf::from(i.1.to_string()));
                 cm.config_mut().set_plugin_path(new).ok();
             },
             LOG_KEY => {
@@ -161,48 +161,48 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
                 cm.config_mut().set_log(log.to_string()).ok();
             },
             DB_TYPE_KEY => {
-                let db_type = if i.1 == "Sqlite" {DatabaseBackend::Sqlite} else if i.1 == "Postgres" {DatabaseBackend::Postgres} else {DatabaseBackend::default()};
+                let db_type = if i.1.to_string() == "Sqlite" {DatabaseBackend::Sqlite} else if i.1 == "Postgres" {DatabaseBackend::Postgres} else {DatabaseBackend::default()};
                 cm.config_mut().set_db_type(db_type).ok();
             },
             DB_PATH_KEY => {
-                let db_path = PathBuf::from(i.1);
+                let db_path = PathBuf::from(i.1.to_string());
                 cm.config_mut().set_db_path(db_path).ok();
             },
             DB_ADDR_KEY => {
-                let addr = i.1.parse().unwrap();
+                let addr = i.1.to_string().parse().unwrap();
                 let db_addr = IpAddr::V4(addr);
                 cm.config_mut().set_db_addr(db_addr).ok();
             },
             DB_PORT_KEY => {
-                let db_port = serde_json::from_str(i.1).ok();
+                let db_port = serde_json::from_str(&i.1.to_string()).ok();
                 cm.config_mut().set_db_port(db_port).ok();
             },
             DB_PASS_KEY => {
-                let password = i.1;
-                cm.config_mut().set_db_password(password).ok();
+                let password = i.1.to_string();
+                cm.config_mut().set_db_password(&password).ok();
             },
             DB_USER_KEY => {
-                let user = i.1;
-                cm.config_mut().set_db_user(user).ok();
+                let user = i.1.to_string();
+                cm.config_mut().set_db_user(&user).ok();
             },
             API_PORT_KEY => {
-                let port = serde_json::from_str(i.1).ok();
+                let port = serde_json::from_str(&i.1.to_string()).ok();
                 cm.config_mut().set_api_port(port).ok();
             },
             HTTPS_KEY => {
-                let https = serde_json::from_str(i.1).ok();
+                let https = serde_json::from_str(&i.1.to_string()).ok();
                 cm.config_mut().set_https(https).ok();
             },
             TLS_CERT_KEY => {
-                let path = PathBuf::from(i.1);
+                let path = PathBuf::from(i.1.to_string());
                 cm.config_mut().set_tls_key(Some(path)).ok();
             },
             TLS_KEY_KEY => {
-                let path = PathBuf::from(i.1);
+                let path = PathBuf::from(i.1.to_string());
                 cm.config_mut().set_tls_key(Some(path)).ok();
             }
             ADMIN_PW_KEY => {
-                let pw = i.1;
+                let pw = i.1.to_string();
                 cm.config_mut().set_admin_pw_hash(pw.to_string()).ok();
             },
             &_ => {
