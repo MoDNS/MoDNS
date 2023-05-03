@@ -44,9 +44,10 @@ const AdvancedSettings = () => {
     useEffect(() => {
         getServerConfig([LOG_FILTER_KEY, PLUGIN_PATH_KEY, DB_TYPE_KEY, SQLITE_PATH_KEY, POSTGRES_IP_KEY, POSTGRES_PORT_KEY, POSTGRES_USER_KEY, POSTGRES_PASS_KEY]).then(res => {
             let dict = res ? res : {}
-            console.log(dict);
             setOldSettings(structuredClone(dict));
             setCurrentSettings(structuredClone(dict));
+
+            console.log(dict)
 
             setSelectLogFilter(parseLogFilter(dict[LOG_FILTER_KEY].value || ""));
             setTextLogFilter(dict[LOG_FILTER_KEY].value || "");
@@ -168,7 +169,7 @@ const AdvancedSettings = () => {
                                     if (addPath.trim() === "") {
                                         return;
                                     }
-                                    let x = (currentSettings[PLUGIN_PATH_KEY] && [...currentSettings[PLUGIN_PATH_KEY]]) || [];
+                                    let x = currentSettings[PLUGIN_PATH_KEY] ? [...currentSettings[PLUGIN_PATH_KEY]] : [];
                                     x.push({
                                         overridden: false,
                                         value: addPath,

@@ -145,7 +145,6 @@ export const setServerConfig = async (dict) => {
     if (Object.keys(dict || {}).length === 0) {
         return
     }
-    console.log(JSON.stringify(dict));
     await fetch(`${window.location.origin}/api/server/config`, {
         method: 'POST',
         headers: {
@@ -156,7 +155,6 @@ export const setServerConfig = async (dict) => {
 }
 
 export const getServerConfig = async (keys) => {
-    console.log(`${window.location.origin}/api/server/config${keys ? `?keys=${keys}` : ""}`)
     return await fetch(`${window.location.origin}/api/server/config${keys ? `?keys=${keys}` : ""}`, {
         method: 'GET',
         headers: {
