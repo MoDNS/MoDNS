@@ -630,7 +630,14 @@ impl ServerConfig {
 
         path.extend_from_slice(&self.override_plugin_path);
 
-        path.extend_from_slice(&self.settings.plugin_path().unwrap_or_default());
+        path.extend(
+            self.settings.plugin_path()
+                .unwrap_or_default()
+                .into_iter()
+                .filter(|p| {
+                    !(self.override_plugin_path.contains(&p) || (!self.no_default_plugins && p == &PathBuf::from(DEFAULT_PLUGIN_PATH)))
+                })
+        );
 
         path
     }
@@ -819,19 +826,19 @@ pub struct MutableConfigValue<T: Debug> {
 }
 
 impl<T: Debug> MutableConfigValue<T> {
-    fn overridden(value: T) -> Self {
-        Self {
-            overridden: true,
-            value
-        }
-    }
-
-    fn mutable(value: T) -> Self {
-        Self {
-            overridden: false,
-            value
-        } 
-    }
+    // fn overridden(value: T) -> Self {
+    //     Self {
+    //         overridden: true,
+    //         value
+    //     }
+    // }
+    //
+    // fn mutable(value: T) -> Self {
+    //     Self {
+    //         overridden: false,
+    //         value
+    //     } 
+    // }
 
     pub fn is_overridden(&self) -> bool {
         self.overridden
@@ -927,33 +934,11 @@ impl ServerConfig {
     }
 
     pub fn query_plugin_path(&self) -> Vec<MutableConfigValue<PathBuf>> {
-        let mut path = Vec::with_capacity(
-            self.override_plugin_path.len() +
-            self.settings.plugin_path().map(|v| v.len()).unwrap_or(0) +
-            1
-        );
-
-        if !self.no_default_plugins {
-            path.push(
-                MutableConfigValue::overridden(PathBuf::from(DEFAULT_PLUGIN_PATH))
-            );
-        }
-
-        path.extend(
-            self.override_plugin_path
-                .iter()
-                .map(Clone::clone)
-                .map(MutableConfigValue::overridden)
-        );
-
-        path.extend(
-            self.settings.plugin_path()
-                .unwrap_or_default()
-                .iter()
-                .map(Clone::clone)
-                .map(MutableConfigValue::mutable)
-        );
-
-        path
+        self.plugin_path().into_iter().map(|p| {
+            MutableConfigValue {
+                overridden: self.override_plugin_path.contains(&p) || p == PathBuf::from(DEFAULT_PLUGIN_PATH),
+                value: p
+            }
+        }).collect()
     }
 }
