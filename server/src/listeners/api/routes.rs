@@ -148,13 +148,12 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
     for i in json.iter() {
         match i.0.as_ref() {
             PLUGIN_PATH_KEY => {
-                let vec = cm.config().query_plugin_path();
-                let mut new = Vec::<PathBuf>::new();
-                for value in vec {
-                    new.insert(0, value.value().to_path_buf())
+                let new = i.1.to_string().split(',').map(str::to_string).collect::<Vec<String>>();
+                let mut plugin_path = Vec::<PathBuf>::new();
+                for path in new {
+                    plugin_path.insert(0, PathBuf::from(path));
                 }
-                new.insert(0, PathBuf::from(i.1.to_string()));
-                cm.config_mut().set_plugin_path(new).ok();
+                cm.config_mut().set_plugin_path(plugin_path).ok();
             },
             LOG_KEY => {
                 let log = i.1;
