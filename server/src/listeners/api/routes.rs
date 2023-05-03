@@ -6,6 +6,7 @@ use std::sync::Arc;
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use uuid::Uuid;
+use warp::query;
 use warp::reply::json;
 use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
@@ -88,7 +89,7 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             get_server_config(pm, json)
             })
         )
-        .or(warp::path!("server" / "config").and(warp::post()).and(warp::filters::body::json())
+        .or(warp::path!("server" / "config").and(warp::post()).and(warp::filters::body::json().or(warp::query()).unify())
         .then(move |json: HashMap<String, String>| {
             let pm = config_set_pm.clone();
             log::trace!("Server config requested");
