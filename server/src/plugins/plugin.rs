@@ -1,5 +1,7 @@
 
 
+use crate::ServerConfig;
+
 use super::{ListenerDecodeFn, ListenerEncodeFn, ResolverFn, SetupFn, TeardownFn, SdkInitFn, InterceptorFn, ValidatorFn, InspectorFn, ResponseSource, PLUGIN_FILE_NAME, ListenerPollFn, ListenerRespondFn};
 use modns_sdk::types::conversion::FfiVector;
 use modns_sdk::{types::ffi, PluginState};
@@ -316,7 +318,7 @@ impl DnsPlugin {
 
     }
 
-    pub fn load<P: AsRef<OsStr>>(home_dir: P) -> Result<Self, PluginLoaderError> {
+    pub fn load<P: AsRef<OsStr>>(home_dir: P, config: &ServerConfig) -> Result<Self, PluginLoaderError> {
 
         let home_dir = PathBuf::from(home_dir.as_ref());
 
@@ -333,20 +335,20 @@ impl DnsPlugin {
             .to_string();
 
         match check_sym::<SdkInitFn>(&lib, SDK_INIT_FN_NAME)? {
-            Some(_sdk_init) => {
+            Some(sdk_init) => {
 
                 log::trace!("Initializing SDK logger for {log_name}");
 
-                // if let Err(e) = sdk_init(
-                //     &log_name,
-                //     log::logger(),
-                //     config.db_info(),
-                //     config.data_dir().join("plugin_data").join(&log_name)
-                // ) {
+                if let Err(e) = sdk_init(
+                    &log_name,
+                    log::logger(),
+                    config.db_info(),
+                    config.data_dir().join("plugin_data").join(&log_name)
+                ) {
 
-                //     log::error!("Failed to initialize SDK for {log_name}");
-                //     log::debug!("Got error while initializing SDK: {e:?}");
-                // };
+                    log::error!("Failed to initialize SDK for {log_name}");
+                    log::debug!("Got error while initializing SDK: {e:?}");
+                };
 
             }
             None => {
