@@ -22,7 +22,7 @@ const AdvancedSettings = () => {
 
     const parseLogFilter = (content) => {
         try {
-            let list = content.value.split("=");
+            let list = content.split("=");
             list = list[1].split(",");
             return [...list]
         } catch (error) {
@@ -43,14 +43,15 @@ const AdvancedSettings = () => {
     
     useEffect(() => {
         getServerConfig([LOG_FILTER_KEY, PLUGIN_PATH_KEY, DB_TYPE_KEY, SQLITE_PATH_KEY, POSTGRES_IP_KEY, POSTGRES_PORT_KEY, POSTGRES_USER_KEY, POSTGRES_PASS_KEY]).then(res => {
-            setOldSettings((res && {...res}) || {});
-            setCurrentSettings((res && {...res}) || {});
+            let dict = res ? res : {}
+            console.log(dict);
+            setOldSettings(structuredClone(dict));
+            setCurrentSettings(structuredClone(dict));
 
-            setSelectLogFilter(parseLogFilter((res && res[LOG_FILTER_KEY] && res[LOG_FILTER_KEY].value) || ""));
-            setTextLogFilter((res && res[LOG_FILTER_KEY] && res[LOG_FILTER_KEY].value) || "");
+            setSelectLogFilter(parseLogFilter(dict[LOG_FILTER_KEY].value || ""));
+            setTextLogFilter(dict[LOG_FILTER_KEY].value || "");
             setUseCustLogFilt(!(loggingOptions.includes(selectLogFilter[0] || "") && loggingOptions.includes(selectLogFilter[1] || "")));
-            setErrorPostgresIP(IPInputValidation((res && res[POSTGRES_IP_KEY] && res[POSTGRES_IP_KEY].value) || ""));
-
+            setErrorPostgresIP(!IPInputValidation(dict[POSTGRES_IP_KEY].value || ""));
         })
         
     }, []);
@@ -79,20 +80,23 @@ const AdvancedSettings = () => {
 
     const applyChanges = () => {
         let newSett = {}
-        Object.keys(currentSettings || {}).forEach(key => {
-            if (key !== PLUGIN_PATH_KEY) {
-                if ((oldSettings[key] && oldSettings[key].value) !== currentSettings[key]) {
-                    newSett[key] = currentSettings[key].value;
+        if (currentSettings){
+            Object.keys(currentSettings).forEach(key => {
+                if (key !== PLUGIN_PATH_KEY) {
+                    if (oldSettings[key].value !== currentSettings[key].value) {
+                        newSett[key] = currentSettings[key].value;
+                    }
+                } else {
+                    let x = []
+                    currentSettings[key].forEach(element => {
+                        x.push(element.value);
+                    });
+                    newSett[key] = x;
                 }
-            } else {
-                let x = []
-                currentSettings[key].forEach(element => {
-                    x.push(element.value);
-                });
-                newSett[key] = x;
-            }
-        });
-        setServerConfig(newSett);
+            });
+            setServerConfig(newSett);
+            setOldSettings(structuredClone(currentSettings));
+        }
     }
 
 
@@ -334,7 +338,7 @@ const AdvancedSettings = () => {
                             </Select>
                         </div>
                         {
-                            currentSettings[DB_TYPE_KEY] === "Sqlite" ? <>
+                            currentSettings[DB_TYPE_KEY] && currentSettings[DB_TYPE_KEY].value === "Sqlite" ? <>
                                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35 }}>
                                     <Typography
                                         sx={{
@@ -356,7 +360,7 @@ const AdvancedSettings = () => {
                                     />
                                 </div>
                                 
-                            </> : currentSettings[DB_TYPE_KEY] === "Postgres" && <>
+                            </> : currentSettings[DB_TYPE_KEY] && currentSettings[DB_TYPE_KEY].value && <>
                                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 35 }}>
                                     <Typography
                                         sx={{

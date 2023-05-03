@@ -10,8 +10,8 @@ export const POSTGRES_PORT_KEY = "postgres_port";
 export const POSTGRES_USER_KEY = "postgres_user";
 export const POSTGRES_PASS_KEY = "postgres_pw";
 
-export const HTTPS_ENABLED_KEY = "https";
-export const TLS_CERT_KEY = "tls_cert";
-export const TLS_KEY_KEY = "tls_key";
+export const HTTPS_ENABLED_KEY = "use_https";
+export const TLS_CERT_KEY = "tls_cert_path";
+export const TLS_KEY_KEY = "tls_key_path";
 export const API_PORT_KEY = "api_port";
-export const ADMIN_PW_KEY = "admin_pw_hash";
+export const ADMIN_PW_KEY = "admin_pw";

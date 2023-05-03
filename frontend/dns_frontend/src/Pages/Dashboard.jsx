@@ -4,7 +4,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import MainBox from "../Components/MainBox";
 import { ParseDashboardPage } from "../scripts/ParseDashboardPage";
-import { getDashboardLayoutAPI, getServerConfig, setDashboardLayoutAPI } from "../API/getsetAPI";
+import { getDashboardLayoutAPI, setDashboardLayoutAPI } from "../API/getsetAPI";
 import { getDashboardLayout, getDashboardSource, setDashboardLayout } from "../scripts/getsetLocalStorage";
 
 

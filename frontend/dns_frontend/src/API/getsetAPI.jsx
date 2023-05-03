@@ -111,7 +111,7 @@ export const getPluginCustomSettings = async (uuid) => {
         }
     }).then(response => {
         if (response.ok) {
-            return response.json().data;
+            return response.json();
         }
     })
 }
@@ -142,6 +142,10 @@ export const shutdownServer = async () => {
 }
 
 export const setServerConfig = async (dict) => {
+    if (Object.keys(dict || {}).length === 0) {
+        return
+    }
+    console.log(JSON.stringify(dict));
     await fetch(`${window.location.origin}/api/server/config`, {
         method: 'POST',
         headers: {
@@ -152,14 +156,12 @@ export const setServerConfig = async (dict) => {
 }
 
 export const getServerConfig = async (keys) => {
-    const keyDict = Object.fromEntries(keys.map(k => [k, ""]))
-    console.log("here", keyDict);
-    return await fetch(`${window.location.origin}/api/server/config`, {
+    console.log(`${window.location.origin}/api/server/config${keys ? `?keys=${keys}` : ""}`)
+    return await fetch(`${window.location.origin}/api/server/config${keys ? `?keys=${keys}` : ""}`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json'
-        },
-        body: JSON.stringify(keyDict)
+        }
     }).then(response => {
         if (response.ok) {
             return response.json();
@@ -176,8 +178,6 @@ export const getDashboardLayoutAPI = async () => {
     }).then(response => {
         if (response.ok) {
             return response.json();
-        } else {
-            return [];
         }
     });
 }
@@ -188,7 +188,7 @@ export const setDashboardLayoutAPI = async (dashboard) => {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: {'data': dashboard },
+        body: JSON.stringify({'data': dashboard }),
     });
 }
 

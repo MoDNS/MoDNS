@@ -1,11 +1,12 @@
 import React from 'react';
 import { Typography, Button, Select, Tooltip, MenuItem } from '@mui/material';
 import { useState, useEffect } from 'react';
-import { getDashboardSource, getThemeStorage, setDashboardSource, setThemeStorage } from '../../scripts/getsetLocalStorage';
+import { getDashboardLayout, getDashboardSource, getThemeStorage, setDashboardLayout, setDashboardSource, setThemeStorage } from '../../scripts/getsetLocalStorage';
 
 import ThemeSelector from './ThemeSelector';
 import SettingBox from './SettingBox';
 import { DASHBOARD_SOURCE_KEY, THEME_KEY } from '../../Constants';
+import { getDashboardLayoutAPI, setDashboardLayoutAPI } from '../../API/getsetAPI';
 
 
 const GeneralSettings = ({ setTheme }) => {
@@ -21,7 +22,6 @@ const GeneralSettings = ({ setTheme }) => {
         setOldSettings({...currSett});
         setCurrentSettings({...currSett});
     }, []);
-    
 
 
     const handleChange = (key, value) => {
@@ -84,6 +84,27 @@ const GeneralSettings = ({ setTheme }) => {
                                 <MenuItem value={'g'} > Global Dashboard </MenuItem>
                                 <MenuItem value={'l'} > Local Dashboard </MenuItem>
                             </Select>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20 }}>
+                            <Button
+                                variant='contained'
+                                onClick={() => {
+                                    getDashboardLayoutAPI().then(res => {
+                                        setDashboardLayout((res && res.dashboard) || []);
+                                    })
+                                }}
+                            >
+                                Copy Global to Local Dashboard
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    let x = getDashboardLayout();
+                                    setDashboardLayoutAPI(x);
+                                }}
+                                variant='contained'
+                            >
+                                Copy Local to Global Dashboard
+                            </Button>
                         </div>
                     </SettingBox>
                 </div>
