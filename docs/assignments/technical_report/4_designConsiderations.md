@@ -7,12 +7,7 @@ MoDNS default plugins will comply with RFC 1035.
 
 ### Safety & Environmental Protection
 
-MoDNS is intended to run on a dedicated server at all times. It is up to the user to safely maintain the server. The DNS Server should not use more power than necessary to complete its tasks.
-
-
-### Sustainability
-
-MoDNS will provide a seamless setup and update process.
+MoDNS is intended to run on a dedicated server at all times. It is up to the user to safely maintain the server. In regard to power conspution, the DNS Server should not consume more power than necessary to complete its tasks.
 
 
 ### Manufacturability

@@ -4,11 +4,11 @@ The MoDNS Framework is designed to run on any device that can run Ubuntu Linux. 
 
 ## Software
 
-MoDNS is a modular DNS server where all functionality is provided by plugins. Plugins are self-contained libraries or scripts which are loaded by the MoDNS server at launch and used to determine how incoming DNS requests are handled. 
+MoDNS is a modular DNS server where all functionality is provided by plugins. Plugins are small user defined programs loaded by the server at launch.These plugins are used to determine how incoming DNS requests are handled. By using these plugins for individual services a user can have all of the benefits of a layered DNS solution without the need to chain a stream of individual DNS servers.
 
 ### Back-End
 
-The MoDNS Back-End implements plugin integration, hosts a Rest API, and hosts the Front-End webserver. By default, MoDNS will ship with plugins that implement basic DNS resolution and caching. MoDNS is designed to allow its admin to change any aspect of the DNS process on their local network.  The Backend will load the plugins on startup and implement their functionality. The Rest API will be used for Back-End and Front-End communication. The Back-End will host a Front-End for easy server management.
+The MoDNS Back-End implements plugin integration, hosts a Rest API, and hosts the Front-End webserver. By default, MoDNS will ship with plugins that implement basic DNS resolution and caching. MoDNS is designed to allow its admin to change any aspect of the DNS process on their local network.  The Backend will load the plugins on startup and implement their functionality. The Rest API will be used for Back-End and Front-End communication. Alongside communication, the API will also allow the front-end to make plugin configuration changes and plugin management changes. The Back-End will host a Front-End for easy server management.
 
 ### Plugins
 
