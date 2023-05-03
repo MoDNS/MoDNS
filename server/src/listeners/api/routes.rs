@@ -69,7 +69,7 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             })
         )
         .or(warp::path!("server" / "config").and(warp::get()).and(warp::filters::body::json())
-        .then(move |json: HashMap<String, String>| {
+        .then(move |json: Vec<String>| {
             let pm = config_get_pm.clone();
             log::trace!("Server config requested");
             get_server_config(pm, json)
@@ -188,113 +188,116 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
 
 }
 
-pub async fn get_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<String, String>) -> impl Reply {
+pub async fn get_server_config<T>(pm: Arc<RwLock<PluginManager>>, json: T) -> impl Reply where
+    T: IntoIterator,
+    T::Item: AsRef<str> + ToString
+{
     
     let cm = pm.write().await;
 
-    let mut reply:BTreeMap<&str, serde_json::Value> = BTreeMap::new();
+    let mut reply = BTreeMap::new();
     
-    for i in json.iter() {
-        match i.0.as_ref() {
+    for i in json.into_iter() {
+        match i.as_ref() {
             PLUGIN_PATH_KEY => {
                 let path = cm.config().query_plugin_path();
                 let Ok(value) = serde_json::to_value(path) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(PLUGIN_PATH_KEY.to_owned(), value);
             },
             LOG_KEY => {
                 let log = cm.config().query_log();
                 let Ok(value) = serde_json::to_value(log) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(LOG_KEY.to_owned(), value);
             },
             DB_TYPE_KEY => {
                 let db_type = cm.config().query_db_type();
                 let Ok(value) = serde_json::to_value(db_type) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(DB_TYPE_KEY.to_owned(), value);
             },
             DB_PATH_KEY => {
                 let db_path = cm.config().query_db_path();
                 let Ok(value) = serde_json::to_value(db_path) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(DB_PATH_KEY.to_owned(), value);
             },
             DB_ADDR_KEY => {
                 let db_ip = cm.config().query_db_addr();
                 let Ok(value) = serde_json::to_value(db_ip) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);           
+                reply.insert(DB_ADDR_KEY.to_owned(), value);           
             },
             DB_PORT_KEY => {
                 let db_port = cm.config().query_db_port();
                 let Ok(value) = serde_json::to_value(db_port) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(DB_PORT_KEY.to_owned(), value);
             },
             DB_USER_KEY => {
                 let db_pass = cm.config().query_db_user();
                 let Ok(value) = serde_json::to_value(db_pass) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(DB_USER_KEY.to_owned(), value);
             },
             DB_PASS_KEY => {
                 let db_pass = cm.config().query_admin_pw();
                 let Ok(value) = serde_json::to_value(db_pass) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(DB_PASS_KEY.to_owned(), value);
             },
             ADMIN_PW_KEY => {
                 let admin_pass = cm.config().query_plugin_path();
                 let Ok(value) = serde_json::to_value(admin_pass) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(ADMIN_PW_KEY.to_owned(), value);
             },
             ALL_KEY => {
                 let db_type = cm.config().query_db_type();
                 let Ok(value) = serde_json::to_value(db_type) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(DB_TYPE_KEY.to_owned(), value);
     
                 let db_pass = cm.config().query_plugin_path();
                 let Ok(value) = serde_json::to_value(db_pass) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(PLUGIN_PATH_KEY.to_owned(), value);
     
                 let db_port = cm.config().query_db_port();
                 let Ok(value) = serde_json::to_value(db_port) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(DB_PORT_KEY.to_owned(), value);
     
                 let db_ip = cm.config().query_db_addr();
                 let Ok(value) = serde_json::to_value(db_ip) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(DB_ADDR_KEY.to_owned(), value);
     
                 let db_path = cm.config().query_db_path();
                 let Ok(value) = serde_json::to_value(db_path) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(DB_PATH_KEY.to_owned(), value);
     
                 log::trace!("Sending all server configs");
 
             },
-            &_ => {
-                return ApiResponse::new(404, format!("Key not found"))
+            s => {
+                return ApiResponse::new(404, format!("Key `{s}` not found"))
             },
         }
     }
