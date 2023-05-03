@@ -6,7 +6,6 @@ use std::sync::Arc;
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use warp::query;
 use warp::reply::json;
 use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
