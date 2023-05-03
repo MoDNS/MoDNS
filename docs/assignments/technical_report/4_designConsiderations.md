@@ -2,7 +2,7 @@
 
 ### Codes & Standards
 
-MoDNS default plugins will comply with RFC 1035.
+MoDNS default plugins will comply with RFC 1035 (Found in appendices).
 
 
 ### Safety & Environmental Protection
