@@ -44,5 +44,6 @@ metadata:
 
   fontfamily: bera
   mainfont: Bera Sans
+  fontsize: 12pt
 
 ...
