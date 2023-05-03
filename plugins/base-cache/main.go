@@ -28,16 +28,30 @@ func impl_inspect_resp(req *C.constMessage, resp *C.constMessage, source C.uchar
         return 0
     }
 
-    modns_log(2, "Inspector called")
+    answers := unsafe.Slice(resp.answers.ptr, resp.answers.size)
+
+    for _, answer := range answers {
+        hostname := decode_hostname(answer.name)
+
+        _, err := db.Exec(`INSERT INTO basecache (host, rrtype, tag, rdata, origin)
+            VALUES (?, ?, ?, cast(? as BLOB), unixepoch())
+            ON CONFLICT (host, rrtype) DO UPDATE`,
+            hostname, answer.type_code, answer.rdata.tag, answer.rdata.anon0[:])
+
+        if err != nil {
+            modns_log(1, fmt.Sprint("Encountered error entering cache record into database: ", err))
+            return 0
+        }
+    }
 
     return 0
 }
 
-// //export impl_intercept_req
-// func impl_intercept_req(req *C.constMessage, resp *C.struct_DnsMessage, plugin_state *C.constVoid) C.uchar {
-//
-//     return 0
-// }
+//export impl_intercept_req
+func impl_intercept_req(req *C.constMessage, resp *C.DnsMessage, plugin_state *C.constVoid) C.uchar {
+
+    return 0
+}
 
 //export impl_plugin_setup
 func impl_plugin_setup() *C.void {
@@ -64,12 +78,10 @@ func impl_plugin_setup() *C.void {
     modns_log(3, "Creating database table")
     _, err := db.Exec(`CREATE TABLE IF NOT EXISTS basecache (
         host    VARCHAR(255),
-        rrtype  INTEGER NOT NULL,
-        tag     INTEGER NOT NULL,
+        rrtype  UNSIGNED INTEGER NOT NULL,
+        tag     UNSIGNED INTEGER NOT NULL,
         rdata   BLOB,
-        trunc   BOOL,
-        ttl     INTEGER NOT NULL,
-        origin  DATETIME NOT NULL,
+        origin  UNSIGNED INTEGER NOT NULL,
 
         PRIMARY KEY(host, rrtype)
         )`)
@@ -138,4 +150,15 @@ func postgres_connect(dbinfo C.struct_DatabaseInfo) *sql.DB {
     }
 
     return conn
+}
+
+func decode_hostname(vec C.struct_BytePtrVector) string {
+    v := unsafe.Slice(vec.ptr, vec.size)
+
+    name := ""
+    for _, s := range v {
+        name = name + "." + into_go_string(s)
+    }
+
+    return name[1:]
 }
