@@ -41,9 +41,17 @@ pub fn make_request(method: hyper::Method, path: &str, body: Option<Body>, heade
 
     if config.verbose() > 2 {
         eprintln!("Sending request: {request:#?}");
+        eprintln!()
     }
 
-    send_request(request, !config.remote_host().is_some())
+    let resp = send_request(request, !config.remote_host().is_some());
+
+    if config.verbose() > 2 {
+        eprintln!("Got response: {resp:#?}");
+        eprintln!()
+    }
+
+    resp
 
 }
 
