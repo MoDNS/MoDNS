@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::{CliOptions, util::make_request};
 
 use anyhow::{Result, Context};
-use hyper::{StatusCode, Method, Body};
+use hyper::{StatusCode, Method};
 use modnsd::config::MutableConfigValue;
 use serde_json::Value;
 
@@ -12,9 +12,7 @@ pub mod plugins;
 
 pub fn get_config(keys: &[String], config: &CliOptions) -> Result<()> {
 
-    let body = Body::from(serde_json::to_string(keys)?);
-
-    let resp = make_request(Method::GET, &format!("/api/server/config?keys={}", keys.join(",")), Some(body), None, config)
+    let resp = make_request(Method::GET, &format!("/api/server/config?keys={}", keys.join(",")), None, None, config)
         .context("Unable to send request")?;
 
     if resp.status() == StatusCode::NOT_FOUND {

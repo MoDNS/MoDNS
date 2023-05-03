@@ -15,10 +15,14 @@ use crate::plugins::manager::PluginManager;
 use crate::plugins::response::ApiResponse;
 
 #[derive(Deserialize)]
-pub struct PluginQuery
-{
+pub struct PluginQuery {
     module: Option<String>,
     enabled: Option<bool>
+}
+
+#[derive(Deserialize)]
+pub struct ConfigQuery {
+    keys: String
 }
 
 pub fn root_redirect() -> BoxedFilter<(impl Reply,)> {
@@ -46,6 +50,7 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
     let disable_pm = pm.clone();
     let config_set_pm = pm.clone();
     let config_get_pm = pm.clone();
+    let config_get_pm2 = pm.clone();
 
     warp::path("api")
         .and(warp::path!("plugins").and(warp::query::<PluginQuery>())
@@ -66,6 +71,14 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             let pm = disable_pm.clone();
             log::trace!("Plugin enabled status change requested");
             set_plugin_stat(pm, uuid, false)
+            })
+        )
+        .or(warp::path!("server" / "config").and(warp::get()).and(warp::query::<ConfigQuery>())
+        .then(move |query: ConfigQuery| {
+            let pm = config_get_pm2.clone();
+            log::trace!("Server config requested");
+            let keys: Vec<_> = query.keys.split(',').map(ToOwned::to_owned).collect();
+            get_server_config(pm, keys)
             })
         )
         .or(warp::path!("server" / "config").and(warp::get()).and(warp::filters::body::json())
