@@ -145,15 +145,11 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
         return ApiResponse::new(404, format!("No key found..."))
     }
 
-    for i in json.iter() {
+    for i in json.into_iter() {
         match i.0.as_ref() {
             PLUGIN_PATH_KEY => {
-                let new = i.1.to_string().split(',').map(str::to_string).collect::<Vec<String>>();
-                let mut plugin_path = Vec::<PathBuf>::new();
-                for path in new {
-                    plugin_path.insert(0, PathBuf::from(path));
-                }
-                cm.config_mut().set_plugin_path(plugin_path).ok();
+                let vec = serde_json::from_value::<Vec<PathBuf>>(i.1).ok().unwrap_or(Vec::<PathBuf>::new());
+                cm.config_mut().set_plugin_path(vec).ok();
             },
             LOG_KEY => {
                 let log = i.1;
