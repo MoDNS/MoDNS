@@ -44,7 +44,7 @@ impl PluginManager {
 
         let dir = PathBuf::from(dir_path.as_ref()).canonicalize().context("Couldn't canonicalize plugin path")?;
 
-        let plugin = Arc::new(DnsPlugin::load(&dir)?);
+        let plugin = Arc::new(DnsPlugin::load(&dir, self.config())?);
 
         let name = plugin.friendly_name().to_owned();
 
