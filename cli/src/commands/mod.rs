@@ -12,7 +12,7 @@ pub mod plugins;
 
 pub fn get_config(keys: &[String], config: &CliOptions) -> Result<()> {
 
-    let resp = make_request(Method::GET, &format!("/api/server/config?{}", keys.join("&")), None, None, config)
+    let resp = make_request(Method::GET, &format!("/api/server/config?keys={}", keys.join(",")), None, None, config)
         .context("Unable to send request")?;
 
     if resp.status() == StatusCode::NOT_FOUND {
@@ -27,11 +27,24 @@ pub fn get_config(keys: &[String], config: &CliOptions) -> Result<()> {
         eprintln!("Got response from server: {}", resp.body())
     }
 
-    let values: HashMap<String, MutableConfigValue<Value>> = serde_json::from_str(resp.body())
+    let values: HashMap<String, Value> = serde_json::from_str(resp.body())
         .context("Couldn't decode server response")?;
 
     for (key, value) in values {
-        println!("{} = {}{}", key, value.value(), if value.is_overridden() {"*"} else {""})
+        if let Ok(val) = serde_json::from_value::<MutableConfigValue<Value>>(value.clone()) {
+            let s = serde_json::from_value::<String>(val.value().clone()).unwrap_or(val.value().to_string());
+            println!("{} = {}{}", key, s, if val.is_overridden() {"*"} else {""})
+        } else {
+            let list = serde_json::from_value::<Vec<MutableConfigValue<Value>>>(value)
+                .context(format!("Couldn't decode object `{key}`"))?;
+            println!("{key} =");
+            for item in list {
+                let ov = if item.is_overridden() {"*"} else {" "};
+                let s = serde_json::from_value::<String>(item.into_value())
+                    .context("Failed to decode list item in object `{key}`")?;
+                println!("  {ov} {s}");
+            }
+        }
     }
 
     Ok(())
