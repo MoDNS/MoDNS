@@ -47,8 +47,6 @@ const AdvancedSettings = () => {
             setOldSettings(structuredClone(dict));
             setCurrentSettings(structuredClone(dict));
 
-            console.log(dict)
-
             setSelectLogFilter(parseLogFilter(dict[LOG_FILTER_KEY].value || ""));
             setTextLogFilter(dict[LOG_FILTER_KEY].value || "");
             setUseCustLogFilt(!(loggingOptions.includes(selectLogFilter[0] || "") && loggingOptions.includes(selectLogFilter[1] || "")));
@@ -85,6 +83,9 @@ const AdvancedSettings = () => {
             Object.keys(currentSettings).forEach(key => {
                 if (key !== PLUGIN_PATH_KEY) {
                     if (oldSettings[key].value !== currentSettings[key].value) {
+                        if (key === POSTGRES_IP_KEY) {
+                            if (errorPostgresIP) { alert("Error in IP... skipping"); return; }
+                        }
                         newSett[key] = currentSettings[key].value;
                     }
                 } else {

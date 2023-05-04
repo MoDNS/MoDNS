@@ -475,11 +475,11 @@ impl MutableServerConfig {
         self.set_config_obj(DB_PORT_KEY, db_port)
     }
 
-    pub fn set_db_user(&mut self, user: &str) -> Result<()> {
+    pub fn set_db_user(&mut self, user: String) -> Result<()> {
         self.set_config_obj(DB_USER_KEY, user)
     }
 
-    pub fn set_db_password(&mut self, password: &str) -> Result<()> {
+    pub fn set_db_password(&mut self, password: String) -> Result<()> {
         self.set_config_obj(DB_PASS_KEY, password)
     }
 
@@ -786,11 +786,11 @@ impl ServerConfig {
         self.settings.set_db_port(db_port)
     }
 
-    pub fn set_db_user(&mut self, user: &str) -> Result<()> {
+    pub fn set_db_user(&mut self, user: String) -> Result<()> {
         self.settings.set_db_user(user)
     }
 
-    pub fn set_db_password(&mut self, password: &str) -> Result<()> {
+    pub fn set_db_password(&mut self, password: String) -> Result<()> {
         self.settings.set_db_password(password)
     }
 

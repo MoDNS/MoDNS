@@ -151,8 +151,8 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
                 cm.config_mut().set_plugin_path(vec).ok();
             },
             LOG_KEY => {
-                let log = i.1;
-                cm.config_mut().set_log(serde_json::from_value(log).ok().unwrap_or("".to_string())).ok();
+                let log = serde_json::from_value(i.1).ok().unwrap_or("".to_string());
+                cm.config_mut().set_log(log).ok();
             },
             DB_TYPE_KEY => {
                 let db_type = if i.1.to_string() == "Sqlite" {DatabaseBackend::Sqlite} else if i.1 == "Postgres" {DatabaseBackend::Postgres} else {DatabaseBackend::default()};
@@ -171,12 +171,12 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
                 cm.config_mut().set_db_port(db_port).ok();
             },
             DB_PASS_KEY => {
-                let password = i.1.to_string().replace("\\\"", "");
-                cm.config_mut().set_db_password(&password).ok();
+                let password = serde_json::from_value(i.1).ok().unwrap_or_default();
+                cm.config_mut().set_db_password(password).ok();
             },
             DB_USER_KEY => {
-                let user = i.1.to_string().replace("\\\"", "");
-                cm.config_mut().set_db_user(&user).ok();
+                let user = serde_json::from_value(i.1).ok().unwrap_or_default();
+                cm.config_mut().set_db_user(user).ok();
             },
             API_PORT_KEY => {
                 let port = serde_json::from_value(i.1).ok();
@@ -188,7 +188,7 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
             },
             TLS_CERT_KEY => {
                 let path = serde_json::from_value(i.1).ok();
-                cm.config_mut().set_tls_key(path).ok();
+                cm.config_mut().set_tls_cert(path).ok();
             },
             TLS_KEY_KEY => {
                 let path = serde_json::from_value(i.1).ok();
@@ -262,8 +262,8 @@ pub async fn get_server_config<T>(pm: Arc<RwLock<PluginManager>>, json: T) -> im
                 reply.insert(DB_PORT_KEY.to_owned(), value);
             },
             DB_USER_KEY => {
-                let db_pass = cm.config().query_db_user();
-                let Ok(value) = serde_json::to_value(db_pass) else {
+                let db_user = cm.config().query_db_user();
+                let Ok(value) = serde_json::to_value(db_user) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
                 reply.insert(DB_USER_KEY.to_owned(), value);
@@ -317,6 +317,12 @@ pub async fn get_server_config<T>(pm: Arc<RwLock<PluginManager>>, json: T) -> im
                 };
                 reply.insert(DB_TYPE_KEY.to_owned(), value);
     
+                let db_user = cm.config().query_db_user();
+                let Ok(value) = serde_json::to_value(db_user) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(i, value);
+                
                 let db_pass = cm.config().query_plugin_path();
                 let Ok(value) = serde_json::to_value(db_pass) else {
                     return ApiResponse::new(404, format!("Key not found"))
