@@ -894,7 +894,7 @@ impl ServerConfig {
     pub fn query_db_pass(&self) -> MutableConfigValue<String> {
         MutableConfigValue { 
             overridden: self.override_db_pass.is_some(),
-            value: self.db_user()
+            value: self.db_password()
         }
     }
 
