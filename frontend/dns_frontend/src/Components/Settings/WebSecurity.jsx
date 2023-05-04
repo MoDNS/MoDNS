@@ -23,6 +23,7 @@ const WebSecurity = () => {
                 overridden: dict[ADMIN_PW_KEY].overridden || false,
                 value: "",
             }
+            console.log(dict)
             setOldSettings(structuredClone(dict));
             setCurrentSettings(structuredClone(dict));
         })        
