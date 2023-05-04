@@ -15,3 +15,7 @@ export const TLS_CERT_KEY = "tls_cert_path";
 export const TLS_KEY_KEY = "tls_key_path";
 export const API_PORT_KEY = "api_port";
 export const ADMIN_PW_KEY = "admin_pw";
+
+
+
+export const loggingOptions = ["error", "warn", "info", "debug", "trace"];

@@ -2,7 +2,7 @@ import React from 'react';
 import { getServerConfig, setServerConfig } from '../../API/getsetAPI';
 import { useState, useEffect } from 'react';
 import { Button, Checkbox, FormControlLabel, IconButton, InputAdornment, List, ListItem, MenuItem, Select, TextField, Tooltip, Typography, useTheme, Icon } from '@mui/material';
-import { LOG_FILTER_KEY, PLUGIN_PATH_KEY, DB_TYPE_KEY, POSTGRES_IP_KEY, POSTGRES_PASS_KEY, POSTGRES_PORT_KEY, POSTGRES_USER_KEY, SQLITE_PATH_KEY } from '../../Constants';
+import { LOG_FILTER_KEY, PLUGIN_PATH_KEY, DB_TYPE_KEY, POSTGRES_IP_KEY, POSTGRES_PASS_KEY, POSTGRES_PORT_KEY, POSTGRES_USER_KEY, SQLITE_PATH_KEY, loggingOptions } from '../../Constants';
 
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
@@ -18,7 +18,7 @@ const AdvancedSettings = () => {
 
     const theme = useTheme();
 
-    const loggingOptions = ["error", "warn", "info", "debug", "trace"];
+    
 
     const parseLogFilter = (content) => {
         try {
@@ -54,7 +54,7 @@ const AdvancedSettings = () => {
             setErrorPostgresIP(!IPInputValidation(dict[POSTGRES_IP_KEY].value || ""));
         })
         
-    }, [loggingOptions]);
+    }, []);
     
 
     const logFilterCheck = (useCust) => {

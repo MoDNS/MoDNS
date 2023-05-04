@@ -75,7 +75,7 @@ const Settings = ({ setTheme }) => {
                             }}
                         >
                             <Tab label="General" {...a11yProps(0)} />
-                            <Tab label="Advaned" {...a11yProps(1)} />
+                            <Tab label="Advanced" {...a11yProps(1)} />
                             <Tab label="Web Security" {...a11yProps(2)} />
                         </Tabs>
                     </div>
