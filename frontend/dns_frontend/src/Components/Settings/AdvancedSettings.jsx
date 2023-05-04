@@ -48,7 +48,7 @@ const AdvancedSettings = () => {
             setCurrentSettings(structuredClone(dict));
 
             let x = parseLogFilter(dict[LOG_FILTER_KEY].value || "");
-            setSelectLogFilter(x);
+            setSelectLogFilter([...x]);
             setTextLogFilter(dict[LOG_FILTER_KEY].value || "");
             setUseCustLogFilt(!(loggingOptions.includes(x[0] || "") && loggingOptions.includes(x[1] || "")));
             setErrorPostgresIP(!IPInputValidation(dict[POSTGRES_IP_KEY].value || ""));
