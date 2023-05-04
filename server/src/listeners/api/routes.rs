@@ -193,7 +193,7 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
             TLS_KEY_KEY => {
                 let path = serde_json::from_value(i.1).ok();
                 cm.config_mut().set_tls_key(path).ok();
-            }
+            },
             ADMIN_PW_KEY => {
                 let pw = i.1.to_string();
                 cm.config_mut().set_admin_pw_hash(pw.to_string()).ok();
@@ -281,6 +281,34 @@ pub async fn get_server_config<T>(pm: Arc<RwLock<PluginManager>>, json: T) -> im
                     return ApiResponse::new(404, format!("Key not found"))
                 };
                 reply.insert(ADMIN_PW_KEY.to_owned(), value);
+            },
+            API_PORT_KEY => {
+                let port = cm.config().query_plugin_path();
+                let Ok(value) = serde_json::to_value(port) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(API_PORT_KEY.to_owned(), value);
+            },
+            HTTPS_KEY => {
+                let https = cm.config().query_https();
+                let Ok(value) = serde_json::to_value(https) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(HTTPS_KEY.to_owned(), value);
+            },
+            TLS_CERT_KEY => {
+                let path = cm.config().query_tls_cert();
+                let Ok(value) = serde_json::to_value(path) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(TLS_CERT_KEY.to_owned(), value);
+            },
+            TLS_KEY_KEY => {
+                let key = cm.config().query_tls_key();
+                let Ok(value) = serde_json::to_value(key) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(TLS_KEY_KEY.to_owned(), value);
             },
             ALL_KEY => {
                 let db_type = cm.config().query_db_type();
