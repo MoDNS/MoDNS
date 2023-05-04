@@ -1,5 +1,5 @@
 
-use std::net::IpAddr;
+use std::net::{IpAddr, Ipv4Addr};
 use std::path::{Path, PathBuf};
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
@@ -153,48 +153,47 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
             },
             LOG_KEY => {
                 let log = i.1;
-                cm.config_mut().set_log(log.to_string()).ok();
+                cm.config_mut().set_log(serde_json::from_value(log).ok().unwrap_or("".to_string())).ok();
             },
             DB_TYPE_KEY => {
                 let db_type = if i.1.to_string() == "Sqlite" {DatabaseBackend::Sqlite} else if i.1 == "Postgres" {DatabaseBackend::Postgres} else {DatabaseBackend::default()};
                 cm.config_mut().set_db_type(db_type).ok();
             },
             DB_PATH_KEY => {
-                let db_path = PathBuf::from(i.1.to_string());
+                let db_path = serde_json::from_value(i.1).ok().unwrap_or_default();
                 cm.config_mut().set_db_path(db_path).ok();
             },
             DB_ADDR_KEY => {
-                let addr = i.1.to_string().parse().unwrap();
-                let db_addr = IpAddr::V4(addr);
+                let db_addr = serde_json::from_value(i.1).ok().unwrap_or(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)));
                 cm.config_mut().set_db_addr(db_addr).ok();
             },
             DB_PORT_KEY => {
-                let db_port = serde_json::from_str(&i.1.to_string()).ok();
+                let db_port = serde_json::from_value(i.1).ok();
                 cm.config_mut().set_db_port(db_port).ok();
             },
             DB_PASS_KEY => {
-                let password = i.1.to_string();
+                let password = i.1.to_string().replace("\\\"", "");
                 cm.config_mut().set_db_password(&password).ok();
             },
             DB_USER_KEY => {
-                let user = i.1.to_string();
+                let user = i.1.to_string().replace("\\\"", "");
                 cm.config_mut().set_db_user(&user).ok();
             },
             API_PORT_KEY => {
-                let port = serde_json::from_str(&i.1.to_string()).ok();
+                let port = serde_json::from_value(i.1).ok();
                 cm.config_mut().set_api_port(port).ok();
             },
             HTTPS_KEY => {
-                let https = serde_json::from_str(&i.1.to_string()).ok();
+                let https = serde_json::from_value(i.1).ok();
                 cm.config_mut().set_https(https).ok();
             },
             TLS_CERT_KEY => {
-                let path = PathBuf::from(i.1.to_string());
-                cm.config_mut().set_tls_key(Some(path)).ok();
+                let path = serde_json::from_value(i.1).ok();
+                cm.config_mut().set_tls_key(path).ok();
             },
             TLS_KEY_KEY => {
-                let path = PathBuf::from(i.1.to_string());
-                cm.config_mut().set_tls_key(Some(path)).ok();
+                let path = serde_json::from_value(i.1).ok();
+                cm.config_mut().set_tls_key(path).ok();
             }
             ADMIN_PW_KEY => {
                 let pw = i.1.to_string();
