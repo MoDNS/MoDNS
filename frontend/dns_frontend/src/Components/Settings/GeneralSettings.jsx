@@ -88,6 +88,7 @@ const GeneralSettings = ({ setTheme }) => {
                         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20 }}>
                             <Button
                                 variant='contained'
+                                sx={{ marginRight: 1 }}
                                 onClick={() => {
                                     getDashboardLayoutAPI().then(res => {
                                         setDashboardLayout((res && res.dashboard) || []);
@@ -97,6 +98,7 @@ const GeneralSettings = ({ setTheme }) => {
                                 Copy Global to Local Dashboard
                             </Button>
                             <Button
+                                sx={{ marginLeft: 1 }}
                                 onClick={() => {
                                     let x = getDashboardLayout();
                                     setDashboardLayoutAPI(x);
