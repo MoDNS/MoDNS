@@ -1,5 +1,5 @@
 
-use std::net::IpAddr;
+use std::net::{IpAddr, Ipv4Addr};
 use std::path::{Path, PathBuf};
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
@@ -10,7 +10,7 @@ use warp::reply::json;
 use warp::{Filter, filters::BoxedFilter, Reply};
 use warp::http::Uri;
 
-use crate::config::{PLUGIN_PATH_KEY, LOG_KEY, DB_TYPE_KEY, DB_PATH_KEY, DB_ADDR_KEY, DB_PASS_KEY, ADMIN_PW_KEY, DB_PORT_KEY, ALL_KEY, DB_USER_KEY, DatabaseBackend};
+use crate::config::{PLUGIN_PATH_KEY, LOG_KEY, DB_TYPE_KEY, DB_PATH_KEY, DB_ADDR_KEY, DB_PASS_KEY, ADMIN_PW_KEY, DB_PORT_KEY, ALL_KEY, DB_USER_KEY, DatabaseBackend, HTTPS_KEY, TLS_CERT_KEY, TLS_KEY_KEY, API_PORT_KEY};
 use crate::plugins::manager::PluginManager;
 use crate::plugins::response::ApiResponse;
 
@@ -21,7 +21,8 @@ pub struct PluginQuery {
 }
 
 #[derive(Deserialize)]
-pub struct ConfigQuery {
+pub struct ConfigQuery
+{
     keys: String
 }
 
@@ -49,7 +50,6 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
     let enable_pm = pm.clone();
     let disable_pm = pm.clone();
     let config_set_pm = pm.clone();
-    let config_get_pm = pm.clone();
     let config_get_pm2 = pm.clone();
 
     warp::path("api")
@@ -81,15 +81,8 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             get_server_config(pm, keys)
             })
         )
-        .or(warp::path!("server" / "config").and(warp::get()).and(warp::filters::body::json())
-        .then(move |json: Vec<String>| {
-            let pm = config_get_pm.clone();
-            log::trace!("Server config requested");
-            get_server_config(pm, json)
-            })
-        )
         .or(warp::path!("server" / "config").and(warp::post()).and(warp::filters::body::json().or(warp::query()).unify())
-        .then(move |json: HashMap<String, String>| {
+        .then(move |json: HashMap<String, serde_json::Value>| {
             let pm = config_set_pm.clone();
             log::trace!("Server config requested");
             set_server_config(pm, json)
@@ -142,7 +135,7 @@ pub async fn set_plugin_stat(pm: Arc<RwLock<PluginManager>>, uuid: Uuid, enable:
     }
 }
 
-pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<String, String>) -> impl Reply {
+pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<String, serde_json::Value>) -> impl Reply {
     
     let mut cm = pm.write().await;
 
@@ -151,44 +144,58 @@ pub async fn set_server_config(pm: Arc<RwLock<PluginManager>>, json: HashMap<Str
         return ApiResponse::new(404, format!("No key found..."))
     }
 
-    for i in json.iter() {
+    for i in json.into_iter() {
         match i.0.as_ref() {
             PLUGIN_PATH_KEY => {
-                let vec =  cm.config().query_plugin_path();
-                let mut new = Vec::<PathBuf>::new();
-                for value in vec {
-                    new.insert(0, value.value().to_path_buf())
-                }
-                new.insert(0, PathBuf::from(i.1));
-                cm.config_mut().set_plugin_path(new).ok();
+                let vec = serde_json::from_value::<Vec<PathBuf>>(i.1).ok().unwrap_or(Vec::<PathBuf>::new());
+                cm.config_mut().set_plugin_path(vec).ok();
             },
             LOG_KEY => {
-                let log = i.1;
-                cm.config_mut().set_log(log.to_string()).ok();
+                let log = serde_json::from_value(i.1).ok().unwrap_or("".to_string());
+                cm.config_mut().set_log(log).ok();
             },
             DB_TYPE_KEY => {
-                let db_type = if i.1 == "Sqlite" {DatabaseBackend::Sqlite} else if i.1 == "Postgres" {DatabaseBackend::Postgres} else {DatabaseBackend::default()};
+                let db_type = if i.1.to_string() == "Sqlite" {DatabaseBackend::Sqlite} else if i.1 == "Postgres" {DatabaseBackend::Postgres} else {DatabaseBackend::default()};
                 cm.config_mut().set_db_type(db_type).ok();
             },
             DB_PATH_KEY => {
-                let db_path = PathBuf::from(i.1);
+                let db_path = serde_json::from_value(i.1).ok().unwrap_or_default();
                 cm.config_mut().set_db_path(db_path).ok();
             },
             DB_ADDR_KEY => {
-                let addr = i.1.parse().unwrap();
-                let db_addr = IpAddr::V4(addr);
+                let db_addr = serde_json::from_value(i.1).ok().unwrap_or(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)));
                 cm.config_mut().set_db_addr(db_addr).ok();
             },
             DB_PORT_KEY => {
-                let db_port = serde_json::from_str(i.1).ok();
+                let db_port = serde_json::from_value(i.1).ok();
                 cm.config_mut().set_db_port(db_port).ok();
             },
             DB_PASS_KEY => {
-                let password = i.1;
+                let password = serde_json::from_value(i.1).ok().unwrap_or_default();
                 cm.config_mut().set_db_password(password).ok();
             },
+            DB_USER_KEY => {
+                let user = serde_json::from_value(i.1).ok().unwrap_or_default();
+                cm.config_mut().set_db_user(user).ok();
+            },
+            API_PORT_KEY => {
+                let port = serde_json::from_value(i.1).ok();
+                cm.config_mut().set_api_port(port).ok();
+            },
+            HTTPS_KEY => {
+                let https = serde_json::from_value(i.1).ok();
+                cm.config_mut().set_https(https).ok();
+            },
+            TLS_CERT_KEY => {
+                let path = serde_json::from_value(i.1).ok();
+                cm.config_mut().set_tls_cert(path).ok();
+            },
+            TLS_KEY_KEY => {
+                let path = serde_json::from_value(i.1).ok();
+                cm.config_mut().set_tls_key(path).ok();
+            },
             ADMIN_PW_KEY => {
-                let pw = i.1;
+                let pw = i.1.to_string();
                 cm.config_mut().set_admin_pw_hash(pw.to_string()).ok();
             },
             &_ => {
@@ -255,56 +262,133 @@ pub async fn get_server_config<T>(pm: Arc<RwLock<PluginManager>>, json: T) -> im
                 reply.insert(DB_PORT_KEY.to_owned(), value);
             },
             DB_USER_KEY => {
-                let db_pass = cm.config().query_db_user();
-                let Ok(value) = serde_json::to_value(db_pass) else {
+                let db_user = cm.config().query_db_user();
+                let Ok(value) = serde_json::to_value(db_user) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
                 reply.insert(DB_USER_KEY.to_owned(), value);
             },
             DB_PASS_KEY => {
-                let db_pass = cm.config().query_admin_pw();
+                let db_pass = cm.config().query_db_pass();
                 let Ok(value) = serde_json::to_value(db_pass) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
                 reply.insert(DB_PASS_KEY.to_owned(), value);
             },
             ADMIN_PW_KEY => {
-                let admin_pass = cm.config().query_plugin_path();
+                let admin_pass = cm.config().query_admin_pw();
                 let Ok(value) = serde_json::to_value(admin_pass) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
                 reply.insert(ADMIN_PW_KEY.to_owned(), value);
             },
+            API_PORT_KEY => {
+                let port = cm.config().query_api_port();
+                let Ok(value) = serde_json::to_value(port) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(API_PORT_KEY.to_owned(), value);
+            },
+            HTTPS_KEY => {
+                let https = cm.config().query_https();
+                let Ok(value) = serde_json::to_value(https) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(HTTPS_KEY.to_owned(), value);
+            },
+            TLS_CERT_KEY => {
+                let cert_path = cm.config().query_tls_cert();
+                let Ok(value) = serde_json::to_value(cert_path) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(TLS_CERT_KEY.to_owned(), value);
+            },
+            TLS_KEY_KEY => {
+                let key = cm.config().query_tls_key();
+                let Ok(value) = serde_json::to_value(key) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(TLS_KEY_KEY.to_owned(), value);
+            },
             ALL_KEY => {
+
+                let path = cm.config().query_plugin_path();
+                let Ok(value) = serde_json::to_value(path) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(PLUGIN_PATH_KEY.to_owned(), value);
+
+                let log = cm.config().query_log();
+                let Ok(value) = serde_json::to_value(log) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(LOG_KEY.to_owned(), value);
+
                 let db_type = cm.config().query_db_type();
                 let Ok(value) = serde_json::to_value(db_type) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
                 reply.insert(DB_TYPE_KEY.to_owned(), value);
-    
-                let db_pass = cm.config().query_plugin_path();
-                let Ok(value) = serde_json::to_value(db_pass) else {
+
+                let db_path = cm.config().query_db_path();
+                let Ok(value) = serde_json::to_value(db_path) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(PLUGIN_PATH_KEY.to_owned(), value);
-    
+                reply.insert(DB_PATH_KEY.to_owned(), value);
+
+                let db_ip = cm.config().query_db_addr();
+                let Ok(value) = serde_json::to_value(db_ip) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(DB_ADDR_KEY.to_owned(), value); 
+
                 let db_port = cm.config().query_db_port();
                 let Ok(value) = serde_json::to_value(db_port) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
                 reply.insert(DB_PORT_KEY.to_owned(), value);
     
-                let db_ip = cm.config().query_db_addr();
-                let Ok(value) = serde_json::to_value(db_ip) else {
+                let db_user = cm.config().query_db_user();
+                let Ok(value) = serde_json::to_value(db_user) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(DB_ADDR_KEY.to_owned(), value);
+                reply.insert(DB_USER_KEY.to_owned(), value);
+                
+                let db_pass = cm.config().query_db_pass();
+                let Ok(value) = serde_json::to_value(db_pass) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(DB_PASS_KEY.to_owned(), value);
     
-                let db_path = cm.config().query_db_path();
-                let Ok(value) = serde_json::to_value(db_path) else {
+                let admin_pass = cm.config().query_admin_pw();
+                let Ok(value) = serde_json::to_value(admin_pass) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(DB_PATH_KEY.to_owned(), value);
+                reply.insert(ADMIN_PW_KEY.to_owned(), value);
+    
+                let port = cm.config().query_api_port();
+                let Ok(value) = serde_json::to_value(port) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(API_PORT_KEY.to_owned(), value);
+
+                let https = cm.config().query_https();
+                let Ok(value) = serde_json::to_value(https) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(HTTPS_KEY.to_owned(), value);
+
+                let cert_path = cm.config().query_tls_cert();
+                let Ok(value) = serde_json::to_value(cert_path) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(TLS_CERT_KEY.to_owned(), value);
+
+                let key = cm.config().query_tls_key();
+                let Ok(value) = serde_json::to_value(key) else {
+                    return ApiResponse::new(404, format!("Key not found"))
+                };
+                reply.insert(TLS_KEY_KEY.to_owned(), value);
     
                 log::trace!("Sending all server configs");
 

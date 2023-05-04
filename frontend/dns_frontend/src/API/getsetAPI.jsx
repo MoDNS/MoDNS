@@ -111,7 +111,7 @@ export const getPluginCustomSettings = async (uuid) => {
         }
     }).then(response => {
         if (response.ok) {
-            return response.json().data;
+            return response.json();
         }
     })
 }
@@ -141,21 +141,25 @@ export const shutdownServer = async () => {
     });
 }
 
-export const setServerConfig = async (key, value) => {
+export const setServerConfig = async (dict) => {
+    if (Object.keys(dict || {}).length === 0) {
+        return
+    }
     await fetch(`${window.location.origin}/api/server/config`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: {
-            key: value,
-        }
+        body: JSON.stringify(dict)
     });
 }
 
-export const getServerConfig = async (key) => {
-    return await fetch(`${window.location.origin}/api/server/config?key=${key}`, {
-        method: 'GET'
+export const getServerConfig = async (keys) => {
+    return await fetch(`${window.location.origin}/api/server/config${keys ? `?keys=${keys}` : ""}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json'
+        }
     }).then(response => {
         if (response.ok) {
             return response.json();
@@ -172,8 +176,6 @@ export const getDashboardLayoutAPI = async () => {
     }).then(response => {
         if (response.ok) {
             return response.json();
-        } else {
-            return [];
         }
     });
 }
@@ -184,21 +186,7 @@ export const setDashboardLayoutAPI = async (dashboard) => {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: {'data': dashboard },
+        body: JSON.stringify({'data': dashboard }),
     });
-}
-
-////////////////////////////// AUTHENTICATION ///////////////////////////////
-export const getAuthentication = (password) => {
-    if (password !== "") {
-        return true
-    }
-    // fetch(`${window.location.origin}/api/auth`);
-
-}
-
-export const setNewPassword = (oldPass, newPass) => {
-    // api call for authentication of old pass
-    return true;
 }
 

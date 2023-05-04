@@ -4,14 +4,13 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import MainBox from "../Components/MainBox";
 import { ParseDashboardPage } from "../scripts/ParseDashboardPage";
-import { getDashboardLayoutAPI, getServerConfig, setDashboardLayoutAPI } from "../API/getsetAPI";
-import { getDashboardLayout, setDashboardLayout } from "../scripts/getsetLocalStorage";
-import { USE_GLOBAL_DASH_KEY } from "../Constants";
+import { getDashboardLayoutAPI, setDashboardLayoutAPI } from "../API/getsetAPI";
+import { getDashboardLayout, getDashboardSource, setDashboardLayout } from "../scripts/getsetLocalStorage";
 
 
 const Dashboard = () => {
   const [editMode, setEditMode] = useState(false);
-  const [useGlobalDashboard, setUseGlobDash] = useState(false);
+  const [dashbourdSource] = useState(false);
   
   const [dashboardJson, setDashboardJson] = useState();
 
@@ -19,30 +18,26 @@ const Dashboard = () => {
 
 
   useEffect(() => {
-    getServerConfig(USE_GLOBAL_DASH_KEY).then(useGlobDash => {
-      setUseGlobDash(useGlobDash[USE_GLOBAL_DASH_KEY]);
-      if (useGlobDash[USE_GLOBAL_DASH_KEY].value) {
-        getDashboardLayoutAPI().then(res => {
-          let x = (res && res["dashboard_layout"].data) || [];
-          setDashboardJson([...x]);
-          setLoading(false);
-        })
-      } else {
-        setDashboardJson(getDashboardLayout());
+    if (getDashboardSource() === "global") {
+      getDashboardLayoutAPI().then(res => {
+        let x = (res && res["dashboard_layout"].data) || [];
+        setDashboardJson([...x]);
         setLoading(false);
-      }
-    })
+      })
+    } else {
+      setDashboardJson(getDashboardLayout());
+      setLoading(false);
+    }
   }, [] );
 
   return (
     <>
       <MainBox title={
-        [
-          <div key={1} style={{ display: 'flex', flexDirection: 'row'}} >
+          <div style={{ display: 'flex', flexDirection: 'row'}} >
             Dashboard
             <Button variant="contained" sx={{ marginLeft: 'auto', marginY: 'auto' }} onClick={() => {
               if (editMode) {
-                if (useGlobalDashboard.value) {
+                if (dashbourdSource === "global") {
                   setDashboardLayoutAPI('dashboard', dashboardJson);
                 } else {
                   setDashboardLayout(dashboardJson);
@@ -51,7 +46,6 @@ const Dashboard = () => {
               setEditMode(!editMode);
               }} > { editMode ? "Save" : "Edit" } </Button>
           </div>
-        ]
         } 
         divider
         allowScroll

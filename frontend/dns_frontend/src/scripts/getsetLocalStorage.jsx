@@ -1,7 +1,8 @@
+import { DASHBOARD_SOURCE_KEY, THEME_KEY } from "../Constants";
 
 /////////////////////////////// THEME ///////////////////////////////
 export const getThemeStorage = () => {
-    var stored_theme = localStorage.getItem('theme');
+    var stored_theme = localStorage.getItem(THEME_KEY);
     if (stored_theme) {
         return stored_theme;
     }
@@ -9,7 +10,7 @@ export const getThemeStorage = () => {
 }
 
 export const setThemeStorage = (theme) => {
-    localStorage.setItem('theme', theme);
+    localStorage.setItem(THEME_KEY, theme);
 }
 
 
@@ -38,4 +39,17 @@ export const getDashboardLayout = () => {
 
 export const setDashboardLayout = (layout) => {
     localStorage.setItem('dashboardLayout', JSON.stringify(layout));
+}
+
+export const getDashboardSource = () => {
+    var dashboard_source = localStorage.getItem(DASHBOARD_SOURCE_KEY);
+    if (dashboard_source) {
+        return dashboard_source;
+    } else {
+        return 'g';
+    }
+}
+
+export const setDashboardSource = (use) => {
+    localStorage.setItem(DASHBOARD_SOURCE_KEY, use);
 }

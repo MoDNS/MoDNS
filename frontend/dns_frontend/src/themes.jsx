@@ -288,6 +288,22 @@ const themeOne = createTheme({
         }
       }
     },
+    MuiTab: {
+      styleOverrides: {
+        root:{
+          "&:hover": {
+            backgroundColor: t1_pl,
+            color: t1_ts,
+          },
+          "&.Mui-selected": {
+            backgroundColor: t1_p,
+            color: t1_tp,
+          },
+          color: t1_ts,
+          backgroundColor: t1_pd,
+        }
+      }
+    },
     MuiCssBaseline: {
       styleOverrides: {
         body: {
@@ -591,6 +607,22 @@ const themeTwo = createTheme({
         root: {
           padding: 2,
           paddingBottom: 0,
+        }
+      }
+    },
+    MuiTab: {
+      styleOverrides: {
+        root:{
+          "&:hover": {
+            backgroundColor: t2_pl,
+            color: t2_ts,
+          },
+          "&.Mui-selected": {
+            backgroundColor: t2_p,
+            color: t2_tp,
+          },
+          color: t2_ts,
+          backgroundColor: t2_pd,
         }
       }
     },
