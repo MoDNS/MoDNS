@@ -20,7 +20,7 @@ Plugins handle the DNS process by implementing atleast one of the following modu
  - Inspectors: Sees the DNS response
 These plugins will form the foundation of the DNS server and allow administrators and hobbyists to develop their own plugins for their DNS server.
 
-Plugins are created by the user in any compiled language that can expose C functions. Prime examples of these languages would be C/C++ itself, Go, and Rust which the backend is built with. These plugins can access functions within the MoDNS sdk that allows users to directly interact with the framework and manipulate the DNS requests as they see fit.
+Plugins are created by the user in any compiled language that can expose C functions. Prime examples of these languages would be C/C++ itself, Go, and Rust which the backend is built with. These plugins can access functions within the MoDNS sdk that allows users to directly interact with the framework and manipulate the DNS requests as they see fit. You can see an example of a user defined plugin in the appendices.
 
 ### API
 
