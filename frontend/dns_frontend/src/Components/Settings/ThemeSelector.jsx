@@ -1,4 +1,4 @@
-import { Button, FormControlLabel, Radio, RadioGroup, Typography, useTheme } from '@mui/material';
+import { FormControlLabel, Radio, RadioGroup, useTheme } from '@mui/material';
 import React from 'react';
 import SquareIcon from '@mui/icons-material/Square';
 import themes from '../../themes';

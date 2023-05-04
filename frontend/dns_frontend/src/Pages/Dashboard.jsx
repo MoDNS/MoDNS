@@ -10,7 +10,7 @@ import { getDashboardLayout, getDashboardSource, setDashboardLayout } from "../s
 
 const Dashboard = () => {
   const [editMode, setEditMode] = useState(false);
-  const [dashbourdSource, setDashSource] = useState(false);
+  const [dashbourdSource] = useState(false);
   
   const [dashboardJson, setDashboardJson] = useState();
 
