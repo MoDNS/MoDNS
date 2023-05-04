@@ -60,7 +60,10 @@ const WebSecurity = () => {
                 }
             });
             setServerConfig(newSett);
-            setOldSettings(structuredClone(currentSettings));
+            let x = structuredClone(currentSettings);
+            x[ADMIN_PW_KEY].value = ""
+            setCurrentSettings(structuredClone(x))
+            setOldSettings(structuredClone(x));
         }
     }
 
@@ -167,7 +170,7 @@ const WebSecurity = () => {
                                     let x = currentSettings[API_PORT_KEY] || {}
                                     let input = e.target.value;
                                     if(/^\d*$/.test(input)){
-                                        x.value = input;
+                                        x.value = Number(input);
                                         handleChange(API_PORT_KEY, {...x});
                                     }
                                 }}

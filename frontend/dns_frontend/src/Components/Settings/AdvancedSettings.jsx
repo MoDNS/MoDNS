@@ -96,7 +96,10 @@ const AdvancedSettings = () => {
                 }
             });
             setServerConfig(newSett);
-            setOldSettings(structuredClone(currentSettings));
+            let x = structuredClone(currentSettings);
+            x[POSTGRES_PASS_KEY].value = ""
+            setCurrentSettings(structuredClone(x))
+            setOldSettings(structuredClone(x));
         }
     }
 
@@ -421,7 +424,7 @@ const AdvancedSettings = () => {
                                             let x = currentSettings[POSTGRES_PORT_KEY] || {}
                                             let input = e.target.value;
                                             if(/^\d*$/.test(input)){
-                                                x.value = input;
+                                                x.value = Number(input);
                                                 handleChange(POSTGRES_PORT_KEY, {...x});
                                             }
                                         }}
