@@ -47,13 +47,14 @@ const AdvancedSettings = () => {
             setOldSettings(structuredClone(dict));
             setCurrentSettings(structuredClone(dict));
 
-            setSelectLogFilter(parseLogFilter(dict[LOG_FILTER_KEY].value || ""));
+            let x = parseLogFilter(dict[LOG_FILTER_KEY].value || "");
+            setSelectLogFilter(x);
             setTextLogFilter(dict[LOG_FILTER_KEY].value || "");
-            setUseCustLogFilt(!(loggingOptions.includes(selectLogFilter[0] || "") && loggingOptions.includes(selectLogFilter[1] || "")));
+            setUseCustLogFilt(!(loggingOptions.includes(x[0] || "") && loggingOptions.includes(x[1] || "")));
             setErrorPostgresIP(!IPInputValidation(dict[POSTGRES_IP_KEY].value || ""));
         })
         
-    }, []);
+    }, [loggingOptions]);
     
 
     const logFilterCheck = (useCust) => {
