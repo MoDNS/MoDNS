@@ -1,14 +1,25 @@
 \pagebreak
 # Appendix
 
+Listed are additional links, images, and code referenced throuhout the report. 
+ 
+## Appendix A
+
 MoDNS Project Github Link:  
 https://github.com/MoDNS/MoDNS
   
+## Appendix B
   
 RFC 1035:  
 https://datatracker.ietf.org/doc/html/rfc1035
+
+## Appendix C
+
+Webpage Screenshots: 
+
   
-  
+## Appendix D
+
 Plugin Example:  
   
 ```C

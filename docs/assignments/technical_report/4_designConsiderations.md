@@ -1,3 +1,4 @@
+\pagebreak
 ## Design Considerations
 
 While working on this project, many design considerations were taken to ensure a smooth and seamless release of the project into user's machines.
