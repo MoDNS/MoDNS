@@ -53,7 +53,7 @@ const AdvancedSettings = () => {
             setErrorPostgresIP(!IPInputValidation(dict[POSTGRES_IP_KEY].value || ""));
         })
         
-    });
+    }, []);
     
 
     const logFilterCheck = (useCust) => {
