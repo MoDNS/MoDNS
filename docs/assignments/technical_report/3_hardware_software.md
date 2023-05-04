@@ -8,7 +8,7 @@ MoDNS is a modular DNS server where all functionality is provided by plugins. Pl
 
 ### Back-End
 
-The MoDNS Back-End implements plugin integration, hosts a Rest API, and hosts the Front-End webserver. By default, MoDNS will ship with plugins that implement basic DNS resolution and caching. MoDNS is designed to allow its admin to change any aspect of the DNS process on their local network.  The Backend will load the plugins on startup and implement their functionality. The Rest API will be used for Back-End and Front-End communication. Alongside communication, the API will also allow the front-end to make plugin configuration changes and plugin management changes. The Back-End will host a Front-End for easy server management.
+The MoDNS Back-End implements plugin integration, hosts a Rest API, and hosts the Front-End webserver. By default, MoDNS will ship with plugins that implement basic DNS resolution and caching. MoDNS is designed to allow its admin to change any aspect of the DNS process on their local network. The Backend will load the plugins on startup and implement their functionality. The Rest API will be used for Back-End and Front-End communication. Alongside communication, the API will also allow the front-end to make plugin configuration changes and plugin management changes. The Back-End will host a Front-End for easy server management.
 
 ### Plugins
 
@@ -19,6 +19,8 @@ Plugins handle the DNS process by implementing atleast one of the following modu
  - Validators: Can drop a DNS response
  - Inspectors: Sees the DNS response
 These plugins will form the foundation of the DNS server and allow administrators and hobbyists to develop their own plugins for their DNS server.
+
+Plugins are created by the user in any compiled language that can expose C functions. Prime examples of these languages would be C/C++ itself, Go, and Rust which the backend is built with. These plugins can access functions within the MoDNS sdk that allows users to directly interact with the framework and manipulate the DNS requests as they see fit.
 
 ### API
 
