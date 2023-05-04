@@ -21,9 +21,9 @@ pub struct PluginQuery {
 }
 
 #[derive(Deserialize)]
-pub struct ConfigGetQuery
+pub struct ConfigQuery
 {
-    keys: Option<String>
+    keys: String
 }
 
 pub fn root_redirect() -> BoxedFilter<(impl Reply,)> {
@@ -50,7 +50,6 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
     let enable_pm = pm.clone();
     let disable_pm = pm.clone();
     let config_set_pm = pm.clone();
-    let config_get_pm = pm.clone();
     let config_get_pm2 = pm.clone();
 
     warp::path("api")
@@ -82,16 +81,8 @@ pub fn api_filter(pm: Arc<RwLock<PluginManager>>) -> BoxedFilter<(impl Reply,)> 
             get_server_config(pm, keys)
             })
         )
-        .or(warp::path!("server" / "config").and(warp::get()).and(warp::filters::body::json())
-        .then(move |json: Vec<String>| {
-            let pm = config_get_pm.clone();
-            let vec = cq.keys.unwrap_or("".to_string()).split(',').map(str::to_string).collect::<Vec<String>>();
-            log::trace!("Server config requested");
-            get_server_config(pm, vec)
-            })
-        )
         .or(warp::path!("server" / "config").and(warp::post()).and(warp::filters::body::json().or(warp::query()).unify())
-        .then(move |json: HashMap<String, String>| {
+        .then(move |json: HashMap<String, serde_json::Value>| {
             let pm = config_set_pm.clone();
             log::trace!("Server config requested");
             set_server_config(pm, json)
@@ -302,19 +293,19 @@ pub async fn get_server_config<T>(pm: Arc<RwLock<PluginManager>>, json: T) -> im
                 let Ok(value) = serde_json::to_value(db_pass) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(DB_PASS_KEY.to_owned(), value);
     
                 let db_port = cm.config().query_db_port();
                 let Ok(value) = serde_json::to_value(db_port) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(DB_PORT_KEY.to_owned(), value);
     
                 let db_ip = cm.config().query_db_addr();
                 let Ok(value) = serde_json::to_value(db_ip) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i.0, value);
+                reply.insert(DB_ADDR_KEY.to_owned(), value);
     
                 let db_path = cm.config().query_db_path();
                 let Ok(value) = serde_json::to_value(db_path) else {
