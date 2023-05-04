@@ -321,7 +321,7 @@ pub async fn get_server_config<T>(pm: Arc<RwLock<PluginManager>>, json: T) -> im
                 let Ok(value) = serde_json::to_value(db_user) else {
                     return ApiResponse::new(404, format!("Key not found"))
                 };
-                reply.insert(i, value);
+                reply.insert(DB_USER_KEY.to_owned(), value);
                 
                 let db_pass = cm.config().query_plugin_path();
                 let Ok(value) = serde_json::to_value(db_pass) else {
