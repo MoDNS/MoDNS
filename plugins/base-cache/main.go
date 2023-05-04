@@ -33,10 +33,10 @@ func impl_inspect_resp(req *C.constMessage, resp *C.constMessage, source C.uchar
     for _, answer := range answers {
         hostname := decode_hostname(answer.name)
 
-        _, err := db.Exec(`INSERT INTO basecache (host, rrtype, tag, rdata, origin)
-            VALUES (?, ?, ?, cast(? as BLOB), unixepoch())
-            ON CONFLICT (host, rrtype) DO UPDATE`,
-            hostname, answer.type_code, answer.rdata.tag, answer.rdata.anon0[:])
+        _, err := db.Exec(`INSERT INTO basecache (host, rrtype, tag, rdata, ttl, origin)
+            VALUES (?1, ?2, ?3, ?4, ?5, unixepoch())
+            ON CONFLICT (host, rrtype) DO UPDATE SET (tag, rdata, ttl, origin) = (?3, ?4, ?5, unixepoch())`,
+            hostname, answer.type_code, answer.rdata.tag, answer.rdata.anon0[:], answer.ttl)
 
         if err != nil {
             modns_log(1, fmt.Sprint("Encountered error entering cache record into database: ", err))
@@ -81,6 +81,7 @@ func impl_plugin_setup() *C.void {
         rrtype  UNSIGNED INTEGER NOT NULL,
         tag     UNSIGNED INTEGER NOT NULL,
         rdata   BLOB,
+        ttl     UNSIGNED INTEGER NOT NULL,
         origin  UNSIGNED INTEGER NOT NULL,
 
         PRIMARY KEY(host, rrtype)
