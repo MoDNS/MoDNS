@@ -6,8 +6,8 @@ While working on this project, many design considerations were taken to ensure a
 
 ### Codes & Standards
 
-MoDNS operates as an open-source project, all source code and documentation can be found in the GitHub repository.
-MoDNS default plugins will comply with RFC 1035 (Found in appendices).
+MoDNS operates as an open-source project, all source code and documentation can be found in the [GitHub repository](https://github.com/MoDNS/MoDNS).
+MoDNS default plugins will comply with [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035). Links can also be found in appendices.
 
 
 ### Safety & Environmental Protection
@@ -17,7 +17,7 @@ MoDNS is intended to run on a dedicated server at all times. It is up to the use
 
 ### Deployment
 
-MoDNS will be available for download via our GitHub repository. On this repo, packages will be released and the user can download them as .deb files to run on a device that has the Ubuntu Linux Operating system. In terms of architecture, there is support for ARM64, x86_64, and ARM. The project will be easily distributable and installable onto devices that runs Ubuntu.
+MoDNS will be available for download via our [GitHub repository](https://github.com/MoDNS/MoDNS). On this repo, packages will be released and the user can download them as .deb files to run on a device that has the Ubuntu Linux Operating system. In terms of architecture, there is support for ARM64, x86_64, and ARM. The project will be easily distributable and installable onto devices that runs Ubuntu.
 
 ### Social & Political Considerations
 
@@ -28,26 +28,25 @@ While we cannot make a conclusion on how people and/or governments would react t
 
 ### Engineering Design Specifications
 
-Here we give the specifications taken into account during the Engineering Design Process
+Here we give the specifications taken into account during the Engineering Design Process.
 
 #### Intended purpose
 
-Provide DNS services on a residential or SOHO network
-
-#### Unintended purposes
-
-Provide DNS services for a corporate network
+Provide a framework that allows the user to implement their own user-defined DNS capabilities on a residential or SOHO network.
 
 #### Special Features
 
-All DNS functionality is provided by plugin modules. This way, DNS functionality is infinitely configurable
+ - All DNS functionality is provided by user-defined plugin modules, which makes DNS functionality infinitely configurable.
+ - MoDNS hosts a web server on the local network that allows for the easy configuration of the server and installed plugins.
 
 ### Requirements
 
+ The requirements we sought for MoDNS are detailed here.
+
 #### Functional Performance
  - MoDNS should provide DNS resolution services for a residential or SOHO network
- - Should allow the installation and use of modules to alter the DNS resolution process
- - Easily managed from local web server hosted alongside MoDNS daemon
+ - Should allow the installation and use of plugins to alter the DNS resolution process
+ - Easily managed from a local web server hosted alongside MoDNS daemon
 
 #### Operating Requirements
  - Server runs on a Linux server operating system
@@ -67,6 +66,7 @@ All DNS functionality is provided by plugin modules. This way, DNS functionality
  - Web interface should be intuitive
  - Use UI elements whose meanings are well-known
  - Dashboard is designed for quick information gathering
+ - CLI should uses simple commands and keys
 
 #### Appearance
  - Web interface should be attractive to users

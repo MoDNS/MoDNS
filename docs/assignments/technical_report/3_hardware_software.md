@@ -25,7 +25,7 @@ Plugins are created by the user in any compiled language that can expose C funct
 
 ### API
 
-To facilitate communication of data between the framework itself and a user-friendly front end website, we created an API baked into the backend. This API uses the plugin manager provided by the framework to grab plugin data, lists, and statistics and sends the data in JSON format to the frontend. In addition to the communication, the frontend can send requests to the API that will modify plugin configuration and handle plugin management. This allows users unfamiliar with command line interfaces or programming languages to easily change plugin configurations from the frontend website. 
+To facilitate communication of data between the framework itself and a user-friendly front end website, we created an API baked into the backend. This API uses the plugin manager provided by the framework to grab plugin data, lists, and statistics and sends the data in JSON format to the frontend. In addition to the communication, the frontend can send requests to the API that will modify plugin configuration and handle plugin management. Server settings will also be available for modification on the web server through the API. This allows users unfamiliar with command line interfaces or programming languages to easily change server and plugin configurations from the frontend website. 
 
 ### Front-End
 
