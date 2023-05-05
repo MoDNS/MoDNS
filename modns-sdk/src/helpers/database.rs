@@ -1,7 +1,7 @@
 
 use std::{path::Path, net::{SocketAddr, IpAddr}};
 
-use crate::types::{safe, ffi::{self, ByteVector}};
+use crate::types::{safe, ffi::{self, ByteVector}, conversion::FfiVector};
 
 pub const DEFAULT_POSTGRES_PORT: u16 = 5432;
 
@@ -74,9 +74,11 @@ pub extern "C" fn modns_get_database() -> Option<&'static ffi::DatabaseInfo> {
 
 #[no_mangle]
 pub extern "C" fn modns_get_plugin_dir() -> ByteVector {
-    super::get_plugin_dir()
-        .and_then(|p| p.to_str())
-        .unwrap_or_default()
-        .as_bytes()
-        .into()
+    ByteVector::from_safe_vec(
+        super::get_plugin_dir()
+            .and_then(|p| p.to_str())
+            .unwrap_or_default()
+            .as_bytes()
+            .into()
+    )
 }

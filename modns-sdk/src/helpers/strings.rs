@@ -12,15 +12,23 @@ use crate::types::{ffi::ByteVector, conversion::FfiVector};
 #[no_mangle]
 pub extern "C" fn modns_strdup_to_bytevec(src: *mut i8, dest: &mut ByteVector) -> usize {
     // Cast to whatever signedness this arch uses for string pointers
+    log::debug!("Checking string");
     let src_str = unsafe { CStr::from_ptr(src.cast_const().cast()) };
 
     // Drop the old string
-    let _ = unsafe { String::from_raw_parts(dest.ptr, dest.size, dest.capacity) };
+    if !dest.ptr.is_null() {
+        log::debug!("Dropping old string");
+        let _ = unsafe { Vec::from_raw_parts(dest.ptr, dest.size, dest.capacity) };
+    }
 
-    let dest_str = src_str.to_string_lossy().to_string();
+    log::debug!("Generating new string");
+    let dest_str = src_str.to_string_lossy().to_string().into_bytes();
 
+    log::debug!("Replacing destination");
     // Replace the elements of `dest`
-    *dest = ByteVector::from_safe_vec(dest_str.as_bytes().to_vec());
+    *dest = ByteVector::from_safe_vec(dest_str);
+
+    log::debug!("Returning");
 
     dest.len()
 }
