@@ -44,7 +44,7 @@ pub const DB_PORT_KEY: &str = "postgres_port";
 pub const DB_USER_KEY: &str = "postgres_user";
 pub const DB_PASS_KEY: &str = "postgres_pw";
 pub const LOG_KEY: &str = "log_filter";
-pub const ADMIN_PW_KEY: &str = "admin_pw_hash";
+pub const ADMIN_PW_KEY: &str = "admin_pw";
 pub const API_PORT_KEY: &str = "api_port";
 pub const HTTPS_KEY: &str = "use_https";
 pub const TLS_CERT_KEY: &str = "tls_cert_path";
@@ -475,11 +475,11 @@ impl MutableServerConfig {
         self.set_config_obj(DB_PORT_KEY, db_port)
     }
 
-    pub fn set_db_user(&mut self, user: &str) -> Result<()> {
+    pub fn set_db_user(&mut self, user: String) -> Result<()> {
         self.set_config_obj(DB_USER_KEY, user)
     }
 
-    pub fn set_db_password(&mut self, password: &str) -> Result<()> {
+    pub fn set_db_password(&mut self, password: String) -> Result<()> {
         self.set_config_obj(DB_PASS_KEY, password)
     }
 
@@ -630,7 +630,14 @@ impl ServerConfig {
 
         path.extend_from_slice(&self.override_plugin_path);
 
-        path.extend_from_slice(&self.settings.plugin_path().unwrap_or_default());
+        path.extend(
+            self.settings.plugin_path()
+                .unwrap_or_default()
+                .into_iter()
+                .filter(|p| {
+                    !(self.override_plugin_path.contains(&p) || (!self.no_default_plugins && p == &PathBuf::from(DEFAULT_PLUGIN_PATH)))
+                })
+        );
 
         path
     }
@@ -779,11 +786,11 @@ impl ServerConfig {
         self.settings.set_db_port(db_port)
     }
 
-    pub fn set_db_user(&mut self, user: &str) -> Result<()> {
+    pub fn set_db_user(&mut self, user: String) -> Result<()> {
         self.settings.set_db_user(user)
     }
 
-    pub fn set_db_password(&mut self, password: &str) -> Result<()> {
+    pub fn set_db_password(&mut self, password: String) -> Result<()> {
         self.settings.set_db_password(password)
     }
 
@@ -819,19 +826,19 @@ pub struct MutableConfigValue<T: Debug> {
 }
 
 impl<T: Debug> MutableConfigValue<T> {
-    fn overridden(value: T) -> Self {
-        Self {
-            overridden: true,
-            value
-        }
-    }
-
-    fn mutable(value: T) -> Self {
-        Self {
-            overridden: false,
-            value
-        } 
-    }
+    // fn overridden(value: T) -> Self {
+    //     Self {
+    //         overridden: true,
+    //         value
+    //     }
+    // }
+    //
+    // fn mutable(value: T) -> Self {
+    //     Self {
+    //         overridden: false,
+    //         value
+    //     } 
+    // }
 
     pub fn is_overridden(&self) -> bool {
         self.overridden
@@ -884,6 +891,13 @@ impl ServerConfig {
         }
     }
 
+    pub fn query_db_pass(&self) -> MutableConfigValue<String> {
+        MutableConfigValue { 
+            overridden: self.override_db_pass.is_some(),
+            value: self.db_password()
+        }
+    }
+
     pub fn query_log(&self) -> MutableConfigValue<String> {
         MutableConfigValue {
             overridden: self.override_log.is_some(),
@@ -927,33 +941,11 @@ impl ServerConfig {
     }
 
     pub fn query_plugin_path(&self) -> Vec<MutableConfigValue<PathBuf>> {
-        let mut path = Vec::with_capacity(
-            self.override_plugin_path.len() +
-            self.settings.plugin_path().map(|v| v.len()).unwrap_or(0) +
-            1
-        );
-
-        if !self.no_default_plugins {
-            path.push(
-                MutableConfigValue::overridden(PathBuf::from(DEFAULT_PLUGIN_PATH))
-            );
-        }
-
-        path.extend(
-            self.override_plugin_path
-                .iter()
-                .map(Clone::clone)
-                .map(MutableConfigValue::overridden)
-        );
-
-        path.extend(
-            self.settings.plugin_path()
-                .unwrap_or_default()
-                .iter()
-                .map(Clone::clone)
-                .map(MutableConfigValue::mutable)
-        );
-
-        path
+        self.plugin_path().into_iter().map(|p| {
+            MutableConfigValue {
+                overridden: self.override_plugin_path.contains(&p) || p == PathBuf::from(DEFAULT_PLUGIN_PATH),
+                value: p
+            }
+        }).collect()
     }
 }
