@@ -2,25 +2,21 @@ FROM rust:1.69
 #nice
 
 # create Rust-based backend server working directory
-WORKDIR /rust-server
+WORKDIR /plugins-env
 
 RUN apt-get update
 RUN apt-get upgrade -y
 RUN apt-get install -y cmake libjsoncpp-dev
 
-RUN cargo install cargo-watch
-
 # Make needs Go
 COPY --from=golang:1.20 /usr/local/go/ /usr/local/go/
 ENV PATH="/rust-server/target/debug:/usr/local/go/bin:${PATH}"
 
+ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
+
 # Use terminal colors when running cargo commands
 ENV CARGO_TERM_COLOR=always
 
-# Use the sparse cargo protocol, which should cut down on build times
-ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
+RUN echo workspace.members=[\"modns-sdk\"] >> Cargo.toml
 
-EXPOSE 8080 
-EXPOSE 5300/udp
-
-CMD make server && cargo watch --poll -w server -w /usr/share/modns/default-plugins -x run --why || tail -f /dev/null
+CMD while true; do make plugin-install -q --silent || make plugin-install; sleep 1; done || echo "ERROR: Primary Command Crashed!" || tail -f /dev/null

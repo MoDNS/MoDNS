@@ -1,5 +1,15 @@
 version: '3.8'
 
+x-modns-sdk:
+  &modns-sdk-share
+  type: bind
+  source: ./modns-sdk
+
+x-makefile:
+  &makefile
+  type: bind
+  source: ./Makefile
+
 services:
   frontend:
     container_name: react-app
@@ -27,21 +37,49 @@ services:
       MODNS_LOG_STYLE: always
     ports:
       - "8080:80"
-      - "4433:443"
       - "5300:53"
       - "5300:53/udp"
     volumes:
       - ./server:/rust-server/server
       - ./cli:/rust-server/cli
-      - ./plugins:/rust-server/plugins
-      - ./modns-sdk:/rust-server/modns-sdk
+      # - ./modns-sdk:/rust-server/modns-sdk
       - ./Cargo.toml:/rust-server/Cargo.toml
-      - ./Makefile:/rust-server/Makefile
+      # - ./Makefile:/rust-server/Makefile
       - frontend_build:/usr/share/modns/web:ro
       - backend_build:/rust-server/target
       - backend_cache:/root/.cargo/registry
+      - plugins_build:/usr/share/modns/default-plugins
+      - <<: *makefile
+        target: /rust-server/Makefile
+      - <<: *modns-sdk-share
+        target: /rust-server/modns-sdk
+  
+  plugins-env:
+    container_name: plugins-env
+    build:
+      context: .
+      dockerfile: Dockerfile.Plugins
+    volumes:
+      - backend_build:/plugins-env/target
+      - backend_cache:/root/.cargo/registry
+      - ./plugins:/plugins-env/plugins
+      - plugins_build:/usr/share/modns/default-plugins
+      - <<: *makefile
+        target: /plugins-env/Makefile
+      - <<: *modns-sdk-share
+        target: /plugins-env/modns-sdk
+
+    # make-env:
+    #   container_name: make-env
+    #   build:
+    #     contxt: .
+    #     dockerfile: Dockerfile.Makefile
+    #   volumes:
+    #     - ./Makefile:/make-env
+
 
 volumes:
   frontend_build:
   backend_build:
   backend_cache:
+  plugins_build:

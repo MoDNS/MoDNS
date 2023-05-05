@@ -59,7 +59,11 @@ clean: cargo-clean plugin-clean
 	$(MAKE) -C plugins/ clean
 	cargo clean
 
-install:
+install: all
 	install -d $(PKGDIR)/usr/share/modns/web $(PKGDIR)/var/lib/modns
 	install -CDt $(PKGDIR)/usr/bin $(TARGET_DIR)/modns $(TARGET_DIR)/modnsd
+	$(MAKE) -C plugins/ install
+
+.PHONY: plugin-install
+plugin-install: sdk
 	$(MAKE) -C plugins/ install
