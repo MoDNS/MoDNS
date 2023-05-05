@@ -1,7 +1,7 @@
 \pagebreak
 # Appendix
 
-Listed are additional links, images, and code referenced throuhout the report. 
+Listed are additional links, images, and code referenced throughout the report. 
  
 ## Appendix A
 
