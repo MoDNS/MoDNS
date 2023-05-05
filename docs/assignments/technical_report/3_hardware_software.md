@@ -37,7 +37,7 @@ The dashboard will serve as an at-a-glance look into the current state of the pl
 
 #### Plugins
 
-This webpage allows the user to manage the plugins without the need for entering a command line interface. Two views exist for this page: the overview and sequential view. The overview allows the user to see all plugins listen in their respective module. The sequential view gives the user a look into the order by which the intalled plugins are being called. The user will have the ability to change the order of certain plugins and also disable and enable plugins as they please. 
+This webpage allows the user to manage the plugins without the need for entering a command line interface. Two views exist for this page: the overview and sequential view. The overview allows the user to see all plugins listen in their respective module. The sequential view gives the user a look into the order by which the installed plugins are being called. The user will have the ability to change the order of certain plugins and also disable and enable plugins as they please. 
 
 #### Tools
 

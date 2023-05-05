@@ -41,7 +41,7 @@ Provide a framework that allows the user to implement their own user-defined DNS
 
 ### Requirements
 
- The requirements we sought for MoDNS are detailed here.
+The requirements we sought for MoDNS are detailed here.
 
 #### Functional Performance
  - MoDNS should provide DNS resolution services for a residential or SOHO network
