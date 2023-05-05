@@ -47,6 +47,6 @@ Plugin developers will also hold the ability to create custom settings page for 
 
 The settings page allows the user to configure the local DNS server settings. Here the page is categorized into three different types of settings: General, Web, and Web Security. 
 
-Under general the user will find generic settings such as the website's theme and settings for the dashboard. In Advanced settings, the user can configure the paths the server looks at to find the plugins to install, a filter for any logs they would want for the server, and settings to decide what type of database and the information for that database. 
+Under general the user will find generic settings such as the website's theme and settings for the dashboard. In Advanced settings, the user can configure the paths the server looks at to find the plugins to install, a filter for any logs they would want for the server, and settings to decide what type of database and the information for that database. In web security, th euser can find where they can give the path for the TLS cert and key for HTTPs use along with the port used for the API and a place to update the password used to enter the website.
  
 Screenshots of the webpages can be found in the appendices.

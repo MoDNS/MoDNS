@@ -32,6 +32,21 @@ Webpage Screenshots:
 ![Overview Plugin Scren](plugin_over.png) 
 
 \pagebreak
+### A.4
+
+![General Settings Screen](general_settings.png)
+
+\pagebreak
+### A.5
+
+![Web Security Settings Screen](web_security.png)
+
+\pagebreak
+### A.6
+
+![Advanced Settings Screen](advanced_settings.png)
+
+\pagebreak
 ## Appendix D
 
 Plugin Example:  
