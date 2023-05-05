@@ -17,36 +17,41 @@ https://datatracker.ietf.org/doc/html/rfc1035
 
 Webpage Screenshots: 
  
-### A.1
+### C.1
 
 ![Login Screen](login.png) 
 
 \pagebreak
-### A.2
+### C.2
 
 ![Sequential Plugin Screen](plugin_seq.png) 
  
 \pagebreak
-### A.3
+### C.3
 
 ![Overview Plugin Scren](plugin_over.png) 
 
 \pagebreak
-### A.4
+### C.4
 
 ![General Settings Screen](general_settings.png)
 
 \pagebreak
-### A.5
+### C.5
 
 ![Web Security Settings Screen](web_security.png)
 
 \pagebreak
-### A.6
+### C.6
 
 ![Advanced Settings Screen](advanced_settings.png)
 
 \pagebreak
+
+## Appendix D
+
+API Documentation: 
+
 ## Appendix D
 
 Plugin Example:  
