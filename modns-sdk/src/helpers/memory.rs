@@ -1,6 +1,6 @@
 use std::mem;
 
-use crate::types::{ffi::{QuestionVector, RRVector}, conversion::FfiVector};
+use crate::types::{ffi::{QuestionVector, RRVector, ByteVector, BytePtrVector}, conversion::FfiVector};
 
 use crate::types::ffi;
 
@@ -52,6 +52,41 @@ pub extern "C" fn resize_rr_field(field: &mut RRVector, new_size: usize) -> bool
 
 }
 
+/// Safely resize the provided [ByteVector]
+/// 
+/// This funciton should always be used to add and remove fields to the vector,
+/// so that all memory that is persistent across calls to your plugin is handled consistently.
+#[no_mangle]
+pub extern "C" fn resize_bytevec(field: &mut ByteVector, new_size: usize) -> bool {
+
+    let Some(vec) = (unsafe {
+        FfiVector::resize(field, new_size)
+    }) else {return false};   
+
+    *field = vec;
+
+    true
+
+}
+
+/// Safely resize the provided [BytePtrVector]
+/// 
+/// This funciton should always be used to add and remove fields to the vector,
+/// so that all memory that is persistent across calls to your plugin is handled consistently.
+#[no_mangle]
+pub extern "C" fn resize_byteptrvec(field: &mut BytePtrVector, new_size: usize) -> bool {
+
+
+    let Some(vec) = (unsafe {
+        FfiVector::resize(field, new_size)
+    }) else {return false};   
+
+    *field = vec;
+
+    true
+
+}
+
 /// Reallocate memory for a buffer of chars so that it can fit `new_size` values
 /// 
 /// Returns the new pointer to the buffer, as well as the size that was actually allocated
@@ -59,10 +94,10 @@ pub extern "C" fn resize_rr_field(field: &mut RRVector, new_size: usize) -> bool
 /// If this function is run multiple times on the same buffer, `current_size` should always
 /// be the actual size returned from the last call to this function
 #[no_mangle]
-pub extern "C" fn extend_char_vec(buf: ffi::ByteVector, num_to_add: usize) -> ffi::ByteVector {
+pub extern "C" fn extend_char_vec(buf: ByteVector, num_to_add: usize) -> ByteVector {
 
     if buf.ptr.is_null() {
-        return ffi::ByteVector::from_safe_vec(Vec::with_capacity(num_to_add));
+        return ByteVector::from_safe_vec(Vec::with_capacity(num_to_add));
     }
 
     let mut v = unsafe {
@@ -71,7 +106,7 @@ pub extern "C" fn extend_char_vec(buf: ffi::ByteVector, num_to_add: usize) -> ff
 
     v.reserve_exact(num_to_add);
 
-    ffi::ByteVector::from_safe_vec(v)
+    ByteVector::from_safe_vec(v)
 }
 
 #[no_mangle]
@@ -91,7 +126,7 @@ pub extern "C" fn extend_ptr_vec(buf: ffi::BytePtrVector, num_to_add: usize) -> 
 }
 
 #[no_mangle]
-pub extern "C" fn drop_char_vec(buf: ffi::ByteVector) {
+pub extern "C" fn drop_char_vec(buf: ByteVector) {
 
     if buf.ptr.is_null() {return}
 

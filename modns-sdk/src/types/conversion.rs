@@ -226,11 +226,11 @@ impl FfiType for ffi::DnsMessage {
     }
 }
 
-impl From<&[u8]> for ffi::ByteVector {
-    fn from(value: &[u8]) -> Self {
-        Self { ptr: value.as_ptr() as *mut u8, size: value.len(), capacity: value.len() }
-    }
-}
+// impl From<&[u8]> for ffi::ByteVector {
+//     fn from(value: &[u8]) -> Self {
+//         Self { ptr: value.as_ptr() as *mut u8, size: value.len(), capacity: value.len() }
+//     }
+// }
 
 impl FfiVector for ffi::ByteVector {
     type Item = u8;
@@ -303,7 +303,7 @@ impl From<Vec<String>> for ffi::BytePtrVector {
     fn from(value: Vec<String>) -> Self {
         Self::from_safe_vec(
             value.into_iter()
-                .map(|s| ffi::ByteVector::from(s.as_bytes()))
+                .map(|s| ffi::ByteVector::from_safe_vec(s.into_bytes()))
                 .collect()
         )
     }
@@ -459,10 +459,10 @@ impl FfiType for ffi::DatabaseInfo {
             },
             safe::DatabaseInfo::Postgres { host, port, username, password } => {
                 ffi::DatabaseInfo::Postgres {
-                    host: ByteVector::from(host.as_bytes()),
+                    host: ByteVector::from_safe_vec(host.into_bytes()),
                     port,
-                    username: ByteVector::from(username.as_bytes()),
-                    password: ByteVector::from(password.as_bytes())
+                    username: ByteVector::from_safe_vec(username.into_bytes()),
+                    password: ByteVector::from_safe_vec(password.into_bytes())
                 }
             },
         }
