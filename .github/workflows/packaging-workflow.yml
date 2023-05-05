@@ -99,7 +99,7 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           name: Release ${{ github.ref_name }}
-          files: '*.deb'
-          generate_release_notes: true
+          artifacts: '*.deb'
+          generateReleaseNotes: true
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta')}}
 
