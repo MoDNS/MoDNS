@@ -2,6 +2,7 @@
 pub mod listeners;
 pub mod plugins;
 pub mod config;
+pub mod api;
 
 pub use config::ServerConfig;
 
