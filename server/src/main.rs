@@ -1,3 +1,4 @@
+use std::net::SocketAddr;
 use std::sync::Arc;
 
 use anyhow::Context;
@@ -6,6 +7,7 @@ use modnsd::config;
 use modnsd::plugins::manager::PluginManager;
 
 use modnsd::listeners;
+use modnsd::api;
 
 use tokio::sync::RwLock;
 
@@ -55,7 +57,11 @@ async fn main() -> anyhow::Result<()> {
         log::info!("Plugin initialization successful");
     }
 
-    listeners::listen(pm_arc).await;
+    let api_addr = api::ApiConfig::Http(SocketAddr::from(([0, 0, 0, 0], 80)));
+
+    api::run(api_addr, pm_arc).await?;
+
+    // listeners::listen(pm_arc).await;
 
     std::fs::remove_file(&socket_path)
     .with_context(|| format!("Failed to remove unix socket at {}", socket_path.display()))?;

@@ -1,12 +1,13 @@
-use std::sync::Arc;
 
 use axum::Router;
-use tokio::sync::RwLock;
 
-use crate::PluginManager;
+use crate::PluginManagerLock;
+
+mod frontend;
 
 
-pub fn router(state: Arc<RwLock<PluginManager>>) -> Router {
+pub fn router(state: PluginManagerLock) -> Router {
     Router::new()
         .with_state(state)
+        .merge(frontend::spa_router("/usr/share/modns/web"))
 }
